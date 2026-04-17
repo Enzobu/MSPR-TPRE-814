@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "bradlc.vscode-tailwindcss",
+    "prisma.prisma",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "eamodio.gitlens",
+    "platformio.platformio-ide",
+    "ms-vscode.cpptools",
+    "gruntfuggly.todo-tree",
+    "redhat.vscode-yaml",
+    "aaron-bond.better-comments"
+  ]
+}

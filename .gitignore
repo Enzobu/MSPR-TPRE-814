@@ -9,7 +9,10 @@ coverage/
 .DS_Store
 .idea/
 idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
 .turbo/
 .claude/settings.local.json
 
