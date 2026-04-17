@@ -1,0 +1,15 @@
+meta {
+  name: auth
+  seq: 1
+}
+
+docs {
+  # Auth (backend-central)
+
+  Endpoints d'authentification exposés par le backend siège.
+
+  - `POST /api/v1/auth/login` — login + émission JWT
+  - (à venir) `POST /api/v1/auth/refresh` — renouvellement du access token
+  - (à venir) `POST /api/v1/auth/logout` — révocation du refresh token
+  - (à venir) `GET  /api/v1/auth/me` — user courant (requiert bearer)
+}
