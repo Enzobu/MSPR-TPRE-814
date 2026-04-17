@@ -23,5 +23,6 @@ Charge en contexte **toutes les règles transverses** du monorepo FutureKawa et 
 - `.claude/rules/07-security.md`
 - `.claude/rules/08-observability.md`
 - `.claude/rules/09-monorepo.md`
+- `.claude/rules/10-ai-parity.md`
 
 La **source canonique** des règles est le dossier `.claude/rules/`. Cette commande n'est qu'un raccourci pour les injecter en contexte.

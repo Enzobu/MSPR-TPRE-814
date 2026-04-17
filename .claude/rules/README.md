@@ -16,6 +16,7 @@ Ce dossier contient les **règles qui s'appliquent à tout le projet**, découp�
 | [`07-security.md`](07-security.md) | OWASP API Top 10, secrets, validation, CORS, rate limit |
 | [`08-observability.md`](08-observability.md) | Logs structurés, correlation ID, health endpoints |
 | [`09-monorepo.md`](09-monorepo.md) | Dépendances, pas de cycles, `@futurekawa/contracts` |
+| [`10-ai-parity.md`](10-ai-parity.md) | Parité Claude Code ↔ Codex — synchronisation obligatoire en PR |
 
 ## Règles spécifiques par sous-projet
 
