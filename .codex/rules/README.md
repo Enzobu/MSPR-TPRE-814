@@ -3,7 +3,10 @@
 Ce dossier contient les **règles qui s'appliquent à tout le projet**, découpées par thème pour faciliter la lecture, la maintenance et les diffs.
 
 **Source canonique** : ces fichiers.
-**Accès rapide** : taper `/rules` dans Claude Code → la commande charge l'ensemble en contexte.
+
+> ℹ️ Codex ne charge pas automatiquement les fichiers de ce dossier (pas de convention native `rules/` côté Codex). Ils sont chargés en contexte via la skill **`rules`** (`.agents/skills/rules/SKILL.md`) — à invoquer en début de session.
+
+**Accès rapide** : invoquer la skill `rules` ou lire manuellement les fichiers.
 
 | Fichier | Thème |
 |---|---|
@@ -20,12 +23,12 @@ Ce dossier contient les **règles qui s'appliquent à tout le projet**, découp�
 
 ## Règles spécifiques par sous-projet
 
-Ces règles-ci sont **transverses**. Les règles **spécifiques** à un sous-projet (REST/DTO/Prisma pour les backends, shadcn/Tailwind/features pour le front, PlatformIO pour l'IoT) vivent dans le `CLAUDE.md` du sous-projet :
+Ces règles-ci sont **transverses**. Les règles **spécifiques** à un sous-projet (REST/DTO/Prisma pour les backends, shadcn/Tailwind/features pour le front, PlatformIO pour l'IoT) vivent dans le `AGENTS.md` du sous-projet :
 
-- `apps/backend-pays/CLAUDE.md`
-- `apps/backend-central/CLAUDE.md`
-- `apps/frontend-web/CLAUDE.md`
-- `apps/iot/CLAUDE.md`
-- `packages/contracts/CLAUDE.md`
+- `apps/backend-pays/AGENTS.md`
+- `apps/backend-central/AGENTS.md`
+- `apps/frontend-web/AGENTS.md`
+- `apps/iot/AGENTS.md`
+- `packages/contracts/AGENTS.md`
 
 En cas de conflit apparent, la règle **la plus spécifique** gagne.

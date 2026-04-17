@@ -1,0 +1,28 @@
+# FutureKawa — Project-scoped Codex config
+# Ref: https://developers.openai.com/codex/config-basic
+#
+# User-level config: ~/.codex/config.toml
+# This file is project-level and merges on top of user config.
+# Pour les valeurs perso / secrets: .codex/settings.local.toml (gitignoré).
+
+# Policy d'approbation : demander avant d'exécuter des commandes sensibles.
+approval_policy = "on-request"
+
+# Sandbox : écriture autorisée dans le workspace, pas hors du repo.
+sandbox_mode = "workspace-write"
+
+# Effort de raisonnement : high pour les tâches complexes de ce projet.
+model_reasoning_effort = "high"
+
+# Recherche web : mode "cached" pour ne pas hammer le web à chaque run.
+web_search = "cached"
+
+# Multi-agent : activé pour permettre orchestrator + subagents (.codex/agents/*.toml).
+multi_agent = true
+
+# Quantité de doc projet chargée automatiquement depuis chaque AGENTS.md.
+# Augmenté car le projet a beaucoup de règles transverses.
+project_doc_max_bytes = 32768
+
+# Fallbacks si AGENTS.md n'existe pas à un niveau donné.
+project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]

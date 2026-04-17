@@ -39,6 +39,9 @@ Closes #
 - [ ] Doc utilisateur (`docs/user/`) à jour si parcours métier touché
 - [ ] ADR créé si choix d'architecture
 
+### Parité assistants IA
+- [ ] Config **Claude Code** et **Codex** synchronisées si touchées (`.claude/` ↔ `.codex/`, `CLAUDE.md` ↔ `AGENTS.md`) — voir règle `10-ai-parity`
+
 ### CI
 - [ ] Lint passe (`pnpm -r lint`)
 - [ ] Build passe (`pnpm -r build`)
