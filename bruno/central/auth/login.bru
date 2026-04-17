@@ -1,0 +1,96 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{userEmail}}",
+    "password": "{{userPassword}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200 || res.getStatus() === 201) {
+    const body = res.getBody();
+    if (body && body.accessToken) {
+      bru.setEnvVar('accessToken', body.accessToken);
+    }
+    if (body && body.refreshToken) {
+      bru.setEnvVar('refreshToken', body.refreshToken);
+    }
+  }
+}
+
+tests {
+  test('should return 200 or 201', function() {
+    expect([200, 201]).to.include(res.getStatus());
+  });
+
+  test('should return accessToken and refreshToken', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('accessToken');
+    expect(body).to.have.property('refreshToken');
+    expect(body.accessToken).to.be.a('string').and.to.have.length.greaterThan(10);
+  });
+
+  test('should persist accessToken in env', function() {
+    expect(bru.getEnvVar('accessToken')).to.be.a('string').and.to.have.length.greaterThan(10);
+  });
+}
+
+docs {
+  # POST /api/v1/auth/login
+
+  Authentifie un utilisateur et renvoie une paire de JWT (access + refresh).
+
+  ## Statut d'implémentation
+  > ⚠ Stub : l'endpoint n'existe pas encore côté backend (retourne 404). Ce fichier documente le contrat attendu et sert de template — sera complété quand l'ADR auth sera tranchée.
+
+  ## Requête
+
+  | Champ | Type | Obligatoire | Description |
+  |---|---|---|---|
+  | `email` | string | oui | Email de l'utilisateur |
+  | `password` | string | oui | Mot de passe en clair (HTTPS obligatoire en prod) |
+
+  ## Réponse 200/201
+  ```json
+  {
+    "accessToken": "<jwt>",
+    "refreshToken": "<jwt>",
+    "user": {
+      "id": "uuid",
+      "email": "admin@futurekawa.local",
+      "role": "ADMIN | MANAGER | OPERATOR",
+      "country": "BR | EC | CO | null"
+    }
+  }
+  ```
+
+  ## Erreurs
+  | Code | Cas |
+  |---|---|
+  | 400 | payload invalide (validation class-validator) |
+  | 401 | credentials invalides |
+  | 429 | rate limit atteint |
+
+  ## Effets de bord Bruno
+  - Le script `post-response` écrit `accessToken` et `refreshToken` dans l'environnement actif.
+  - Les requêtes suivantes de la collection héritent automatiquement de l'auth Bearer via `collection.bru`.
+
+  ## Sécurité
+  - ADR-0006 (stratégie d'auth) à écrire.
+  - Ne pas commiter de vrais credentials dans les environnements — utiliser des valeurs locales jetables ou les secrets Bruno.
+}
