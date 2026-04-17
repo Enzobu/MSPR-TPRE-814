@@ -136,9 +136,20 @@ API :
 - **Swagger** : `/api-docs` sur chaque backend
 - **Bruno** : collection [`bruno/`](./bruno/) — voir [`bruno/README.md`](./bruno/README.md)
 
+## Assistants IA (Claude Code + Codex)
+
+Le repo supporte **deux assistants IA en parallèle**, avec une configuration **sémantiquement équivalente** (formats natifs propres à chaque outil) :
+
+| Outil | Contexte | Config | Subagents | Skills / commands |
+|---|---|---|---|---|
+| Claude Code | [`CLAUDE.md`](./CLAUDE.md) | [`.claude/settings.json`](./.claude/settings.json) | [`.claude/agents/`](./.claude/agents/) (YAML + markdown) | [`.claude/commands/`](./.claude/commands/) |
+| Codex | [`AGENTS.md`](./AGENTS.md) | [`.codex/config.toml`](./.codex/config.toml) | [`.codex/agents/`](./.codex/agents/) (TOML) | [`.agents/skills/`](./.agents/skills/) (dossiers `SKILL.md`) |
+
+**Règle critique** (`10-ai-parity`) : toute modification d'un côté est répliquée sémantiquement dans l'autre **dans le même PR**. Voir [`docs/operations/ai-assistants.md`](./docs/operations/ai-assistants.md).
+
 ## Conventions & règles
 
-Règles transverses centralisées dans [`.claude/rules/`](./.claude/rules/). Charger via `/rules` dans Claude Code. Points saillants :
+Règles transverses centralisées dans [`.claude/rules/`](./.claude/rules/) et [`.codex/rules/`](./.codex/rules/). Charger via `/rules` dans ton assistant. Points saillants :
 
 - **Clean architecture** (domain / application / infrastructure / interface), dependency rule stricte
 - **DTO d'entrée ET de sortie** obligatoires, jamais de type Prisma exposé
@@ -149,7 +160,7 @@ Règles transverses centralisées dans [`.claude/rules/`](./.claude/rules/). Cha
 - **Sécurité** OWASP API Top 10, pas de secret en git, `.env.example` à jour
 - **Observabilité** logs structurés Pino + `x-correlation-id` propagé
 
-Règles spécifiques par sous-projet dans les `CLAUDE.md` correspondants.
+Règles spécifiques par sous-projet dans les `CLAUDE.md` / `AGENTS.md` correspondants.
 
 ### Workflow Git
 
@@ -158,9 +169,9 @@ Règles spécifiques par sous-projet dans les `CLAUDE.md` correspondants.
 - Review obligatoire par un pair
 - Pre-commit : Prettier + ESLint via Husky + lint-staged (ne pas `--no-verify`)
 
-### Commandes slash Claude Code
+### Commandes slash (Claude Code & Codex)
 
-Workflow :
+Mêmes commandes dans les deux assistants. Workflow :
 - `/create-ticket <desc>` — crée une issue GitHub propre
 - `/feature <#id>` — implémente une feature de bout en bout
 - `/fix <#id>` — corrige un bug (test-first obligatoire)
