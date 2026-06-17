@@ -1,0 +1,179 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '*.*.*'
+  pull_request:
+
+jobs:
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspaces
+        run: pnpm -r build
+
+      - name: Create CI compose env file
+        run: |
+          cat > .env.compose.ci << 'EOF'
+          COMPOSE_PROJECT_NAME=futurekawa-ci
+          FRONTEND_WEB_URL=http://localhost:40050
+          BACKEND_CENTRAL_URL=http://localhost:40051
+          BACKEND_PAYS_URL=http://localhost:40052
+          BACKEND_PAYS_INTERNAL_URL=http://backend-pays:3000
+          BACKEND_CENTRAL_CORS_ORIGIN=http://localhost:40050
+          BACKEND_PAYS_CORS_ORIGIN=http://backend-central:3000
+          PHPMYADMIN_WEB_URL=http://localhost:40064
+          PHPMYADMIN_HOSTS=mariadb-central,mariadb-pays
+          PHPMYADMIN_VERBOSES=Central,Pays
+          FRONTEND_WEB_PORT=40050
+          BACKEND_CENTRAL_PORT=40051
+          BACKEND_PAYS_PORT=40052
+          MARIADB_CENTRAL_PORT=40056
+          MARIADB_PAYS_PORT=40057
+          MOSQUITTO_PAYS_PORT=40060
+          PHPMYADMIN_WEB_PORT=40064
+          MARIADB_ROOT_PASSWORD=root
+          MARIADB_USER=futurekawa
+          MARIADB_PASSWORD=futurekawa
+          MARIADB_CENTRAL_DATABASE=futurekawa_central
+          MARIADB_PAYS_DATABASE=futurekawa_pays
+          COUNTRY_CODE=BR
+          DATABASE_CENTRAL_URL=mysql://futurekawa:futurekawa@mariadb-central:3306/futurekawa_central
+          DATABASE_PAYS_URL=mysql://futurekawa:futurekawa@mariadb-pays:3306/futurekawa_pays
+          MQTT_PAYS_URL=mqtt://mosquitto-pays:1883
+          SMTP_HOST=ssl0.ovh.net
+          SMTP_PORT=587
+          SMTP_SECURE=false
+          SMTP_USER=ci@example.com
+          SMTP_PASSWORD=ci-password
+          ALERT_SMTP_FROM=alerts@example.com
+          ALERT_RECIPIENT=responsable@example.com
+          EOF
+
+      - name: Build Docker images
+        run: docker compose --env-file .env.compose.ci build
+
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint workspaces
+        run: pnpm -r lint
+
+      - name: Test workspaces
+        run: pnpm -r test
+
+      - name: Generate backend coverage reports
+        run: |
+          pnpm --filter backend-central test:cov
+          pnpm --filter backend-pays test:cov
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: js-ts-coverage
+          path: |
+            apps/backend-central/coverage/lcov.info
+            apps/backend-pays/coverage/lcov.info
+          if-no-files-found: error
+
+  sonarqube:
+    name: SonarQube analysis
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: js-ts-coverage
+          path: apps
+
+      - name: Run SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Add SonarQube link to summary
+        if: always()
+        run: |
+          echo "## SonarQube" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[Voir l'analyse SonarQube](${{ vars.SONAR_HOST_URL }}/dashboard?id=Enzobu_MSPR-TPRE-814_328a41f3-b493-4fed-8e21-11fbc69b8ee6&codeScope=overall)" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: sonarqube
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy
+        run: |
+          HTTP_CODE=$(curl -sS -o /tmp/deploy-response.txt -w "%{http_code}" -X POST "https://dockploy.enzo-palermo.com/api/compose.deploy" \
+            -H "accept: application/json" \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: ${{ secrets.DOKPLOY_API_KEY }}" \
+            -d '{"composeId":"${{ secrets.DOKPLOY_COMPOSE_ID }}"}')
+
+          echo "HTTP code: $HTTP_CODE"
+          cat /tmp/deploy-response.txt
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            exit 1
+          fi
