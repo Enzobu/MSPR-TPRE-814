@@ -7,7 +7,7 @@ updated: 2026-06-17
 
 # Environnement Docker
 
-L'environnement local conteneurise les backends NestJS, le frontend React, MariaDB, Mosquitto et Maildev.
+L'environnement local conteneurise les backends NestJS, le frontend React, MariaDB, Mosquitto et phpMyAdmin. Pour la démo actuelle, une seule instance pays est lancée ; le pays cible est configuré via `COUNTRY_CODE`.
 
 ## URLs, ports et credentials
 
@@ -19,17 +19,11 @@ Les URLs locales, ports exposés, URLs internes et credentials MariaDB sont déf
 |---|---|
 | `frontend-web` | SPA React servie par Nginx |
 | `backend-central` | API siège et agrégation pays |
-| `backend-pays-br` | API pays Brésil |
-| `backend-pays-ec` | API pays Équateur |
-| `backend-pays-co` | API pays Colombie |
+| `backend-pays` | API pays configurée par `COUNTRY_CODE` |
 | `mariadb-central` | Base siège |
-| `mariadb-br` | Base pays Brésil |
-| `mariadb-ec` | Base pays Équateur |
-| `mariadb-co` | Base pays Colombie |
-| `mosquitto-br` | Broker MQTT Brésil |
-| `mosquitto-ec` | Broker MQTT Équateur |
-| `mosquitto-co` | Broker MQTT Colombie |
-| `maildev` | SMTP local et interface de consultation des emails |
+| `mariadb-pays` | Base pays |
+| `mosquitto-pays` | Broker MQTT pays |
+| `phpmyadmin` | Interface dev-only d'accès aux bases MariaDB |
 
 ## Commandes
 

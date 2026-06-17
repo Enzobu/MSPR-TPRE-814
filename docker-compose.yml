@@ -16,169 +16,72 @@ services:
       timeout: 5s
       retries: 10
 
-  mariadb-br:
+  mariadb-pays:
     image: mariadb:11.4
     environment:
-      MARIADB_DATABASE: ${MARIADB_BR_DATABASE}
+      MARIADB_DATABASE: ${MARIADB_PAYS_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     ports:
-      - "${MARIADB_BR_PORT}:3306"
+      - "${MARIADB_PAYS_PORT}:3306"
     volumes:
-      - mariadb-br-data:/var/lib/mysql
+      - mariadb-pays-data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
 
-  mariadb-ec:
-    image: mariadb:11.4
+  mosquitto-pays:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "${MOSQUITTO_PAYS_PORT}:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-pays-data:/mosquitto/data
+
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
     environment:
-      MARIADB_DATABASE: ${MARIADB_EC_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      PMA_HOSTS: ${PHPMYADMIN_HOSTS}
+      PMA_VERBOSES: ${PHPMYADMIN_VERBOSES}
+      PMA_USER: ${MARIADB_USER}
+      PMA_PASSWORD: ${MARIADB_PASSWORD}
     ports:
-      - "${MARIADB_EC_PORT}:3306"
-    volumes:
-      - mariadb-ec-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - "${PHPMYADMIN_WEB_PORT}:80"
+    depends_on:
+      mariadb-central:
+        condition: service_healthy
+      mariadb-pays:
+        condition: service_healthy
 
-  mariadb-co:
-    image: mariadb:11.4
-    environment:
-      MARIADB_DATABASE: ${MARIADB_CO_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-    ports:
-      - "${MARIADB_CO_PORT}:3306"
-    volumes:
-      - mariadb-co-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  mosquitto-br:
-    image: eclipse-mosquitto:2.0
-    ports:
-      - "${MOSQUITTO_BR_PORT}:1883"
-    volumes:
-      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - mosquitto-br-data:/mosquitto/data
-
-  mosquitto-ec:
-    image: eclipse-mosquitto:2.0
-    ports:
-      - "${MOSQUITTO_EC_PORT}:1883"
-    volumes:
-      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - mosquitto-ec-data:/mosquitto/data
-
-  mosquitto-co:
-    image: eclipse-mosquitto:2.0
-    ports:
-      - "${MOSQUITTO_CO_PORT}:1883"
-    volumes:
-      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - mosquitto-co-data:/mosquitto/data
-
-  maildev:
-    image: maildev/maildev:2.2.1
-    ports:
-      - "${MAILDEV_SMTP_PORT}:1025"
-      - "${MAILDEV_WEB_PORT}:1080"
-
-  backend-pays-br:
+  backend-pays:
     build:
       context: .
       dockerfile: apps/backend-pays/Dockerfile
     environment:
       NODE_ENV: production
       PORT: 3000
-      COUNTRY_CODE: BR
-      DATABASE_URL: ${DATABASE_BR_URL}
-      MQTT_URL: ${MQTT_BR_URL}
-      MQTT_CLIENT_ID: backend-pays-br
-      SMTP_HOST: maildev
-      SMTP_PORT: 1025
-      SMTP_SECURE: "false"
-      SMTP_FROM: alerts@futurekawa.local
-      ALERT_RECIPIENT: responsable.br@futurekawa.local
+      COUNTRY_CODE: ${COUNTRY_CODE}
+      DATABASE_URL: ${DATABASE_PAYS_URL}
+      MQTT_URL: ${MQTT_PAYS_URL}
+      MQTT_CLIENT_ID: backend-pays
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${ALERT_SMTP_FROM}
+      ALERT_RECIPIENT: ${ALERT_RECIPIENT}
       LOG_LEVEL: info
-      CORS_ORIGIN: http://backend-central:3000
+      CORS_ORIGIN: ${BACKEND_PAYS_CORS_ORIGIN}
     ports:
-      - "${BACKEND_PAYS_BR_PORT}:3000"
+      - "${BACKEND_PAYS_PORT}:3000"
     depends_on:
-      mariadb-br:
+      mariadb-pays:
         condition: service_healthy
-      mosquitto-br:
-        condition: service_started
-      maildev:
-        condition: service_started
-
-  backend-pays-ec:
-    build:
-      context: .
-      dockerfile: apps/backend-pays/Dockerfile
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      COUNTRY_CODE: EC
-      DATABASE_URL: ${DATABASE_EC_URL}
-      MQTT_URL: ${MQTT_EC_URL}
-      MQTT_CLIENT_ID: backend-pays-ec
-      SMTP_HOST: maildev
-      SMTP_PORT: 1025
-      SMTP_SECURE: "false"
-      SMTP_FROM: alerts@futurekawa.local
-      ALERT_RECIPIENT: responsable.ec@futurekawa.local
-      LOG_LEVEL: info
-      CORS_ORIGIN: http://backend-central:3000
-    ports:
-      - "${BACKEND_PAYS_EC_PORT}:3000"
-    depends_on:
-      mariadb-ec:
-        condition: service_healthy
-      mosquitto-ec:
-        condition: service_started
-      maildev:
-        condition: service_started
-
-  backend-pays-co:
-    build:
-      context: .
-      dockerfile: apps/backend-pays/Dockerfile
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      COUNTRY_CODE: CO
-      DATABASE_URL: ${DATABASE_CO_URL}
-      MQTT_URL: ${MQTT_CO_URL}
-      MQTT_CLIENT_ID: backend-pays-co
-      SMTP_HOST: maildev
-      SMTP_PORT: 1025
-      SMTP_SECURE: "false"
-      SMTP_FROM: alerts@futurekawa.local
-      ALERT_RECIPIENT: responsable.co@futurekawa.local
-      LOG_LEVEL: info
-      CORS_ORIGIN: http://backend-central:3000
-    ports:
-      - "${BACKEND_PAYS_CO_PORT}:3000"
-    depends_on:
-      mariadb-co:
-        condition: service_healthy
-      mosquitto-co:
-        condition: service_started
-      maildev:
+      mosquitto-pays:
         condition: service_started
 
   backend-central:
@@ -189,12 +92,12 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: ${DATABASE_CENTRAL_URL}
-      BACKEND_PAYS_BR_URL: http://backend-pays-br:3000
-      BACKEND_PAYS_EC_URL: http://backend-pays-ec:3000
-      BACKEND_PAYS_CO_URL: http://backend-pays-co:3000
+      BACKEND_PAYS_BR_URL: ${BACKEND_PAYS_INTERNAL_URL}
+      BACKEND_PAYS_EC_URL: ${BACKEND_PAYS_INTERNAL_URL}
+      BACKEND_PAYS_CO_URL: ${BACKEND_PAYS_INTERNAL_URL}
       PAYS_REQUEST_TIMEOUT_MS: 3000
       PAYS_REQUEST_RETRIES: 2
-      CORS_ORIGIN: ${FRONTEND_WEB_URL}
+      CORS_ORIGIN: ${BACKEND_CENTRAL_CORS_ORIGIN}
       JWT_SECRET: change-me-for-local-compose-only
       JWT_ACCESS_TTL: 15m
       JWT_REFRESH_TTL: 7d
@@ -204,11 +107,7 @@ services:
     depends_on:
       mariadb-central:
         condition: service_healthy
-      backend-pays-br:
-        condition: service_started
-      backend-pays-ec:
-        condition: service_started
-      backend-pays-co:
+      backend-pays:
         condition: service_started
 
   frontend-web:
@@ -225,9 +124,5 @@ services:
 
 volumes:
   mariadb-central-data:
-  mariadb-br-data:
-  mariadb-ec-data:
-  mariadb-co-data:
-  mosquitto-br-data:
-  mosquitto-ec-data:
-  mosquitto-co-data:
+  mariadb-pays-data:
+  mosquitto-pays-data:

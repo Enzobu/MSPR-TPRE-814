@@ -130,10 +130,9 @@ Services exposés par défaut :
 |---|---|
 | Frontend | http://localhost:5173 |
 | Backend central | http://localhost:3000 |
-| Backend pays BR | http://localhost:3010 |
-| Backend pays EC | http://localhost:3011 |
-| Backend pays CO | http://localhost:3012 |
-| Maildev | http://localhost:1080 |
+| Backend pays | Configuré via `BACKEND_PAYS_URL` dans `.env.compose` |
+| Broker MQTT pays | Configuré via `MOSQUITTO_PAYS_PORT` dans `.env.compose` |
+| phpMyAdmin | Configuré via `PHPMYADMIN_WEB_URL` dans `.env.compose` |
 
 ## Commandes workspace
 

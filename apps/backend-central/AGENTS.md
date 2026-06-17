@@ -38,9 +38,9 @@ pnpm exec prisma migrate dev
 
 ```
 DATABASE_URL=mysql://user:pass@mariadb:3306/futurekawa_central
-BACKEND_PAYS_BR_URL=http://backend-pays-br:3000
-BACKEND_PAYS_EC_URL=http://backend-pays-ec:3000
-BACKEND_PAYS_CO_URL=http://backend-pays-co:3000
+BACKEND_PAYS_BR_URL=http://backend-pays:3000
+BACKEND_PAYS_EC_URL=http://backend-pays:3000
+BACKEND_PAYS_CO_URL=http://backend-pays:3000
 CORS_ORIGIN=http://localhost:5173
 ```
 
