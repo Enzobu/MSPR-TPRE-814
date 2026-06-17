@@ -1,0 +1,233 @@
+services:
+  mariadb-central:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_CENTRAL_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_CENTRAL_PORT}:3306"
+    volumes:
+      - mariadb-central-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mariadb-br:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_BR_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_BR_PORT}:3306"
+    volumes:
+      - mariadb-br-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mariadb-ec:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_EC_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_EC_PORT}:3306"
+    volumes:
+      - mariadb-ec-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mariadb-co:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_CO_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_CO_PORT}:3306"
+    volumes:
+      - mariadb-co-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mosquitto-br:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "${MOSQUITTO_BR_PORT}:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-br-data:/mosquitto/data
+
+  mosquitto-ec:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "${MOSQUITTO_EC_PORT}:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-ec-data:/mosquitto/data
+
+  mosquitto-co:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "${MOSQUITTO_CO_PORT}:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-co-data:/mosquitto/data
+
+  maildev:
+    image: maildev/maildev:2.2.1
+    ports:
+      - "${MAILDEV_SMTP_PORT}:1025"
+      - "${MAILDEV_WEB_PORT}:1080"
+
+  backend-pays-br:
+    build:
+      context: .
+      dockerfile: apps/backend-pays/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      COUNTRY_CODE: BR
+      DATABASE_URL: ${DATABASE_BR_URL}
+      MQTT_URL: ${MQTT_BR_URL}
+      MQTT_CLIENT_ID: backend-pays-br
+      SMTP_HOST: maildev
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_FROM: alerts@futurekawa.local
+      ALERT_RECIPIENT: responsable.br@futurekawa.local
+      LOG_LEVEL: info
+      CORS_ORIGIN: http://backend-central:3000
+    ports:
+      - "${BACKEND_PAYS_BR_PORT}:3000"
+    depends_on:
+      mariadb-br:
+        condition: service_healthy
+      mosquitto-br:
+        condition: service_started
+      maildev:
+        condition: service_started
+
+  backend-pays-ec:
+    build:
+      context: .
+      dockerfile: apps/backend-pays/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      COUNTRY_CODE: EC
+      DATABASE_URL: ${DATABASE_EC_URL}
+      MQTT_URL: ${MQTT_EC_URL}
+      MQTT_CLIENT_ID: backend-pays-ec
+      SMTP_HOST: maildev
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_FROM: alerts@futurekawa.local
+      ALERT_RECIPIENT: responsable.ec@futurekawa.local
+      LOG_LEVEL: info
+      CORS_ORIGIN: http://backend-central:3000
+    ports:
+      - "${BACKEND_PAYS_EC_PORT}:3000"
+    depends_on:
+      mariadb-ec:
+        condition: service_healthy
+      mosquitto-ec:
+        condition: service_started
+      maildev:
+        condition: service_started
+
+  backend-pays-co:
+    build:
+      context: .
+      dockerfile: apps/backend-pays/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      COUNTRY_CODE: CO
+      DATABASE_URL: ${DATABASE_CO_URL}
+      MQTT_URL: ${MQTT_CO_URL}
+      MQTT_CLIENT_ID: backend-pays-co
+      SMTP_HOST: maildev
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_FROM: alerts@futurekawa.local
+      ALERT_RECIPIENT: responsable.co@futurekawa.local
+      LOG_LEVEL: info
+      CORS_ORIGIN: http://backend-central:3000
+    ports:
+      - "${BACKEND_PAYS_CO_PORT}:3000"
+    depends_on:
+      mariadb-co:
+        condition: service_healthy
+      mosquitto-co:
+        condition: service_started
+      maildev:
+        condition: service_started
+
+  backend-central:
+    build:
+      context: .
+      dockerfile: apps/backend-central/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_CENTRAL_URL}
+      BACKEND_PAYS_BR_URL: http://backend-pays-br:3000
+      BACKEND_PAYS_EC_URL: http://backend-pays-ec:3000
+      BACKEND_PAYS_CO_URL: http://backend-pays-co:3000
+      PAYS_REQUEST_TIMEOUT_MS: 3000
+      PAYS_REQUEST_RETRIES: 2
+      CORS_ORIGIN: ${FRONTEND_WEB_URL}
+      JWT_SECRET: change-me-for-local-compose-only
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 7d
+      LOG_LEVEL: info
+    ports:
+      - "${BACKEND_CENTRAL_PORT}:3000"
+    depends_on:
+      mariadb-central:
+        condition: service_healthy
+      backend-pays-br:
+        condition: service_started
+      backend-pays-ec:
+        condition: service_started
+      backend-pays-co:
+        condition: service_started
+
+  frontend-web:
+    build:
+      context: .
+      dockerfile: apps/frontend-web/Dockerfile
+      args:
+        VITE_API_URL: ${BACKEND_CENTRAL_URL}
+    ports:
+      - "${FRONTEND_WEB_PORT}:80"
+    depends_on:
+      backend-central:
+        condition: service_started
+
+volumes:
+  mariadb-central-data:
+  mariadb-br-data:
+  mariadb-ec-data:
+  mariadb-co-data:
+  mosquitto-br-data:
+  mosquitto-ec-data:
+  mosquitto-co-data:

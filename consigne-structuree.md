@@ -292,14 +292,14 @@ Standardiser le suivi de stockage et préparer une **phase 2** : automatisation 
 - Cas de test, données, critères de réussite
 - Gestion des anomalies (constat, correction, re-test)
 
-### 6.5 Pipelines CI/CD (Jenkins)
+### 6.5 Pipelines CI/CD
 
 - Build
 - Tests automatisés
 - Vérification qualité
 - Packaging (images Docker / artefacts)
 - Mise à disposition d'artefacts pour démo
-- **Jenkinsfile** ou config documentée + preuve d'exécution
+- Configuration documentée + preuve d'exécution
 
 ### 6.6 Tests lançables manuellement
 
@@ -381,10 +381,6 @@ L'évaluation repose sur trois éléments combinés :
 #### Conteneurisation / Docker
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
-
-#### CI/CD — Jenkins
-- [Jenkins User Handbook](https://www.jenkins.io/doc/)
-- [Jenkins Pipeline](https://www.jenkins.io/doc/book/pipeline/)
 
 #### API / Documentation / Contrats
 - [OpenAPI Initiative](https://www.openapis.org/)

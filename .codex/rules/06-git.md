@@ -14,7 +14,7 @@ Types autorisés :
 | `refactor` | refactor sans changement de comportement |
 | `test` | ajout / correction de tests |
 | `chore` | maintenance (deps, config) |
-| `ci` | pipeline Jenkins / Docker |
+| `ci` | pipeline CI / Docker |
 | `style` | formatage uniquement (rare si Prettier tourne) |
 
 Scopes suggérés : `pays`, `central`, `front`, `iot`, `contracts`, `docker`, `ci`, `docs`.

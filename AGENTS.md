@@ -13,7 +13,7 @@ Projet pédagogique (bloc 4, RNCP35584). Le cahier des charges complet est dans 
 | IoT firmware | PlatformIO + C++ Arduino (ESP8266 + DHT) |
 | Base de données | MariaDB (provider Prisma `mysql`) |
 | Broker IoT | Mosquitto (MQTT) |
-| CI/CD | Jenkins (imposé par le CDC) |
+| CI/CD | À définir |
 | Conteneurisation | Docker + Docker Compose (imposé par le CDC) |
 | Monorepo | pnpm workspaces |
 
@@ -73,7 +73,7 @@ Codex charge automatiquement le AGENTS.md du dossier courant **en plus** de celu
 
 ## Subagents et skills disponibles
 
-- **Subagents** (fichiers TOML, voir `.codex/agents/*.toml`) : `orchestrator`, `tester`, `nest-expert`, `iot-expert`, `frontend-expert`, `cdc-reviewer`, `jenkins-expert`
+- **Subagents** (fichiers TOML, voir `.codex/agents/*.toml`) : `orchestrator`, `tester`, `nest-expert`, `iot-expert`, `frontend-expert`, `cdc-reviewer`
 - **Skills** (dossiers avec `SKILL.md`, voir `.agents/skills/<nom>/`) :
   - Workflow : `create-ticket`, `feature`, `fix`, `refacto`, `commit`, `close-ticket`
   - Utilitaires : `rules`, `check-cdc`, `mqtt-simulate`

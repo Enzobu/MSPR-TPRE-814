@@ -40,7 +40,6 @@ docs/
 │
 ├── ci-cd/                           §IV.5 CDC
 │   ├── README.md
-│   ├── jenkins.md                   pipelines + preuves d'exécution
 │   └── docker.md                    images + compose
 │
 ├── user/                            §IV.8 CDC — doc métier (français)

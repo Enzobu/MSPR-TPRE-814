@@ -3,6 +3,7 @@ dist/
 build/
 coverage/
 .env
+.env.compose
 .env.local
 *.env
 *.log
