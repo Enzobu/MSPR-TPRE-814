@@ -1,0 +1,88 @@
+name: ✨ Feature request
+description: Proposer une nouvelle fonctionnalité métier ou technique
+title: "feat(<scope>): "
+labels: ["feat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Les features doivent être **testables** et **traçables**.
+        Merci de formuler des critères d'acceptance vérifiables (pas "ça doit marcher bien").
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - pays
+        - central
+        - front
+        - iot
+        - contracts
+        - docker
+        - ci
+        - docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte
+      description: Pourquoi cette feature existe. Irritant ou besoin métier. Lien CDC si applicable.
+      placeholder: "CDC §III.X — Les équipes terrain doivent pouvoir ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      description: En tant que <rôle>, je veux <action>, afin de <bénéfice>.
+      placeholder: "En tant que responsable d'exploitation Brésil, je veux recevoir un email quand un lot dépasse 365 jours, afin de prioriser son expédition."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope-details
+    attributes:
+      label: Inclus / Hors scope
+      placeholder: |
+        **Inclus :**
+        - ...
+
+        **Hors scope :**
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critères d'acceptance
+      description: Listes de conditions testables et vérifiables.
+      placeholder: |
+        - [ ] Quand un lot atteint 365 jours, une alerte LOT_EXPIRED est levée.
+        - [ ] Un email est envoyé à ALERT_RECIPIENT dans les 24h.
+        - [ ] L'API expose GET /api/v1/alerts avec pagination standard.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact technique
+      description: Sous-projets touchés, ADR à créer ou référencer, breaking changes potentiels.
+
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of Done (à respecter par la PR)
+      options:
+        - label: Code respecte `/rules`
+        - label: Tests ajoutés (unit + intégration si applicable)
+        - label: `docs/features/<feature>.md` créé ou mis à jour
+        - label: Swagger à jour
+        - label: Bruno à jour si nouvelle route
+        - label: `.env.example` à jour si nouvelle variable
+        - label: Doc utilisateur à jour si parcours métier touché

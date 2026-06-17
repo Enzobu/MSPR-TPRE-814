@@ -1,0 +1,77 @@
+name: 🐛 Bug report
+description: Signaler un comportement incorrect et reproductible
+title: "fix(<scope>): "
+labels: ["fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de remonter ce bug.
+        Plus la reproduction est précise, plus le fix est rapide.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: Quelle partie du projet est concernée ?
+      options:
+        - pays
+        - central
+        - front
+        - iot
+        - contracts
+        - docker
+        - ci
+        - docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+      description: Ce qui devrait se passer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportement observé
+      description: Ce qui se passe réellement. Inclure logs, erreurs, captures.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes de reproduction
+      description: Liste ordonnée permettant de reproduire le bug de zéro.
+      placeholder: |
+        1. Lancer `docker compose up`
+        2. Faire ...
+        3. Observer ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte (versions, env, navigateur)
+      description: Node, pnpm, OS, navigateur, branche Git, etc.
+
+  - type: textarea
+    id: cdc
+    attributes:
+      label: Section CDC concernée
+      description: Référence `consigne-structuree.md` (ex. §III.2).
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Avant de soumettre
+      options:
+        - label: J'ai cherché dans les issues existantes (ouvertes et fermées).
+          required: true
+        - label: Je peux reproduire le bug avec les étapes ci-dessus.
+          required: true

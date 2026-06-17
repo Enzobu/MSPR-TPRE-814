@@ -1,0 +1,22 @@
+node_modules/
+dist/
+build/
+coverage/
+*.env*
+!.env.compose.example
+*.log
+.DS_Store
+.idea/
+idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.turbo/
+.claude/settings.local.json
+.codex/settings.local.toml
+.codex/settings.local.json
+
+# IoT firmware secrets
+apps/iot/include/secrets.h
+apps/iot/src/secrets.h

@@ -1,0 +1,35 @@
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:pre-request {
+  // Correlation ID propagé dans tous les logs serveur (voir rules 08-observability)
+  const correlationId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  req.setHeader('x-correlation-id', correlationId);
+}
+
+docs {
+  # Collection FutureKawa API
+
+  Collection Bruno partagée par toute l'équipe, versionnée dans le monorepo.
+
+  ## Utilisation
+  1. Installer Bruno : https://www.usebruno.com/
+  2. Ouvrir le dossier `bruno/` comme collection
+  3. Sélectionner un environnement (ex. `local-central`) en haut à droite
+  4. Lancer `POST central/auth/login` → le JWT est stocké automatiquement dans la variable `accessToken`
+  5. Toutes les requêtes suivantes héritent de l'auth Bearer via la collection
+
+  ## Auth
+  - Mode : `bearer` (hérité par toutes les requêtes)
+  - Token : `{{accessToken}}` (capturé à partir de la réponse du login)
+  - Refresh : `{{refreshToken}}` (capturé aussi)
+  - Pour un endpoint public : mettre `auth: none` sur la requête
+
+  ## Correlation ID
+  Chaque requête envoie un header `x-correlation-id` unique (script:pre-request). Les logs serveur doivent le remonter intact pour tracer une requête bout-en-bout (règle `08-observability`).
+}

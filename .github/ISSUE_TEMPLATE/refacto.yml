@@ -1,0 +1,71 @@
+name: ♻️ Refactor
+description: Proposer un refactor sans changement de comportement
+title: "refactor(<scope>): "
+labels: ["refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Un refactor **ne change pas le comportement observable**.
+        Si la demande implique un changement de comportement, ouvre plutôt une feature.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - pays
+        - central
+        - front
+        - iot
+        - contracts
+        - docker
+        - ci
+        - docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: target
+    attributes:
+      label: Zone ciblée
+      description: Fichier(s), module(s), feature(s) concernés.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Dette technique, lisibilité, perf, conformité aux règles, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: Approche proposée
+      description: Comment tu comptes procéder. Découpage en petits commits.
+
+  - type: textarea
+    id: test-coverage
+    attributes:
+      label: Couverture de test existante
+      description: Le refacto exige une couverture préalable. Si insuffisante, proposer d'ajouter des tests de caractérisation avant.
+      placeholder: "Couverture actuelle : X % sur la zone. À compléter avant refacto : ..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: guarantees
+    attributes:
+      label: Garanties après refacto
+      options:
+        - label: Mêmes endpoints, status codes, shapes de réponses
+          required: true
+        - label: Mêmes contrats `@futurekawa/contracts`
+          required: true
+        - label: Mêmes écrans / interactions utilisateur
+          required: true
+        - label: Bruno et Swagger restent identiques
+          required: true
