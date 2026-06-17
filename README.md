@@ -40,7 +40,7 @@ Cahier des charges complet : [`consigne-structuree.md`](./consigne-structuree.md
 | IoT firmware | PlatformIO · C++ Arduino · ESP8266 (esp12e) |
 | Base de données | MariaDB |
 | Broker IoT | Mosquitto (MQTT) |
-| CI/CD | Jenkins |
+| CI/CD | À définir |
 | Conteneurisation | Docker · Docker Compose |
 | API testing | Bruno (collection versionnée) |
 | Monorepo | pnpm workspaces |
@@ -71,7 +71,7 @@ Vue détaillée des conventions dans [`CLAUDE.md`](./CLAUDE.md).
 
 - Node **22 LTS** (voir `.nvmrc`) — `nvm use` ou équivalent
 - pnpm **9+**
-- Docker + Docker Compose (pour MariaDB, Mosquitto, démo conteneurisée — à venir)
+- Docker + Docker Compose (pour MariaDB, Mosquitto et la démo conteneurisée)
 - PlatformIO CLI (pour flasher le firmware IoT)
 - Bruno (pour tester l'API) — [usebruno.com](https://www.usebruno.com/)
 
@@ -107,7 +107,32 @@ pio run -t upload
 pio device monitor
 ```
 
-> L'orchestration complète via `docker compose up` arrivera avec la config infra (à venir).
+### Démarrer avec Docker
+
+Les URLs, ports exposés et credentials MariaDB locaux sont centralisés dans `.env.compose`, à créer depuis [`.env.compose.example`](./.env.compose.example). Utiliser le `Makefile` pour injecter ce fichier à Docker Compose :
+
+```bash
+cp .env.compose.example .env.compose
+```
+
+```bash
+make docker-build     # build des images applicatives
+make docker-up        # démarre l'environnement complet en arrière-plan
+make docker-logs      # suit les logs
+make docker-ps        # liste les services
+make docker-down      # arrête les services
+make docker-clean     # arrête et supprime les volumes
+```
+
+Services exposés par défaut :
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend central | http://localhost:3000 |
+| Backend pays | Configuré via `BACKEND_PAYS_URL` dans `.env.compose` |
+| Broker MQTT pays | Configuré via `MOSQUITTO_PAYS_PORT` dans `.env.compose` |
+| phpMyAdmin | Configuré via `PHPMYADMIN_WEB_URL` dans `.env.compose` |
 
 ## Commandes workspace
 
@@ -128,7 +153,7 @@ Toute la doc vit dans [`docs/`](./docs/) (structure imposée par [`.claude/rules
 - [`docs/iot/`](./docs/iot/) — hardware, protocole, firmware (§IV.4.2 CDC)
 - [`docs/testing/`](./docs/testing/) — stratégie, plan de tests (§IV.4.3 CDC)
 - [`docs/adr/`](./docs/adr/) — Architecture Decision Records (immuables)
-- [`docs/ci-cd/`](./docs/ci-cd/) — Jenkins, Docker (§IV.5 CDC)
+- [`docs/ci-cd/`](./docs/ci-cd/) — Docker et déploiement local
 - [`docs/user/`](./docs/user/) — documentation utilisateur métier en français (§IV.8 CDC)
 - [`docs/phase-2/`](./docs/phase-2/) — automatisation & questionnaire (§IV.9-10 CDC)
 

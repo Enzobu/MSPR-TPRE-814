@@ -1,0 +1,128 @@
+services:
+  mariadb-central:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_CENTRAL_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_CENTRAL_PORT}:3306"
+    volumes:
+      - mariadb-central-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mariadb-pays:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_PAYS_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_PAYS_PORT}:3306"
+    volumes:
+      - mariadb-pays-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mosquitto-pays:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "${MOSQUITTO_PAYS_PORT}:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-pays-data:/mosquitto/data
+
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    environment:
+      PMA_HOSTS: ${PHPMYADMIN_HOSTS}
+      PMA_VERBOSES: ${PHPMYADMIN_VERBOSES}
+      PMA_USER: ${MARIADB_USER}
+      PMA_PASSWORD: ${MARIADB_PASSWORD}
+    ports:
+      - "${PHPMYADMIN_WEB_PORT}:80"
+    depends_on:
+      mariadb-central:
+        condition: service_healthy
+      mariadb-pays:
+        condition: service_healthy
+
+  backend-pays:
+    build:
+      context: .
+      dockerfile: apps/backend-pays/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      COUNTRY_CODE: ${COUNTRY_CODE}
+      DATABASE_URL: ${DATABASE_PAYS_URL}
+      MQTT_URL: ${MQTT_PAYS_URL}
+      MQTT_CLIENT_ID: backend-pays
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${ALERT_SMTP_FROM}
+      ALERT_RECIPIENT: ${ALERT_RECIPIENT}
+      LOG_LEVEL: info
+      CORS_ORIGIN: ${BACKEND_PAYS_CORS_ORIGIN}
+    ports:
+      - "${BACKEND_PAYS_PORT}:3000"
+    depends_on:
+      mariadb-pays:
+        condition: service_healthy
+      mosquitto-pays:
+        condition: service_started
+
+  backend-central:
+    build:
+      context: .
+      dockerfile: apps/backend-central/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_CENTRAL_URL}
+      BACKEND_PAYS_BR_URL: ${BACKEND_PAYS_INTERNAL_URL}
+      BACKEND_PAYS_EC_URL: ${BACKEND_PAYS_INTERNAL_URL}
+      BACKEND_PAYS_CO_URL: ${BACKEND_PAYS_INTERNAL_URL}
+      PAYS_REQUEST_TIMEOUT_MS: 3000
+      PAYS_REQUEST_RETRIES: 2
+      CORS_ORIGIN: ${BACKEND_CENTRAL_CORS_ORIGIN}
+      JWT_SECRET: change-me-for-local-compose-only
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 7d
+      LOG_LEVEL: info
+    ports:
+      - "${BACKEND_CENTRAL_PORT}:3000"
+    depends_on:
+      mariadb-central:
+        condition: service_healthy
+      backend-pays:
+        condition: service_started
+
+  frontend-web:
+    build:
+      context: .
+      dockerfile: apps/frontend-web/Dockerfile
+      args:
+        VITE_API_URL: ${BACKEND_CENTRAL_URL}
+    ports:
+      - "${FRONTEND_WEB_PORT}:80"
+    depends_on:
+      backend-central:
+        condition: service_started
+
+volumes:
+  mariadb-central-data:
+  mariadb-pays-data:
+  mosquitto-pays-data:

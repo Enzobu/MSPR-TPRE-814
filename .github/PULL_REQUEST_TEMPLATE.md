@@ -45,7 +45,7 @@ Closes #
 ### CI
 - [ ] Lint passe (`pnpm -r lint`)
 - [ ] Build passe (`pnpm -r build`)
-- [ ] CI Jenkins verte
+- [ ] CI verte
 
 ## Comment tester
 

@@ -39,10 +39,13 @@ pnpm exec prisma studio      # explorer la DB
 DATABASE_URL=mysql://user:pass@mariadb:3306/futurekawa_pays
 MQTT_URL=mqtt://mosquitto:1883
 COUNTRY_CODE=BR              # BR | EC | CO — détermine les seuils via contracts
-SMTP_HOST=maildev
-SMTP_PORT=1025
-SMTP_FROM=alerts@futurekawa.local
-ALERT_RECIPIENT=responsable.br@futurekawa.local
+SMTP_HOST=ssl0.ovh.net
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=alerts@example.com
+SMTP_PASSWORD=change-me
+SMTP_FROM=alerts@example.com
+ALERT_RECIPIENT=responsable@example.com
 ```
 
 ## Règles spécifiques

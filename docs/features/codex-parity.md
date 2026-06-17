@@ -114,5 +114,5 @@ N/A — pas une feature métier.
 ## Évolutions / TODO
 
 - [ ] Script `scripts/check-ai-parity.sh` vérifiant la parité structurelle (count équivalent des deux côtés).
-- [ ] Intégrer ce check dans le Jenkinsfile.
+- [ ] Intégrer ce check dans la pipeline CI retenue.
 - [ ] Documenter en continu les éventuels gaps (feature supportée par un outil pas par l'autre).

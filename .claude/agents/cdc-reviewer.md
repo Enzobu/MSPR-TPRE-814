@@ -44,7 +44,7 @@ Pour chaque demande explicite du CDC, produire un verdict :
 7. **§IV — Livrables** :
    - `docker compose up` fonctionnel pour un pays complet
    - Dossier technique (archi, IoT, plans de tests)
-   - **Jenkinsfile** + preuve d'exécution
+   - configuration CI/CD + preuve d'exécution
    - Tests lançables manuellement
    - Repo Git structuré + README
    - Doc utilisateur métier
@@ -55,4 +55,4 @@ Pour chaque demande explicite du CDC, produire un verdict :
 - **Ne modifie rien**. Tu lis, tu audites, tu rapportes.
 - Cite systématiquement le fichier et la ligne/section quand tu affirmes qu'une exigence est couverte.
 - Quand partiel/manquant, propose la plus petite action concrète pour avancer.
-- Rappel : le CDC impose **MariaDB**, **Mosquitto**, **Jenkins**, **Docker**. Si ces briques manquent, c'est bloquant pour la notation.
+- Rappel : le projet impose **MariaDB**, **Mosquitto** et **Docker**. Si ces briques manquent, c'est bloquant pour la notation.

@@ -2,9 +2,8 @@ node_modules/
 dist/
 build/
 coverage/
-.env
-.env.local
-*.env
+*.env*
+!.env.compose.example
 *.log
 .DS_Store
 .idea/

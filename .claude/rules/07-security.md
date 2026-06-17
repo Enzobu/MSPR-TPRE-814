@@ -6,7 +6,7 @@ Référence : **OWASP API Security Top 10** (cité au CDC §V.2).
 
 - **Aucun secret en git** : `.env` gitignoré, `.env.example` commité et maintenu à jour.
 - **Secrets frontend** : n'existent pas. Toute variable `VITE_*` est shipped dans le bundle public.
-- **Secrets CI** : via Jenkins Credentials, jamais en clair dans le `Jenkinsfile`.
+- **Secrets CI** : via le coffre de secrets de l'outil CI retenu, jamais en clair dans le dépôt.
 
 ## Validation d'environnement au boot
 
