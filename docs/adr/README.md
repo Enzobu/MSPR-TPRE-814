@@ -28,7 +28,7 @@ Chaque ADR fige un choix, son contexte et ses conséquences.
 |---|---|---|---|
 | [0001](0001-distributed-architecture.md) | Architecture distribuée pays/siège | `accepted` | #2 |
 | [0002](0002-prisma-schema.md) | Schéma Prisma (pays + central) | `accepted` | #24, #29 |
-| 0003 | Convention MQTT (topics + payload + QoS) | `proposed` | #27, #28, #31 |
+| [0003](0003-mqtt-convention.md) | Convention MQTT (topics + payload + QoS) | `accepted` | #27, #28, #31 |
 | 0004 | Stratégie d'alerting (déduplication, sync/async) | `proposed` | #32, #33, #39 |
 | 0005 | Stack frontend (routing, data fetching, charts) | `proposed` | #25, #30 |
 | 0006 | Stratégie d'authentification | `proposed` | #50 |
