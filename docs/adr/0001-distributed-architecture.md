@@ -1,7 +1,7 @@
 ---
 title: Architecture distribuée pays/siège
 owner: Yanis
-status: proposed
+status: accepted
 updated: 2026-06-19
 cdc-ref: "§III.5, §IV.4.1"
 ---
