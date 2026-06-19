@@ -1,13 +1,19 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Schéma Prisma — backend-pays (MariaDB via provider mysql).
+// Le client est généré dans ../generated/prisma (gitignoré, régénéré au build).
+// runtime/moduleFormat: client CJS compatible NestJS + driver adapter MariaDB
+// (pas de binaire query-engine à embarquer dans l'image alpine).
+// Voir docs/architecture/database.md pour le modèle complet (à venir avec les features).
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
 }
 
+// La connexion est fournie au runtime par le driver adapter MariaDB
+// (PrismaService), pas par une url ici : `prisma generate` n'exige donc
+// aucune env var. La url pour `prisma migrate` vient de prisma.config.ts.
 datasource db {
   provider = "mysql"
 }
