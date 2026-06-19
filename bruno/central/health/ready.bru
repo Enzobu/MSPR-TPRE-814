@@ -1,0 +1,35 @@
+meta {
+  name: Readiness
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/ready
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200 (DB up) or 503 (DB down)', function () {
+    expect([200, 503]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  # GET /ready — Readiness (central)
+
+  Vérifie **uniquement la DB du siège** (`SELECT 1` via Prisma). Les backends pays
+  ne sont pas sondés ici : un pays down ne doit pas rendre le central « not ready »
+  (agrégation best-effort, ADR-0007).
+
+  ## Réponse 200
+  ```json
+  { "status": "ok", "info": { "database": { "status": "up" } }, "error": {}, "details": { "database": { "status": "up" } } }
+  ```
+
+  ## Réponse 503
+  DB siège injoignable → format RFC 7807 (`application/problem+json`) via le filtre global.
+
+  Route hors `/api/v1` et publique (`auth: none`). Référence : rules `08-observability`.
+}

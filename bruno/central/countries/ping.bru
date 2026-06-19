@@ -1,0 +1,55 @@
+meta {
+  name: Ping pays (debug)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/countries/BR/ping
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the country reachability shape', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('country');
+    expect(body).to.have.property('reachable');
+    expect(body).to.have.property('status');
+  });
+}
+
+docs {
+  # GET /api/v1/countries/{country}/ping — Ping pays (debug)
+
+  Appelle le `/health` du backend pays à travers le `CountryBackendGateway`
+  (timeout, retry+backoff, circuit breaker) et **propage le correlation-id**.
+  Endpoint de **debug, retirable** une fois les vraies features d'agrégation en place.
+
+  ## Paramètre
+  | Param | Valeurs | Description |
+  |---|---|---|
+  | `country` | `BR` \| `EC` \| `CO` | code pays (insensible à la casse) |
+
+  ## Réponse 200 (pays joignable)
+  ```json
+  { "country": "BR", "reachable": true, "status": "ok" }
+  ```
+
+  ## Réponse 200 (pays injoignable — best-effort, jamais 500)
+  ```json
+  { "country": "BR", "reachable": false, "status": null }
+  ```
+
+  ## Réponse 400
+  Code pays inconnu → format RFC 7807 (`application/problem+json`).
+
+  ## Notes
+  - Le header `x-correlation-id` (script `pre-request` de la collection) est relayé
+    tel quel vers le backend pays → traçabilité bout-en-bout (ADR-0007, rules 08).
+  - `auth: none` : pas d'auth tant qu'ADR-0006 n'est pas branché.
+}
