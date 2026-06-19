@@ -7,6 +7,7 @@ import {
   ProblemDetailsFilter,
   buildPinoOptions,
 } from '@futurekawa/nest-common';
+import { AlertsModule } from './alerts/alerts.module';
 import { AuthModule } from './auth/auth.module';
 import type { Env } from './config/env.validation';
 import { validateEnv } from './config/env.validation';
@@ -41,6 +42,7 @@ import { StocksModule } from './stocks/stocks.module';
     AuthModule,
     StocksModule,
     MeasurementsModule,
+    AlertsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

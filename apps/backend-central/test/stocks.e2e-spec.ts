@@ -59,6 +59,10 @@ class FakeGateway implements CountryBackendGateway {
     };
     return Promise.resolve(page(data[country] ?? []) as T);
   }
+
+  patch<T>(): Promise<T> {
+    return Promise.reject(new Error('patch not used by /stocks'));
+  }
 }
 
 describe('Stocks aggregation (e2e, mocked country backends)', () => {

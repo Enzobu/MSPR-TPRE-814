@@ -1,7 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env.validation';
-import { CountryUnavailableError } from '../domain/country-backend.gateway';
+import {
+  CountryRequestError,
+  CountryUnavailableError,
+} from '../domain/country-backend.gateway';
 import { HttpCountryBackendGateway } from './http-country-backend.gateway';
 
 const CONFIG: Partial<Env> = {
@@ -23,8 +26,11 @@ function axiosError(status?: number): unknown {
   };
 }
 
-function buildGateway(get: jest.Mock): HttpCountryBackendGateway {
-  const http = { axiosRef: { get } } as unknown as HttpService;
+function buildGateway(
+  get: jest.Mock,
+  patch: jest.Mock = jest.fn(),
+): HttpCountryBackendGateway {
+  const http = { axiosRef: { get, patch } } as unknown as HttpService;
   const config = {
     get: (key: keyof Env) => CONFIG[key],
   } as unknown as ConfigService<Env, true>;
@@ -98,5 +104,61 @@ describe('HttpCountryBackendGateway', () => {
       gateway.get('BR', '/x', { correlationId: 'x' }),
     ).rejects.toThrow(/circuit breaker open/);
     expect(get).not.toHaveBeenCalled();
+  });
+
+  it('should patch with body and correlation-id, returning data', async () => {
+    // Arrange
+    const patch = jest.fn().mockResolvedValue({ data: { acknowledged: true } });
+    const gateway = buildGateway(jest.fn(), patch);
+
+    // Act
+    const result = await gateway.patch<{ acknowledged: boolean }>(
+      'BR',
+      '/api/v1/alerts/a-1/acknowledge',
+      undefined,
+      { correlationId: 'corr-1' },
+    );
+
+    // Assert
+    expect(result).toEqual({ acknowledged: true });
+    expect(patch).toHaveBeenCalledWith(
+      '/api/v1/alerts/a-1/acknowledge',
+      undefined,
+      {
+        baseURL: 'http://br:3000',
+        timeout: 50,
+        headers: { 'x-correlation-id': 'corr-1' },
+      },
+    );
+  });
+
+  it('should surface a 404 on patch as CountryRequestError carrying the status (no retry)', async () => {
+    // Arrange — distinguishing a 4xx (alert unknown) from an unavailability.
+    const patch = jest.fn().mockRejectedValue(axiosError(404));
+    const gateway = buildGateway(jest.fn(), patch);
+
+    // Act
+    const error = await gateway
+      .patch('BR', '/api/v1/alerts/nope/acknowledge', undefined, {
+        correlationId: 'x',
+      })
+      .catch((e: unknown) => e);
+
+    // Assert
+    expect(error).toBeInstanceOf(CountryRequestError);
+    expect((error as CountryRequestError).status).toBe(404);
+    expect(patch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should retry a 5xx on patch then fail as CountryUnavailableError', async () => {
+    // Arrange
+    const patch = jest.fn().mockRejectedValue(axiosError(503));
+    const gateway = buildGateway(jest.fn(), patch);
+
+    // Act / Assert — retries 2 → 3 attempts, then unavailable
+    await expect(
+      gateway.patch('BR', '/x', undefined, { correlationId: 'x' }),
+    ).rejects.toBeInstanceOf(CountryUnavailableError);
+    expect(patch).toHaveBeenCalledTimes(3);
   });
 });

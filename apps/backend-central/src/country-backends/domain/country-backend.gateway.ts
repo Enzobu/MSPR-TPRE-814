@@ -13,6 +13,16 @@ export interface CountryBackendGateway {
     path: string,
     options: CountryRequestOptions,
   ): Promise<T>;
+  // Écriture relayée vers le pays propriétaire (ex. ACK d'alerte). Body optionnel
+  // (PATCH d'ACK n'en a pas). Contrairement à `get`, un 4xx du pays remonte tel
+  // quel (CountryRequestError) pour qu'un 404 pays → 404 central ; seuls les
+  // 5xx/réseau/breaker basculent en CountryUnavailableError (ADR-0007).
+  patch<T>(
+    country: CountryCode,
+    path: string,
+    body: unknown,
+    options: CountryRequestOptions,
+  ): Promise<T>;
 }
 
 export const COUNTRY_BACKEND_GATEWAY = Symbol('COUNTRY_BACKEND_GATEWAY');
@@ -27,5 +37,20 @@ export class CountryUnavailableError extends Error {
   ) {
     super(`Country backend ${country} is unavailable: ${reason}`);
     this.name = 'CountryUnavailableError';
+  }
+}
+
+// Levée quand le backend pays répond une erreur cliente (4xx) non transitoire :
+// la requête est invalide/introuvable côté pays, pas une indisponibilité. Porte
+// le status HTTP d'origine pour que les écritures (ex. ACK) le relaient (404
+// pays → 404 central). N'enclenche ni retry ni circuit breaker.
+export class CountryRequestError extends Error {
+  constructor(
+    readonly country: CountryCode,
+    readonly status: number,
+    reason: string,
+  ) {
+    super(`Country backend ${country} responded ${status}: ${reason}`);
+    this.name = 'CountryRequestError';
   }
 }

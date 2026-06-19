@@ -1,0 +1,47 @@
+meta {
+  name: Acknowledge alert
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/alerts/{{alertId}}/acknowledge
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should mark the alert acknowledged', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id', bru.getEnvVar('alertId'));
+    expect(body).to.have.property('acknowledged', true);
+  });
+}
+
+docs {
+  # PATCH /api/v1/alerts/:id/acknowledge
+
+  Acquitte une alerte : passe `acknowledged` à `true`. Idempotent (un nouvel
+  appel sur une alerte déjà acquittée renvoie 200 avec `acknowledged: true`).
+
+  ## Requête
+  Pas de body.
+
+  ## Réponse 200
+  L'alerte mise à jour (même forme que `GET /alerts/:id`), `acknowledged: true`.
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 404 | aucune alerte pour cet id |
+
+  ## Prérequis Bruno
+  - `alertId` posé par `List alerts`.
+
+  ## Références
+  - CDC §III.4, ADR-0004.
+}

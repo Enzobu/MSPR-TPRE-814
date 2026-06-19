@@ -8,6 +8,7 @@ import { CORRELATION_ID_HEADER } from '@futurekawa/nest-common';
 import type { Env } from '../../config/env.validation';
 import {
   CountryBackendGateway,
+  CountryRequestError,
   CountryRequestOptions,
   CountryUnavailableError,
 } from '../domain/country-backend.gateway';
@@ -46,20 +47,44 @@ export class HttpCountryBackendGateway implements CountryBackendGateway {
     path: string,
     options: CountryRequestOptions,
   ): Promise<T> {
+    return this.send<T>(country, path, options, (correlationId) =>
+      this.requestWithRetry<T>('get', country, path, correlationId),
+    );
+  }
+
+  async patch<T>(
+    country: CountryCode,
+    path: string,
+    body: unknown,
+    options: CountryRequestOptions,
+  ): Promise<T> {
+    return this.send<T>(country, path, options, (correlationId) =>
+      this.requestWithRetry<T>('patch', country, path, correlationId, body),
+    );
+  }
+
+  // Garde du breaker + retry/backoff + comptage succès/échec, partagés par get
+  // et patch. Un 4xx (CountryRequestError) remonte tel quel sans compter d'échec
+  // breaker ni se transformer en indisponibilité (404 pays → 404 central).
+  private async send<T>(
+    country: CountryCode,
+    path: string,
+    options: CountryRequestOptions,
+    run: (correlationId: string) => Promise<T>,
+  ): Promise<T> {
     const breaker = this.breakerFor(country);
     if (!breaker.canRequest()) {
       throw new CountryUnavailableError(country, 'circuit breaker open');
     }
 
     try {
-      const data = await this.requestWithRetry<T>(
-        country,
-        path,
-        options.correlationId,
-      );
+      const data = await run(options.correlationId);
       breaker.recordSuccess();
       return data;
     } catch (error) {
+      if (error instanceof CountryRequestError) {
+        throw error;
+      }
       breaker.recordFailure();
       const reason = error instanceof Error ? error.message : String(error);
       this.logger.warn(
@@ -82,23 +107,37 @@ export class HttpCountryBackendGateway implements CountryBackendGateway {
   }
 
   private async requestWithRetry<T>(
+    method: 'get' | 'patch',
     country: CountryCode,
     path: string,
     correlationId: string,
+    body?: unknown,
   ): Promise<T> {
     const attempts = this.retries + 1;
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       try {
-        const response = await this.http.axiosRef.get<T>(path, {
-          baseURL: this.baseUrl(country),
-          timeout: this.timeoutMs,
-          headers: { [CORRELATION_ID_HEADER]: correlationId },
-        });
-        return response.data;
+        return await this.dispatch<T>(
+          method,
+          country,
+          path,
+          correlationId,
+          body,
+        );
       } catch (error) {
         lastError = error;
+        // Un 4xx est définitif (jamais de retry). Pour une écriture (patch) on le
+        // remonte typé (status préservé) → un 404 pays devient un 404 central.
+        // Pour un get on conserve le comportement historique (→ CountryUnavailableError).
+        const clientStatus = this.clientErrorStatus(error);
+        if (clientStatus !== undefined && method === 'patch') {
+          throw new CountryRequestError(
+            country,
+            clientStatus,
+            error instanceof Error ? error.message : String(error),
+          );
+        }
         if (!this.isTransient(error) || attempt === attempts) {
           break;
         }
@@ -109,6 +148,25 @@ export class HttpCountryBackendGateway implements CountryBackendGateway {
     throw lastError;
   }
 
+  private async dispatch<T>(
+    method: 'get' | 'patch',
+    country: CountryCode,
+    path: string,
+    correlationId: string,
+    body?: unknown,
+  ): Promise<T> {
+    const config = {
+      baseURL: this.baseUrl(country),
+      timeout: this.timeoutMs,
+      headers: { [CORRELATION_ID_HEADER]: correlationId },
+    };
+    const response =
+      method === 'get'
+        ? await this.http.axiosRef.get<T>(path, config)
+        : await this.http.axiosRef.patch<T>(path, body, config);
+    return response.data;
+  }
+
   // Retry uniquement sur erreurs transitoires : timeout, réseau, 5xx. Jamais sur 4xx.
   private isTransient(error: unknown): boolean {
     if (isAxiosError(error)) {
@@ -116,6 +174,17 @@ export class HttpCountryBackendGateway implements CountryBackendGateway {
       return status === undefined || status >= 500;
     }
     return true;
+  }
+
+  // Status d'une erreur cliente (4xx) si c'en est une, sinon undefined.
+  private clientErrorStatus(error: unknown): number | undefined {
+    if (isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status !== undefined && status >= 400 && status < 500) {
+        return status;
+      }
+    }
+    return undefined;
   }
 
   private backoffMs(attempt: number): number {

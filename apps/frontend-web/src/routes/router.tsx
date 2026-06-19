@@ -5,6 +5,8 @@ import { RootLayout } from '@/components/layout/RootLayout';
 import { RouteError } from '@/components/route-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  AlertDetailPage,
+  AlertsPage,
   HomePage,
   LotDetailPage,
   LotsPage,
@@ -39,6 +41,8 @@ export const router = createBrowserRouter([
           { index: true, element: lazyPage(<HomePage />) },
           { path: 'lots', element: lazyPage(<LotsPage />) },
           { path: 'lots/:id', element: lazyPage(<LotDetailPage />) },
+          { path: 'alerts', element: lazyPage(<AlertsPage />) },
+          { path: 'alerts/:id', element: lazyPage(<AlertDetailPage />) },
           { path: '*', element: lazyPage(<NotFoundPage />) },
         ],
       },
