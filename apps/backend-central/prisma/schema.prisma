@@ -15,3 +15,27 @@ generator client {
 datasource db {
   provider = "mysql"
 }
+
+// Miroir de persistance des rôles (ADR-0006). Synchronisé à la main avec
+// l'union `Role` de @futurekawa/contracts.
+enum Role {
+  ADMIN
+  MANAGER
+  OPERATOR
+  VIEWER
+}
+
+// Utilisateur du siège (ADR-0002, ADR-0006). Frontière d'auth unique : seul le
+// central porte des utilisateurs. `passwordHash` en bcrypt, jamais en clair.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  // null pour un compte siège non rattaché à un pays (BR|EC|CO sinon).
+  country      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}

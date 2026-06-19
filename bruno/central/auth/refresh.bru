@@ -1,0 +1,66 @@
+meta {
+  name: Refresh
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/refresh
+  body: none
+  auth: none
+}
+
+script:post-response {
+  // Rotation (ADR-0006) : un nouvel access token + un nouveau cookie fk_refresh.
+  if (res.getStatus() === 200) {
+    const body = res.getBody();
+    if (body && body.accessToken) {
+      bru.setEnvVar('accessToken', body.accessToken);
+    }
+  }
+}
+
+tests {
+  test('should return 200 when the refresh cookie is present', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return a new access token', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('accessToken');
+    expect(body.accessToken).to.be.a('string').and.to.have.length.greaterThan(10);
+  });
+
+  test('should rotate the refresh cookie', function() {
+    const setCookie = res.getHeader('set-cookie');
+    const raw = Array.isArray(setCookie) ? setCookie.join(';') : String(setCookie || '');
+    expect(raw.toLowerCase()).to.contain('fk_refresh');
+  });
+}
+
+docs {
+  # POST /api/v1/auth/refresh
+
+  Rafraîchit la session. **Aucun body** : le refresh token est lu dans le cookie
+  httpOnly `fk_refresh` (envoyé automatiquement par le cookie jar de Bruno après
+  un `login`). Renvoie un nouvel access token et fait **tourner** le refresh
+  (nouveau cookie — ADR-0006).
+
+  ## Pré-requis
+  Exécuter `login` d'abord (pose le cookie `fk_refresh`).
+
+  ## Réponse 200
+  ```json
+  { "accessToken": "<jwt>", "user": { "id": "clx...", "email": "...", "role": "ADMIN", "country": null } }
+  ```
+  + `Set-Cookie: fk_refresh=<nouveau jwt>; HttpOnly; SameSite=Strict; Path=/api/v1/auth`.
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 401 | cookie absent, refresh token invalide ou expiré |
+
+  ## Effets de bord Bruno
+  - Met à jour `accessToken` dans l'environnement.
+  - Le cookie jar remplace `fk_refresh` par le nouveau.
+}

@@ -5,6 +5,7 @@ const baseEnv = {
   BACKEND_PAYS_BR_URL: 'http://localhost:3010',
   BACKEND_PAYS_EC_URL: 'http://localhost:3011',
   BACKEND_PAYS_CO_URL: 'http://localhost:3012',
+  JWT_SECRET: 'test-secret-at-least-32-characters-long',
 };
 
 describe('validateEnv', () => {
@@ -44,5 +45,21 @@ describe('validateEnv', () => {
     expect(() =>
       validateEnv({ ...baseEnv, BACKEND_PAYS_BR_URL: 'not-a-url' }),
     ).toThrow(/BACKEND_PAYS_BR_URL/);
+  });
+
+  it('should reject a missing JWT_SECRET', () => {
+    // Arrange
+    const withoutSecret: Partial<typeof baseEnv> = { ...baseEnv };
+    delete withoutSecret.JWT_SECRET;
+
+    // Act / Assert
+    expect(() => validateEnv(withoutSecret)).toThrow(/JWT_SECRET/);
+  });
+
+  it('should reject a too-short JWT_SECRET', () => {
+    // Act / Assert
+    expect(() => validateEnv({ ...baseEnv, JWT_SECRET: 'short' })).toThrow(
+      /JWT_SECRET/,
+    );
   });
 });

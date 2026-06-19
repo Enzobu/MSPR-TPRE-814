@@ -22,27 +22,38 @@ body:json {
 }
 
 script:post-response {
-  if (res.getStatus() === 200 || res.getStatus() === 201) {
+  // L'access token voyage dans le body ; le refresh token est posé en cookie
+  // httpOnly (ADR-0006) — géré automatiquement par le cookie jar de Bruno.
+  if (res.getStatus() === 200) {
     const body = res.getBody();
     if (body && body.accessToken) {
       bru.setEnvVar('accessToken', body.accessToken);
-    }
-    if (body && body.refreshToken) {
-      bru.setEnvVar('refreshToken', body.refreshToken);
     }
   }
 }
 
 tests {
-  test('should return 200 or 201', function() {
-    expect([200, 201]).to.include(res.getStatus());
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
   });
 
-  test('should return accessToken and refreshToken', function() {
+  test('should return an access token and the user', function() {
     const body = res.getBody();
     expect(body).to.have.property('accessToken');
-    expect(body).to.have.property('refreshToken');
     expect(body.accessToken).to.be.a('string').and.to.have.length.greaterThan(10);
+    expect(body).to.have.property('user');
+    expect(body.user).to.have.property('role');
+  });
+
+  test('should NOT return the refresh token in the body', function() {
+    expect(res.getBody()).to.not.have.property('refreshToken');
+  });
+
+  test('should set an httpOnly refresh cookie', function() {
+    const setCookie = res.getHeader('set-cookie');
+    const raw = Array.isArray(setCookie) ? setCookie.join(';') : String(setCookie || '');
+    expect(raw.toLowerCase()).to.contain('fk_refresh');
+    expect(raw.toLowerCase()).to.contain('httponly');
   });
 
   test('should persist accessToken in env', function() {
@@ -53,44 +64,44 @@ tests {
 docs {
   # POST /api/v1/auth/login
 
-  Authentifie un utilisateur et renvoie une paire de JWT (access + refresh).
-
-  ## Statut d'implémentation
-  > ⚠ Stub : l'endpoint n'existe pas encore côté backend (retourne 404). Ce fichier documente le contrat attendu et sert de template — sera complété quand l'ADR auth sera tranchée.
+  Authentifie un utilisateur. Renvoie l'**access token** dans le body (à garder
+  en mémoire côté client) et pose le **refresh token** en **cookie httpOnly**
+  `fk_refresh` (`Secure` en prod, `SameSite=Strict`, path `/api/v1/auth`).
 
   ## Requête
 
   | Champ | Type | Obligatoire | Description |
   |---|---|---|---|
   | `email` | string | oui | Email de l'utilisateur |
-  | `password` | string | oui | Mot de passe en clair (HTTPS obligatoire en prod) |
+  | `password` | string | oui | Mot de passe en clair (HTTPS obligatoire en prod), 12–128 car. |
 
-  ## Réponse 200/201
+  ## Réponse 200
   ```json
   {
     "accessToken": "<jwt>",
-    "refreshToken": "<jwt>",
     "user": {
-      "id": "uuid",
+      "id": "clx...",
       "email": "admin@futurekawa.local",
-      "role": "ADMIN | MANAGER | OPERATOR",
+      "role": "ADMIN | MANAGER | OPERATOR | VIEWER",
       "country": "BR | EC | CO | null"
     }
   }
   ```
+  + header `Set-Cookie: fk_refresh=<jwt>; HttpOnly; SameSite=Strict; Path=/api/v1/auth`.
 
-  ## Erreurs
+  ## Erreurs (RFC 7807)
   | Code | Cas |
   |---|---|
   | 400 | payload invalide (validation class-validator) |
-  | 401 | credentials invalides |
-  | 429 | rate limit atteint |
+  | 401 | identifiants invalides |
+  | 429 | rate limit atteint (5 / min) |
 
   ## Effets de bord Bruno
-  - Le script `post-response` écrit `accessToken` et `refreshToken` dans l'environnement actif.
-  - Les requêtes suivantes de la collection héritent automatiquement de l'auth Bearer via `collection.bru`.
+  - `script:post-response` écrit `accessToken` dans l'environnement actif.
+  - Le cookie `fk_refresh` est stocké par le cookie jar de Bruno et renvoyé
+    automatiquement par `refresh` et `logout`.
 
   ## Sécurité
-  - ADR-0006 (stratégie d'auth) à écrire.
-  - Ne pas commiter de vrais credentials dans les environnements — utiliser des valeurs locales jetables ou les secrets Bruno.
+  - ADR-0006 (stratégie d'auth). Ne jamais commiter de vrais credentials —
+    utiliser des valeurs locales jetables alignées sur le seed (`prisma/seed.ts`).
 }
