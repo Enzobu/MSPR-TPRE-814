@@ -31,7 +31,12 @@ describe('RaiseMeasurementAlertsUseCase', () => {
     save = jest
       .fn<Promise<Alert>, [NewAlert]>()
       .mockResolvedValue({ id: 'a1' } as Alert);
-    const alerts: AlertRepository = { existsForWarehouseOnDay, save };
+    const alerts: AlertRepository = {
+      existsForWarehouseOnDay,
+      // Non utilisé ici (dédup mesure par entrepôt) ; présent pour le contrat.
+      existsForLotOnDay: jest.fn<Promise<boolean>, never>(),
+      save,
+    };
     useCase = new RaiseMeasurementAlertsUseCase(alerts, silentLogger);
   });
 
