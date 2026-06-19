@@ -46,3 +46,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Faux serveur SMTP jetable pour le test d'intégration du mailer (#34, ADR-0004).
+  # SMTP sur 1026 (hôte) → 1025 (conteneur) ; UI + API REST sur 1081 → 1080. Le
+  # test interroge l'API REST (/email) pour vérifier la réception de l'alerte.
+  maildev-test:
+    image: maildev/maildev:2.1.0
+    ports:
+      - "1026:1025"
+      - "1081:1080"
+    healthcheck:
+      # L'API REST répond 200 sur /email dès que MailDev est prêt.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:1080/email',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10

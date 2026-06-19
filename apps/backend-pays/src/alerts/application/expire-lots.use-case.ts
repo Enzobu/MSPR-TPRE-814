@@ -8,6 +8,8 @@ import {
 import type { Lot } from '../../lots/domain/lot';
 import { startOfDayUtc } from '../domain/day';
 import { expirationCutoff } from '../domain/lot-expiration';
+import { ALERT_NOTIFIER } from '../domain/alert-notifier';
+import type { AlertNotifier } from '../domain/alert-notifier';
 import { ALERT_REPOSITORY } from '../domain/alert.repository';
 import type { AlertRepository } from '../domain/alert.repository';
 
@@ -25,6 +27,7 @@ export class ExpireLotsUseCase {
   constructor(
     @Inject(LOT_REPOSITORY) private readonly lots: LotRepository,
     @Inject(ALERT_REPOSITORY) private readonly alerts: AlertRepository,
+    @Inject(ALERT_NOTIFIER) private readonly notifier: AlertNotifier,
     @InjectPinoLogger(ExpireLotsUseCase.name)
     private readonly logger: PinoLogger,
   ) {}
@@ -75,7 +78,7 @@ export class ExpireLotsUseCase {
       return false;
     }
 
-    await this.alerts.save({
+    const alert = await this.alerts.save({
       country: lot.country,
       type: LOT_EXPIRED,
       message: expiredMessage(lot.id),
@@ -83,6 +86,8 @@ export class ExpireLotsUseCase {
       warehouse: lot.warehouse,
       triggeredAt: now,
     });
+    // Notification best-effort (ADR-0004) : déjà dans un try/catch côté scan.
+    await this.notifier.notify(alert);
     return true;
   }
 }
