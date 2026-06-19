@@ -25,6 +25,10 @@ export const envSchema = z.object({
   PAYS_BREAKER_FAILURE_THRESHOLD: z.coerce.number().int().positive().default(5),
   PAYS_BREAKER_COOLDOWN_MS: z.coerce.number().int().positive().default(30_000),
 
+  // Cache court de l'agrégation /stocks (ADR-0007) : évite de marteler les
+  // backends pays à chaque refresh du front. 0 désactive le cache.
+  STOCKS_CACHE_TTL_MS: z.coerce.number().int().nonnegative().default(60_000),
+
   // Auth (ADR-0006). Le secret est REQUIS au boot : l'app refuse de démarrer
   // sans (signature JWT impossible) — rules/07-security.md.
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
