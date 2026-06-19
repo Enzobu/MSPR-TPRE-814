@@ -3,6 +3,7 @@ import type { CountryCode, LotStatus } from '@futurekawa/contracts';
 import type { Lot } from '../../lots/domain/lot';
 import type { LotRepository } from '../../lots/domain/lot.repository';
 import type { Alert, NewAlert } from '../domain/alert';
+import type { AlertNotifier } from '../domain/alert-notifier';
 import type { AlertRepository } from '../domain/alert.repository';
 import { ExpireLotsUseCase } from './expire-lots.use-case';
 
@@ -31,6 +32,7 @@ describe('ExpireLotsUseCase', () => {
   let updateStatus: jest.Mock<Promise<Lot | null>, [string, LotStatus]>;
   let existsForLotOnDay: jest.Mock<Promise<boolean>>;
   let save: jest.Mock<Promise<Alert>, [NewAlert]>;
+  let notify: jest.Mock<Promise<void>, [Alert]>;
   let useCase: ExpireLotsUseCase;
 
   beforeEach(() => {
@@ -53,7 +55,9 @@ describe('ExpireLotsUseCase', () => {
       existsForLotOnDay,
       save,
     } as unknown as AlertRepository;
-    useCase = new ExpireLotsUseCase(lots, alerts, silentLogger);
+    notify = jest.fn<Promise<void>, [Alert]>().mockResolvedValue(undefined);
+    const notifier: AlertNotifier = { notify };
+    useCase = new ExpireLotsUseCase(lots, alerts, notifier, silentLogger);
   });
 
   it('should mark an expirable lot as PERIME and raise a LOT_EXPIRED alert', async () => {
@@ -74,6 +78,7 @@ describe('ExpireLotsUseCase', () => {
       warehouse: 'W1',
     });
     expect(saved.triggeredAt).toBe(now);
+    expect(notify).toHaveBeenCalledWith({ id: 'a1' });
   });
 
   it('should not raise a second alert when one already exists today (idempotent)', async () => {

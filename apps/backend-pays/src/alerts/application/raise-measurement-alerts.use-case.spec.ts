@@ -1,6 +1,7 @@
 import type { PinoLogger } from 'nestjs-pino';
 import type { CountryCode } from '@futurekawa/contracts';
 import type { Alert, NewAlert } from '../domain/alert';
+import type { AlertNotifier } from '../domain/alert-notifier';
 import type { AlertRepository } from '../domain/alert.repository';
 import { RaiseMeasurementAlertsUseCase } from './raise-measurement-alerts.use-case';
 import type { MeasurementForAlerting } from './raise-measurement-alerts.use-case';
@@ -11,6 +12,7 @@ const silentLogger = { warn: jest.fn() } as unknown as PinoLogger;
 describe('RaiseMeasurementAlertsUseCase', () => {
   let existsForWarehouseOnDay: jest.Mock<Promise<boolean>>;
   let save: jest.Mock<Promise<Alert>, [NewAlert]>;
+  let notify: jest.Mock<Promise<void>, [Alert]>;
   let useCase: RaiseMeasurementAlertsUseCase;
 
   const outOfRange: MeasurementForAlerting = {
@@ -37,7 +39,9 @@ describe('RaiseMeasurementAlertsUseCase', () => {
       existsForLotOnDay: jest.fn<Promise<boolean>, never>(),
       save,
     };
-    useCase = new RaiseMeasurementAlertsUseCase(alerts, silentLogger);
+    notify = jest.fn<Promise<void>, [Alert]>().mockResolvedValue(undefined);
+    const notifier: AlertNotifier = { notify };
+    useCase = new RaiseMeasurementAlertsUseCase(alerts, notifier, silentLogger);
   });
 
   it('should persist an alert when out of range and none raised today', async () => {
@@ -56,6 +60,7 @@ describe('RaiseMeasurementAlertsUseCase', () => {
       warehouse: 'W1',
     });
     expect(savedAlert.triggeredAt).toBeInstanceOf(Date);
+    expect(notify).toHaveBeenCalledWith({ id: 'a1' });
   });
 
   it('should not persist when an alert of the same type already exists today (dedup)', async () => {
@@ -67,6 +72,7 @@ describe('RaiseMeasurementAlertsUseCase', () => {
 
     // Assert
     expect(save).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('should neither check nor persist when the measurement is in range', async () => {

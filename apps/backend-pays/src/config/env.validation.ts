@@ -29,6 +29,9 @@ export const envSchema = z.object({
   SMTP_FROM: z.string().optional(),
   ALERT_RECIPIENT: z.string().optional(),
 
+  // Base de l'UI siège, insérée comme lien dans les emails d'alerte (ADR-0004).
+  CENTRAL_UI_URL: z.string().url().default('http://localhost:3000'),
+
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
     .default('info'),

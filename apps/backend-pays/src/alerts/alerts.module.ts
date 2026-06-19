@@ -5,7 +5,10 @@ import { ExpireLotsUseCase } from './application/expire-lots.use-case';
 import { GetAlertUseCase } from './application/get-alert.use-case';
 import { ListAlertsUseCase } from './application/list-alerts.use-case';
 import { RaiseMeasurementAlertsUseCase } from './application/raise-measurement-alerts.use-case';
+import { ALERT_NOTIFIER } from './domain/alert-notifier';
 import { ALERT_REPOSITORY } from './domain/alert.repository';
+import { AppMailerModule } from './infrastructure/email/mailer.module';
+import { MailerAlertNotifier } from './infrastructure/email/mailer-alert.notifier';
 import { LotExpirationCron } from './infrastructure/lot-expiration.cron';
 import { PrismaAlertRepository } from './infrastructure/prisma-alert.repository';
 import { AlertsController } from './interface/alerts.controller';
@@ -20,8 +23,14 @@ const REPOSITORY_PROVIDER = {
   useClass: PrismaAlertRepository,
 };
 
+// Notifier email best-effort (ADR-0004, #34) consommé par les use-cases.
+const NOTIFIER_PROVIDER = {
+  provide: ALERT_NOTIFIER,
+  useClass: MailerAlertNotifier,
+};
+
 @Module({
-  imports: [LotsModule],
+  imports: [LotsModule, AppMailerModule],
   controllers: [AlertsController],
   providers: [
     RaiseMeasurementAlertsUseCase,
@@ -31,6 +40,7 @@ const REPOSITORY_PROVIDER = {
     GetAlertUseCase,
     AcknowledgeAlertUseCase,
     REPOSITORY_PROVIDER,
+    NOTIFIER_PROVIDER,
   ],
   exports: [RaiseMeasurementAlertsUseCase, ExpireLotsUseCase],
 })

@@ -4,6 +4,8 @@ import type { CountryCode } from '@futurekawa/contracts';
 import { COUNTRY_CONDITIONS } from '@futurekawa/contracts';
 import { evaluateMeasurement } from '../domain/alert-rule';
 import type { AlertEvaluation } from '../domain/alert-rule';
+import { ALERT_NOTIFIER } from '../domain/alert-notifier';
+import type { AlertNotifier } from '../domain/alert-notifier';
 import { ALERT_REPOSITORY } from '../domain/alert.repository';
 import type { AlertRepository } from '../domain/alert.repository';
 import { startOfDayUtc } from '../domain/day';
@@ -21,6 +23,7 @@ export interface MeasurementForAlerting {
 export class RaiseMeasurementAlertsUseCase {
   constructor(
     @Inject(ALERT_REPOSITORY) private readonly alerts: AlertRepository,
+    @Inject(ALERT_NOTIFIER) private readonly notifier: AlertNotifier,
     @InjectPinoLogger(RaiseMeasurementAlertsUseCase.name)
     private readonly logger: PinoLogger,
   ) {}
@@ -56,7 +59,7 @@ export class RaiseMeasurementAlertsUseCase {
       return;
     }
 
-    await this.alerts.save({
+    const alert = await this.alerts.save({
       country: measurement.country,
       type: evaluation.type,
       message: evaluation.message,
@@ -67,5 +70,8 @@ export class RaiseMeasurementAlertsUseCase {
       { type: evaluation.type, warehouse: measurement.warehouse },
       'Alerte levée',
     );
+    // Notification best-effort (ADR-0004) : ne throw jamais, n'attend rien de
+    // critique côté ingestion.
+    await this.notifier.notify(alert);
   }
 }

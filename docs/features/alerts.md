@@ -42,9 +42,15 @@ le pays) et matérialiser une **alerte** persistée, consultable et actionnable
   le pays propriétaire (`country` requis ; 404 si inconnue, 503 si pays down).
 - Détail : [`aggregation-siege.md`](aggregation-siege.md).
 
+**Inclus (#34 — mailer SMTP) :**
+- Port `AlertNotifier` + implémentation SMTP (`@nestjs-modules/mailer`).
+- Email **FR**, **HTML + fallback texte** (templates Handlebars), un sujet par
+  type d'alerte, lien vers l'UI siège (`CENTRAL_UI_URL`).
+- Déclenché après persistance d'une alerte (mesure **et** péremption).
+- **Best-effort** (ADR-0004) : un échec SMTP ne bloque ni l'alerte ni l'ingestion ;
+  destinataire `ALERT_RECIPIENT` / expéditeur `SMTP_FROM` (env, jamais en dur).
+
 **Hors scope (autres tickets) :**
-- Envoi d'email au responsable (#34) — l'alerte `LOT_EXPIRED` est persistée, le
-  branchement email viendra avec #34.
 - UI front de consultation / ACK des alertes — suit côté frontend.
 
 ## Règles métier
@@ -143,11 +149,13 @@ flowchart TD
     E -- oui --> D{"alerte same type+warehouse+jour UTC ?"}
     D -- oui --> OK
     D -- non --> P["save Alert (acknowledged=false)"]
+    P --> N["AlertNotifier.notify (email best-effort, ne throw jamais)"]
     C["Cron quotidien 02:00 UTC"] --> F["lots.findExpirable(cutoff = now − 365j)"]
     F --> U["status = PERIME"]
     U --> DL{"LOT_EXPIRED same lotId+jour UTC ?"}
     DL -- oui --> OK
     DL -- non --> PL["save Alert LOT_EXPIRED (lotId)"]
+    PL --> N
 ```
 
 ## Implémentation
@@ -157,6 +165,8 @@ flowchart TD
   - `apps/backend-pays/src/alerts/domain/alert-rule.ts` (évaluateur pur)
   - `apps/backend-pays/src/alerts/domain/alert.repository.ts` (port,
     `existsForWarehouseOnDay` + `existsForLotOnDay`)
+  - `apps/backend-pays/src/alerts/domain/alert-notifier.ts` (port `AlertNotifier`,
+    best-effort — #34)
   - `apps/backend-pays/src/alerts/domain/lot-expiration.ts` (`expirationCutoff`,
     `isLotExpired`, purs — #33)
   - `apps/backend-pays/src/alerts/domain/day.ts` (`startOfDayUtc`, partagé)
@@ -167,6 +177,12 @@ flowchart TD
   - `apps/backend-pays/src/alerts/infrastructure/prisma-alert.repository.ts`
     (#35 : `findMany`, `findById`, `acknowledge`)
   - `apps/backend-pays/src/alerts/infrastructure/lot-expiration.cron.ts` (#33)
+  - `apps/backend-pays/src/alerts/infrastructure/email/mailer.module.ts` (transport
+    SMTP depuis l'env — #34)
+  - `apps/backend-pays/src/alerts/infrastructure/email/mailer-alert.notifier.ts`
+    (impl `AlertNotifier`, best-effort, skip si non configuré — #34)
+  - `apps/backend-pays/src/alerts/infrastructure/email/alert-email.template.ts`
+    (rendu Handlebars pur : sujet + HTML + texte FR — #34)
 - **Application (#35)** :
   - `apps/backend-pays/src/alerts/application/list-alerts.use-case.ts`
   - `apps/backend-pays/src/alerts/application/get-alert.use-case.ts`
@@ -182,6 +198,11 @@ flowchart TD
   `AlertsModule` importe `LotsModule` (qui exporte `LOT_REPOSITORY`) et fournit
   `ExpireLotsUseCase` + `LotExpirationCron`. `LotsModule` n'importe pas
   `AlertsModule` (pas de cycle).
+- **Wiring mailer (#34)** : `AlertsModule` importe `AppMailerModule` et lie le port
+  `ALERT_NOTIFIER` à `MailerAlertNotifier`. Les deux use-cases (mesure + péremption)
+  appellent `notifier.notify(alert)` après `save`. Env requis pour un envoi réel :
+  `SMTP_HOST/PORT/SECURE/USER/PASSWORD`, `SMTP_FROM`, `ALERT_RECIPIENT`,
+  `CENTRAL_UI_URL` (voir `.env.example`).
 
 ## Tests
 
@@ -195,14 +216,16 @@ flowchart TD
 | Unit | `apps/backend-pays/src/alerts/application/list-alerts.use-case.spec.ts` | skip/take + filtres (#35) |
 | Unit | `apps/backend-pays/src/alerts/application/get-alert.use-case.spec.ts` | trouvé / `AlertNotFoundError` (#35) |
 | Unit | `apps/backend-pays/src/alerts/application/acknowledge-alert.use-case.spec.ts` | ACK / `AlertNotFoundError` (#35) |
-| Intégration | `apps/backend-pays/test/alerting.e2e-spec.ts` | persistance + dédup via REST, DB réelle |
+| Unit | `apps/backend-pays/src/alerts/infrastructure/email/alert-email.template.spec.ts` | sujets/variables FR + échappement HTML (#34) |
+| Unit | `apps/backend-pays/src/alerts/infrastructure/email/mailer-alert.notifier.spec.ts` | headers, skip si non configuré, best-effort (#34) |
+| Intégration | `apps/backend-pays/test/alerting.e2e-spec.ts` | persistance + dédup via REST + **email reçu sur MailDev** (#34), DB réelle |
 | Intégration | `apps/backend-pays/test/expiration.e2e-spec.ts` | cron péremption + idempotence, DB réelle |
 | Intégration | `apps/backend-pays/test/alerts-api.e2e-spec.ts` | API liste/détail/ACK + tri/filtres/404, DB réelle (#35) |
 
 ## Évolutions / TODO
 
 - [x] #33 — cron péremption (lots > 365j → `LOT_EXPIRED`).
-- [ ] #34 — envoi d'email best-effort au responsable.
+- [x] #34 — envoi d'email best-effort au responsable (SMTP, templates FR, MailDev).
 - [x] #35 (pays) — API REST de consultation et d'ACK des alertes (liste / détail
   / acknowledge).
 - [x] #36 (siège) — agrégation `GET /api/v1/alerts` + proxy `PATCH .../acknowledge`

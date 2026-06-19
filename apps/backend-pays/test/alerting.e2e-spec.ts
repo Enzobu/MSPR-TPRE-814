@@ -10,6 +10,16 @@ import { ProblemDetailsFilter } from '@futurekawa/nest-common';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/infrastructure/persistence/prisma.service';
 
+// Le mailer pointe sur le faux SMTP MailDev (docker-compose.test.yml). On câble
+// l'env ici plutôt que via `.env.test.example` car `process.loadEnvFile`
+// (setup-e2e) écrit dans l'env natif que le sandbox VM de Jest ne reflète pas.
+// `??=` laisse la CI / un override manuel prioritaires.
+process.env.SMTP_HOST ??= 'localhost';
+process.env.SMTP_PORT ??= '1026';
+process.env.SMTP_SECURE ??= 'false';
+process.env.SMTP_FROM ??= 'alerts@futurekawa.test';
+process.env.ALERT_RECIPIENT ??= 'responsable@futurekawa.test';
+
 // Intégration de bout en bout de l'alerting (CDC §III.4, ADR-0004) contre une
 // VRAIE MariaDB, déclenché via le POST REST /api/v1/measurements (déterministe).
 // Pré-requis : `docker compose -f docker-compose.test.yml up -d`. Le pays de
@@ -18,6 +28,42 @@ import { PrismaService } from './../src/infrastructure/persistence/prisma.servic
 const PREFIX = 'IT-';
 const WAREHOUSE = `${PREFIX}alert`;
 const IN_RANGE_WAREHOUSE = `${PREFIX}ok`;
+const MAIL_WAREHOUSE = `${PREFIX}mail`;
+
+// API REST de MailDev (docker-compose.test.yml) interrogée pour vérifier l'email.
+const MAILDEV_API_URL = process.env.MAILDEV_API_URL ?? 'http://localhost:1081';
+
+interface MailDevAddress {
+  address: string;
+}
+interface MailDevEmail {
+  subject: string;
+  to: MailDevAddress[];
+  from: MailDevAddress[];
+  text: string;
+  html: string;
+}
+
+const clearMailbox = async (): Promise<void> => {
+  await fetch(`${MAILDEV_API_URL}/email/all`, { method: 'DELETE' });
+};
+
+// L'envoi est awaité dans le handler d'ingestion mais on tolère un court délai
+// de remise SMTP : on poll l'API REST jusqu'à trouver l'email attendu.
+const waitForEmail = async (
+  predicate: (email: MailDevEmail) => boolean,
+): Promise<MailDevEmail> => {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = await fetch(`${MAILDEV_API_URL}/email`);
+    const emails = (await response.json()) as MailDevEmail[];
+    const match = emails.find(predicate);
+    if (match) {
+      return match;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error('Aucun email reçu dans MailDev pour le prédicat fourni');
+};
 
 describe('Alerting integration (e2e, real DB)', () => {
   let app: INestApplication<App>;
@@ -106,5 +152,26 @@ describe('Alerting integration (e2e, real DB)', () => {
 
     const alerts = await findAlerts(IN_RANGE_WAREHOUSE);
     expect(alerts).toHaveLength(0);
+  });
+
+  it('should send an alert email to MailDev when an out-of-range measurement is ingested', async () => {
+    // Arrange : boîte vide pour isoler l'email de ce test.
+    await clearMailbox();
+
+    // Act : BR humidité max 57 → 80% hors plage déclenche HUMIDITY_OUT_OF_RANGE.
+    await postMeasurement(MAIL_WAREHOUSE, 29, 80);
+
+    // Assert : email reçu, headers et corps corrects (variables substituées).
+    const email = await waitForEmail((mail) =>
+      mail.subject.includes('Humidité hors plage'),
+    );
+    expect(email.to[0].address).toBe('responsable@futurekawa.test');
+    expect(email.from[0].address).toBe('alerts@futurekawa.test');
+    expect(email.subject).toBe(
+      '[FutureKawa] Humidité hors plage — Brésil / IT-mail',
+    );
+    expect(email.text).toContain('Pays : Brésil');
+    expect(email.text).toContain('IT-mail');
+    expect(email.html).toContain('hors plage');
   });
 });
