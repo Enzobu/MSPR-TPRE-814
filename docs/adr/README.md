@@ -30,7 +30,7 @@ Chaque ADR fige un choix, son contexte et ses conséquences.
 | [0002](0002-prisma-schema.md) | Schéma Prisma (pays + central) | `accepted` | #24, #29 |
 | [0003](0003-mqtt-convention.md) | Convention MQTT (topics + payload + QoS) | `accepted` | #27, #28, #31 |
 | [0004](0004-alerting-strategy.md) | Stratégie d'alerting (seuils, cron, email) | `accepted` | #32, #33, #39 |
-| 0005 | Stack frontend (routing, data fetching, charts) | `proposed` | #25, #30 |
+| [0005](0005-frontend-stack.md) | Stack frontend (router, query, charts, tests) | `accepted` | #25, #30 |
 | 0006 | Stratégie d'authentification | `proposed` | #50 |
 | 0007 | Résilience & indisponibilités partielles | `proposed` | #36, #37 |
 | 0008 | Stratégie de tests (pyramide, outils) | `proposed` | #26, #31, #38, #39, #42 |
