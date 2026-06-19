@@ -1,0 +1,84 @@
+meta {
+  name: Measurement aggregate
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/measurements/aggregate?warehouse=W1&bucket=1h
+  body: none
+  auth: none
+}
+
+params:query {
+  warehouse: W1
+  bucket: 1h
+  ~from: 2026-06-01T00:00:00.000Z
+  ~to: 2026-06-02T00:00:00.000Z
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return an array of buckets', function() {
+    const body = res.getBody();
+    expect(body).to.be.an('array');
+  });
+
+  test('each bucket should expose the aggregate shape', function() {
+    const body = res.getBody();
+    body.forEach(function(bucket) {
+      expect(bucket).to.have.property('bucketStart').that.is.a('string');
+      expect(bucket).to.have.property('avgTemperatureCelsius').that.is.a('number');
+      expect(bucket).to.have.property('avgHumidityPercent').that.is.a('number');
+      expect(bucket).to.have.property('count').that.is.a('number');
+    });
+  });
+
+  test('buckets should be ordered chronologically', function() {
+    const body = res.getBody();
+    for (let i = 1; i < body.length; i++) {
+      const prev = new Date(body[i - 1].bucketStart).getTime();
+      const curr = new Date(body[i].bucketStart).getTime();
+      expect(prev).to.be.at.most(curr);
+    }
+  });
+}
+
+docs {
+  # GET /api/v1/measurements/aggregate
+
+  Moyennes T°/humidité d'un entrepôt groupées par **fenêtre temporelle**
+  (`bucket`), triées chronologiquement.
+
+  ## Query params
+  | Param | Requis | Défaut | Description |
+  |---|---|---|---|
+  | `warehouse` | oui | — | Entrepôt ciblé |
+  | `bucket` | oui | — | Taille de fenêtre : `1h` ou `1d` |
+  | `from` | non | — | Borne inférieure ISO 8601 (incluse) |
+  | `to` | non | — | Borne supérieure ISO 8601 (incluse) |
+
+  ## Réponse 200
+  ```json
+  [
+    {
+      "bucketStart": "2026-06-01T08:00:00.000Z",
+      "avgTemperatureCelsius": 22.4,
+      "avgHumidityPercent": 54.8,
+      "count": 12
+    }
+  ]
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `warehouse`/`bucket` manquant, `bucket` hors {1h, 1d}, `from`/`to` non ISO 8601 |
+
+  ## Références
+  - CDC §III.2. Agrégation via `$queryRaw` MariaDB (`FLOOR(UNIX_TIMESTAMP/bucketSeconds)`),
+    `bucketSeconds` lié en paramètre (pas d'injection).
+}

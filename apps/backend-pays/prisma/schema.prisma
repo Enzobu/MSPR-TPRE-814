@@ -56,3 +56,21 @@ model Lot {
   @@unique([id, country])
   @@map("lots")
 }
+
+// Relevé T°/humidité d'un entrepôt (CDC §III.2). Persisté par le subscriber MQTT
+// (#28) et exposé en historique paginé + agrégat par l'API. Sur-ensemble du type
+// `Measurement` de @futurekawa/contracts (createdAt en plus, audit interne).
+// Les types Prisma ne sortent jamais d'un contrôleur — mapping explicite.
+model Measurement {
+  id                 String   @id @default(cuid())
+  country            Country
+  warehouse          String
+  temperatureCelsius Float
+  humidityPercent    Float
+  recordedAt         DateTime
+  createdAt          DateTime @default(now())
+
+  // Historique d'un entrepôt trié par date de relevé (requête principale).
+  @@index([warehouse, recordedAt])
+  @@map("measurements")
+}
