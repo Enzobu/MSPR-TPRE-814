@@ -104,6 +104,61 @@ describe('Measurements integration (e2e, real DB)', () => {
     });
   };
 
+  it('POST /api/v1/measurements should persist a relevé and expose it via history', async () => {
+    const postWarehouse = `${PREFIX}post`;
+    const recordedAt = '2026-06-02T12:00:00.000Z';
+
+    const created = await request(server())
+      .post('/api/v1/measurements')
+      .send({
+        warehouse: postWarehouse,
+        temperatureCelsius: 23.5,
+        humidityPercent: 57,
+        recordedAt,
+      })
+      .expect(201);
+    expect(created.body).toMatchObject({
+      country: 'BR',
+      warehouse: postWarehouse,
+      temperatureCelsius: 23.5,
+      humidityPercent: 57,
+      recordedAt,
+    });
+    expect(created.body).toHaveProperty('id');
+
+    const history = await request(server())
+      .get(`/api/v1/measurements?warehouse=${postWarehouse}&pageSize=100`)
+      .expect(200);
+    const body = history.body as HistoryBody;
+    expect(body.total).toBe(1);
+    expect(body.data[0].recordedAt).toBe(recordedAt);
+  });
+
+  it('POST /api/v1/measurements should reject a temperature out of range (400)', async () => {
+    await request(server())
+      .post('/api/v1/measurements')
+      .send({
+        warehouse: `${PREFIX}post`,
+        temperatureCelsius: 999,
+        humidityPercent: 57,
+        recordedAt: '2026-06-02T12:00:00.000Z',
+      })
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
+  });
+
+  it('POST /api/v1/measurements should reject a missing warehouse (400)', async () => {
+    await request(server())
+      .post('/api/v1/measurements')
+      .send({
+        temperatureCelsius: 22,
+        humidityPercent: 57,
+        recordedAt: '2026-06-02T12:00:00.000Z',
+      })
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
+  });
+
   it('GET /api/v1/measurements should require the warehouse param (400)', async () => {
     await request(server())
       .get('/api/v1/measurements')

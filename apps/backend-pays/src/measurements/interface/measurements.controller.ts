@@ -1,10 +1,21 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Inject, Post, Query } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { CountryCode } from '@futurekawa/contracts';
+import { COUNTRY_CODE } from '../../config/country-code.token';
 import { AggregateMeasurementsUseCase } from '../application/aggregate-measurements.use-case';
 import { GetMeasurementHistoryUseCase } from '../application/get-measurement-history.use-case';
+import { IngestMeasurementUseCase } from '../application/ingest-measurement.use-case';
 import { AggregateMeasurementsQueryDto } from './dto/aggregate-measurements-query.dto';
+import { IngestMeasurementDto } from './dto/ingest-measurement.dto';
 import { MeasurementBucketResponseDto } from './dto/measurement-bucket-response.dto';
 import { MeasurementHistoryQueryDto } from './dto/measurement-history-query.dto';
+import { MeasurementResponseDto } from './dto/measurement-response.dto';
 import { PaginatedMeasurementsResponseDto } from './dto/paginated-measurements-response.dto';
 import { toBucketResponse, toMeasurementResponse } from './measurement.mapper';
 
@@ -14,7 +25,34 @@ export class MeasurementsController {
   constructor(
     private readonly getHistory: GetMeasurementHistoryUseCase,
     private readonly aggregate: AggregateMeasurementsUseCase,
+    private readonly ingest: IngestMeasurementUseCase,
+    @Inject(COUNTRY_CODE) private readonly country: CountryCode,
   ) {}
+
+  @Post()
+  @ApiOperation({
+    summary: 'Enregistre un relevé T°/humidité (fallback REST)',
+    description:
+      "Voie de secours à l'ingestion MQTT (ADR-0003) quand le broker est " +
+      "indisponible. Le `country` n'est pas fourni : il est imposé par le pays " +
+      "de l'instance. Mêmes bornes de validation que le payload MQTT.",
+  })
+  @ApiCreatedResponse({ type: MeasurementResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Payload invalide (RFC 7807, application/problem+json).',
+  })
+  async create(
+    @Body() dto: IngestMeasurementDto,
+  ): Promise<MeasurementResponseDto> {
+    const measurement = await this.ingest.execute({
+      country: this.country,
+      warehouse: dto.warehouse,
+      temperatureCelsius: dto.temperatureCelsius,
+      humidityPercent: dto.humidityPercent,
+      recordedAt: new Date(dto.recordedAt),
+    });
+    return toMeasurementResponse(measurement);
+  }
 
   @Get()
   @ApiOperation({

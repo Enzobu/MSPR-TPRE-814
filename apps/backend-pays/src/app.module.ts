@@ -13,6 +13,7 @@ import { HealthModule } from './health/health.module';
 import { PrismaModule } from './infrastructure/persistence/prisma.module';
 import { LotsModule } from './lots/lots.module';
 import { MeasurementsModule } from './measurements/measurements.module';
+import { MqttModule } from './mqtt/mqtt.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { MeasurementsModule } from './measurements/measurements.module';
     HealthModule,
     LotsModule,
     MeasurementsModule,
+    MqttModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

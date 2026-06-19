@@ -1,0 +1,86 @@
+meta {
+  name: Ingest measurement (REST fallback)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/measurements
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "warehouse": "W1",
+    "temperatureCelsius": 22.5,
+    "humidityPercent": 55.2,
+    "recordedAt": "2026-06-01T08:00:00.000Z"
+  }
+}
+
+tests {
+  test('should return 201', function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test('should return the persisted measurement', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body).to.have.property('country', bru.getEnvVar('country'));
+    expect(body).to.have.property('warehouse', 'W1');
+    expect(body).to.have.property('temperatureCelsius', 22.5);
+    expect(body).to.have.property('humidityPercent', 55.2);
+    expect(body).to.have.property('recordedAt', '2026-06-01T08:00:00.000Z');
+  });
+
+  test('should not expose internal Prisma fields', function() {
+    const body = res.getBody();
+    expect(body).to.not.have.property('createdAt');
+  });
+}
+
+docs {
+  # POST /api/v1/measurements
+
+  **Fallback REST** à l'ingestion MQTT (ADR-0003), à utiliser quand le broker
+  Mosquitto est indisponible. La voie nominale reste MQTT
+  (`futurekawa/{country}/warehouse/{id}/measurement`).
+
+  Le `country` n'est **pas** fourni dans le body : il est imposé par le
+  `COUNTRY_CODE` du backend. Mêmes bornes de validation que le payload MQTT
+  (constantes `@futurekawa/contracts`).
+
+  ## Requête
+  | Champ | Type | Obligatoire | Description |
+  |---|---|---|---|
+  | `warehouse` | string | oui | Entrepôt à l'origine du relevé (non vide) |
+  | `temperatureCelsius` | number | oui | Température °C, ∈ [-50, 80] |
+  | `humidityPercent` | number | oui | Humidité relative %, ∈ [0, 100] |
+  | `recordedAt` | string | oui | Instant du relevé, ISO 8601 |
+
+  ## Réponse 201
+  ```json
+  {
+    "id": "clxyz...",
+    "country": "BR",
+    "warehouse": "W1",
+    "temperatureCelsius": 22.5,
+    "humidityPercent": 55.2,
+    "recordedAt": "2026-06-01T08:00:00.000Z"
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | payload invalide : `warehouse` vide, T°/humidité hors bornes, `recordedAt` non ISO 8601 |
+
+  ## Références
+  - ADR-0003 (convention topics + bornes de validation). CDC §III.2.
+  - Types : `IngestMeasurementDto` (`packages/contracts/src/measurement.ts`).
+}
