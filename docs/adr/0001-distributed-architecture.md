@@ -1,7 +1,7 @@
 ---
 title: Architecture distribuée pays/siège
 owner: Yanis
-status: accepted
+status: proposed
 updated: 2026-06-19
 cdc-ref: "§III.5, §IV.4.1"
 ---
@@ -57,8 +57,9 @@ Nous retenons l'**option 3** : un backend autonome par pays + un backend siège.
   direct à leurs bases de données.
 - Possède une **base MariaDB légère** (authentification / utilisateurs, et
   consolidation éventuelle — détail hors scope de cet ADR).
-- **Sert le frontend** et lui expose des données consolidées (stocks, mesures,
-  alertes des trois pays).
+- Expose au **frontend** des données consolidées (stocks, mesures, alertes des
+  trois pays) ; le frontend est un déployable séparé (conteneur `frontend-web`)
+  qui consomme **exclusivement** l'API du central.
 
 ### Flux et règle d'échange
 
