@@ -4,6 +4,7 @@ build/
 coverage/
 *.env*
 !.env.compose.example
+!**/.env.test.example
 *.log
 .DS_Store
 .idea/
