@@ -1,0 +1,74 @@
+meta {
+  name: Aggregate warehouse measurements
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/measurements/aggregate?country=BR&warehouse=W1&bucket=1h
+  body: none
+  auth: none
+}
+
+params:query {
+  country: BR
+  warehouse: W1
+  bucket: 1h
+  ~from: 2026-06-01T00:00:00.000Z
+  ~to: 2026-06-19T23:59:59.000Z
+}
+
+tests {
+  test('should return 200 (never 500, even if the country is down)', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the consolidated list shape', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('unavailable').that.is.an('array');
+  });
+}
+
+docs {
+  # GET /api/v1/measurements/aggregate — Moyennes T°/humidité par fenêtre
+
+  Proxy **mono-pays résilient** (ADR-0007) : relaie les moyennes agrégées (par
+  heure ou par jour) du backend pays. **Jamais 500** si le pays est down : la
+  réponse est vide + `unavailable: [country]`. Réponse **non paginée**
+  (`ConsolidatedList`) : le volume de buckets est déjà borné côté pays.
+
+  ## Query params
+  | Param | Requis | Description |
+  |---|---|---|
+  | `country` | oui | `BR\|EC\|CO` |
+  | `warehouse` | oui | identifiant d'entrepôt (non vide) |
+  | `bucket` | oui | `1h` ou `1d` (fenêtre d'agrégation) |
+  | `from` | non | borne basse incluse (ISO 8601) |
+  | `to` | non | borne haute incluse (ISO 8601) |
+
+  ## Réponse 200
+  ```json
+  {
+    "data": [
+      {
+        "bucketStart": "2026-06-01T08:00:00.000Z",
+        "avgTemperatureCelsius": 22.4,
+        "avgHumidityPercent": 54.8,
+        "count": 12
+      }
+    ],
+    "unavailable": []
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `country` absent/invalide, `warehouse` absent, `bucket` ∉ {1h, 1d}, `from`/`to` non ISO 8601 |
+
+  ## Notes
+  - Le siège mappe vers `MeasurementBucketDto` (découplage du contrat pays).
+  - Pas de cache : la donnée est dynamique.
+  - Réfs : ADR-0007, CDC §III.5. Type partagé : `ConsolidatedList<MeasurementBucket>`.
+}
