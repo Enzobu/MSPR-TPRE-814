@@ -172,6 +172,6 @@ Libs installées et configurées ; **ne pas en introduire d'autres** sans nouvel
 - **Forms** : `react-hook-form` + `zod` v3 (schémas dérivés de `contracts`).
 - **Toasts** : `sonner` — `<Toaster>` monté dans `App.tsx` (`src/components/ui/sonner.tsx`).
 - **Theme** : `ThemeProvider` (`src/components/theme/`) + `useTheme` (`src/hooks/use-theme.ts`), classe `dark` sur `<html>`.
-- **Tests** : `vitest` + `@testing-library/react` (dans `tests/`), e2e `playwright` (`tests/e2e/`, non lancé en CI).
+- **Tests** : `vitest` + `@testing-library/react` (dans `tests/`), e2e `playwright` (`tests/e2e/`, lancé en CI via le job `e2e` de `ci.yml` — specs mockant le réseau, aucun backend requis).
 
 - **Auth** : implémentée (ADR-0006, #20). Feature `src/features/auth/` : `AuthProvider`/`useAuth` (access token **en mémoire**, jamais `localStorage`), garde `<ProtectedRoute>`, page `/login` (react-hook-form + zod). Le hook 401 de `http-client.ts` tente un refresh transparent puis rejoue, sinon déconnexion forcée. `withCredentials: true` pour le cookie `fk_refresh` httpOnly. Token hors-React dans `src/lib/auth-token.ts`.
