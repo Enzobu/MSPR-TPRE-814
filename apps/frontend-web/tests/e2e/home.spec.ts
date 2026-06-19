@@ -1,4 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { setupAuthMock } from './support/auth-mock';
+
+// Depuis #20 les routes hors /login sont derrière <ProtectedRoute> : on simule
+// une session déjà active (refresh au boot → 200) pour atteindre l'app.
+test.beforeEach(async ({ page }) => {
+  await setupAuthMock(page, { initiallyAuthenticated: true });
+});
 
 test('home affiche le titre et un toast au clic', async ({ page }) => {
   await page.goto('/');

@@ -127,9 +127,14 @@ Clean archi (dependency rule ADR-0001) : les use-cases parlent aux ports
 | UI | `tests/features/auth/context/AuthProvider.test.tsx` | login→user en mémoire, logout→reset, restauration boot |
 | UI | `tests/features/auth/components/ProtectedRoute.test.tsx` | redirect non-auth, loader, contenu protégé |
 | Intégration (front) | `tests/lib/http-client.test.ts` | intercepteur 401 → refresh → rejeu, échec → logout forcé |
+| E2E (Playwright, #21) | `tests/e2e/auth.spec.ts` | login valide→home→reload, login invalide, garde, logout |
 
-> L'e2e d'intégration nécessite MariaDB up + migration appliquée. Le scénario
-> Playwright (#21) couvrira le parcours UI complet de bout en bout.
+> L'e2e d'intégration backend nécessite MariaDB up + migration appliquée.
+> L'e2e Playwright (#21) mocke les routes `/api/v1/auth/*` au niveau réseau
+> ([`tests/e2e/support/auth-mock.ts`](../../apps/frontend-web/tests/e2e/support/auth-mock.ts))
+> pour valider le parcours UI sans backend ni DB seedée — déterministe et
+> sans dépendance d'infra. L'intégration des e2e dans la CI fera l'objet d'un
+> ticket dédié.
 
 ## Documentation utilisateur
 
