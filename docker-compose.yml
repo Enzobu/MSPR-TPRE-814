@@ -35,10 +35,18 @@ services:
 
   mosquitto-pays:
     image: eclipse-mosquitto:2.0
+    entrypoint: ["/bin/sh", "/mosquitto/entrypoint.sh"]
+    environment:
+      COUNTRY_CODE: ${COUNTRY_CODE}
+      MOSQUITTO_IOT_USERNAME: ${MQTT_IOT_USERNAME}
+      MOSQUITTO_IOT_PASSWORD: ${MQTT_IOT_PASSWORD}
+      MOSQUITTO_BACKEND_USERNAME: ${MQTT_BACKEND_USERNAME}
+      MOSQUITTO_BACKEND_PASSWORD: ${MQTT_BACKEND_PASSWORD}
     ports:
       - "${MOSQUITTO_PAYS_PORT}:1883"
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./infra/mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
       - mosquitto-pays-data:/mosquitto/data
 
   phpmyadmin:
@@ -67,6 +75,8 @@ services:
       DATABASE_URL: ${DATABASE_PAYS_URL}
       MQTT_URL: ${MQTT_PAYS_URL}
       MQTT_CLIENT_ID: backend-pays
+      MQTT_USERNAME: ${MQTT_BACKEND_USERNAME}
+      MQTT_PASSWORD: ${MQTT_BACKEND_PASSWORD}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_SECURE: ${SMTP_SECURE}
