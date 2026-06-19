@@ -26,7 +26,8 @@ apps/                   code DÉPLOYABLE (process, image Docker, firmware flash�
   ├── frontend-web/     Vite + React — UI siège
   └── iot/              PlatformIO + C++ — firmware ESP8266
 packages/               code IMPORTÉ (libs TS partagées)
-  └── contracts/        @futurekawa/contracts — types/DTO/enums/seuils pays
+  ├── contracts/        @futurekawa/contracts — types/DTO/enums/seuils pays (types-only)
+  └── nest-common/      @futurekawa/nest-common — infra NestJS transverse (filtre RFC 7807, pino, validation env)
 .claude/                config Claude Code (agents, commands, settings)
 consigne-structuree.md  cahier des charges (source de vérité métier)
 ```
@@ -69,7 +70,8 @@ Claude charge automatiquement le CLAUDE.md du dossier courant **en plus** de cel
 - `apps/backend-central/CLAUDE.md` — backend siège (agrégation)
 - `apps/frontend-web/CLAUDE.md` — UI React/shadcn
 - `apps/iot/CLAUDE.md` — firmware ESP8266 C++
-- `packages/contracts/CLAUDE.md` — lib TS partagée
+- `packages/contracts/CLAUDE.md` — lib TS partagée (types-only)
+- `packages/nest-common/CLAUDE.md` — infra NestJS transverse partagée par les backends
 
 ## Subagents et commandes disponibles
 

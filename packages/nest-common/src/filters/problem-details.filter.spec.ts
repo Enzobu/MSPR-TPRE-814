@@ -12,7 +12,10 @@ interface CapturedResponse {
   body?: ProblemDetailsDto;
 }
 
-function mockHost(url = '/api/v1/countries/BR/ping'): {
+function mockHost(
+  url = '/api/v1/resource',
+  method = 'GET',
+): {
   host: ArgumentsHost;
   captured: CapturedResponse;
 } {
@@ -35,7 +38,7 @@ function mockHost(url = '/api/v1/countries/BR/ping'): {
       return response;
     },
   };
-  const request = { url, method: 'GET' };
+  const request = { url, method };
 
   const host = {
     switchToHttp: () => ({
@@ -56,9 +59,10 @@ describe('ProblemDetailsFilter', () => {
 
   it('should map a validation error to an RFC 7807 problem with field errors', () => {
     // Arrange
-    const { host, captured } = mockHost();
+    const { host, captured } = mockHost('/api/v1/items', 'POST');
     const exception = new BadRequestException([
-      'country must be one of BR, EC, CO',
+      'name must not be empty',
+      'amount must be a number',
     ]);
 
     // Act
@@ -68,22 +72,29 @@ describe('ProblemDetailsFilter', () => {
     expect(captured.statusCode).toBe(400);
     expect(captured.contentType).toBe('application/problem+json');
     expect(captured.body).toMatchObject({
+      type: 'about:blank',
       title: 'Bad Request',
       status: 400,
-      errors: ['country must be one of BR, EC, CO'],
+      instance: '/api/v1/items',
+      errors: ['name must not be empty', 'amount must be a number'],
     });
   });
 
-  it('should map a NotFoundException to a 404 problem', () => {
+  it('should map a NotFoundException to a 404 problem without field errors', () => {
     // Arrange
-    const { host, captured } = mockHost('/api/v1/unknown');
+    const { host, captured } = mockHost('/api/v1/items/42');
 
     // Act
-    filter.catch(new NotFoundException('Resource not found'), host);
+    filter.catch(new NotFoundException('Item not found'), host);
 
     // Assert
     expect(captured.statusCode).toBe(404);
-    expect(captured.body).toMatchObject({ title: 'Not Found', status: 404 });
+    expect(captured.body).toMatchObject({
+      title: 'Not Found',
+      status: 404,
+      detail: 'Item not found',
+      instance: '/api/v1/items/42',
+    });
     expect(captured.body?.errors).toBeUndefined();
   });
 
@@ -92,10 +103,11 @@ describe('ProblemDetailsFilter', () => {
     const { host, captured } = mockHost();
 
     // Act
-    filter.catch(new Error('db secret mysql://...'), host);
+    filter.catch(new Error('connection string mysql://secret'), host);
 
     // Assert
     expect(captured.statusCode).toBe(500);
+    expect(captured.body?.title).toBe('Internal Server Error');
     expect(captured.body?.detail).toBe('An unexpected error occurred.');
   });
 });
