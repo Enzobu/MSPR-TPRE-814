@@ -7,6 +7,10 @@ ENV HUSKY=0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY apps/backend-central/package.json apps/backend-central/package.json
+# Le postinstall de backend-central lance `prisma generate` : le schéma et la
+# config Prisma doivent donc être présents avant l'install.
+COPY apps/backend-central/prisma apps/backend-central/prisma
+COPY apps/backend-central/prisma.config.ts apps/backend-central/prisma.config.ts
 RUN pnpm install --frozen-lockfile
 
 COPY packages/contracts packages/contracts

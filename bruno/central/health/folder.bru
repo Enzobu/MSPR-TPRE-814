@@ -1,0 +1,16 @@
+meta {
+  name: health
+  seq: 1
+}
+
+docs {
+  # Health & readiness (backend-central)
+
+  Sondes exposées hors `/api/v1` et hors auth (rules `08-observability`).
+
+  - `GET /health` — liveness : le process répond, aucune dépendance vérifiée.
+  - `GET /ready` — readiness : vérifie la DB du siège uniquement (les backends
+    pays ne sont PAS vérifiés ici — agrégation best-effort, ADR-0007). 503 si DB down.
+
+  Consommées par le `healthcheck` Docker Compose et un futur orchestrateur.
+}

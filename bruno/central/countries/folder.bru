@@ -1,0 +1,15 @@
+meta {
+  name: countries
+  seq: 3
+}
+
+docs {
+  # Backends pays (via gateway)
+
+  Routes du siège qui interrogent les backends pays à travers le
+  `CountryBackendGateway` résilient (timeout, retry+backoff, circuit breaker,
+  propagation du correlation-id — ADR-0007).
+
+  - `GET /api/v1/countries/{country}/ping` — sonde de debug (retirable) qui
+    vérifie qu'un pays est joignable via le gateway.
+}
