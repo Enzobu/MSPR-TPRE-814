@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
+import { AuthModule } from './auth/auth.module';
 import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
 import { buildPinoOptions } from './common/logging/pino-logger.options';
 import type { Env } from './config/env.validation';
@@ -33,6 +34,7 @@ import { PrismaModule } from './infrastructure/persistence/prisma.module';
     PrismaModule,
     HealthModule,
     CountryBackendsModule,
+    AuthModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

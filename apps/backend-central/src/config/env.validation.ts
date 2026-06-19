@@ -24,10 +24,16 @@ export const envSchema = z.object({
   PAYS_BREAKER_FAILURE_THRESHOLD: z.coerce.number().int().positive().default(5),
   PAYS_BREAKER_COOLDOWN_MS: z.coerce.number().int().positive().default(30_000),
 
-  // Auth (branchée par une feature ultérieure — ADR-0006). Optionnel au backbone.
-  JWT_SECRET: z.string().optional(),
+  // Auth (ADR-0006). Le secret est REQUIS au boot : l'app refuse de démarrer
+  // sans (signature JWT impossible) — rules/07-security.md.
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
+
+  // Seed de l'utilisateur ADMIN initial (prisma/seed.ts). Optionnel au boot du
+  // serveur — seul `prisma db seed` les exige (et échoue sinon).
+  SEED_ADMIN_EMAIL: z.string().email().optional(),
+  SEED_ADMIN_PASSWORD: z.string().optional(),
 
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
