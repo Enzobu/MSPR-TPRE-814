@@ -32,7 +32,7 @@ Chaque ADR fige un choix, son contexte et ses conséquences.
 | [0004](0004-alerting-strategy.md) | Stratégie d'alerting (seuils, cron, email) | `accepted` | #32, #33, #39 |
 | [0005](0005-frontend-stack.md) | Stack frontend (router, query, charts, tests) | `accepted` | #25, #30 |
 | [0006](0006-auth-strategy.md) | Stratégie d'authentification | `accepted` | #19, #20, #50 |
-| 0007 | Résilience & indisponibilités partielles | `proposed` | #36, #37 |
+| [0007](0007-resilience-strategy.md) | Résilience central ↔ pays | `accepted` | #36, #37 |
 | 0008 | Stratégie de tests (pyramide, outils) | `proposed` | #26, #31, #38, #39, #42 |
 
 > Les titres des ADR `proposed` sont **provisoires** : ils fixent le périmètre
