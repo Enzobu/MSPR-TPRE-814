@@ -118,6 +118,7 @@ jobs:
 
       - name: Generate coverage reports
         run: |
+          pnpm --filter @futurekawa/contracts test:cov
           pnpm --filter @futurekawa/nest-common test:cov
           pnpm --filter backend-central test:cov
           pnpm --filter backend-pays test:cov
@@ -132,6 +133,7 @@ jobs:
             apps/backend-pays/coverage/lcov.info
             apps/frontend-web/coverage/lcov.info
             packages/nest-common/coverage/lcov.info
+            packages/contracts/coverage/lcov.info
           if-no-files-found: error
 
   e2e:

@@ -50,7 +50,7 @@ export default function AlertsPage() {
         </p>
       ) : null}
 
-      {data && data.data.length === 0 ? (
+      {data?.data.length === 0 ? (
         <p className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted-foreground">
           Aucune alerte ne correspond à ces critères.
         </p>

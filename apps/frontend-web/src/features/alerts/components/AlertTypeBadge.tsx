@@ -1,9 +1,9 @@
 import type { AlertType } from '@futurekawa/contracts';
 import { cn } from '@/lib/utils';
 
-interface AlertTypeBadgeProps {
+type AlertTypeBadgeProps = Readonly<{
   type: AlertType;
-}
+}>;
 
 interface TypeConfig {
   label: string;

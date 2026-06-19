@@ -1,9 +1,9 @@
 import type { LotStatus } from '@futurekawa/contracts';
 import { cn } from '@/lib/utils';
 
-interface LotStatusBadgeProps {
+type LotStatusBadgeProps = Readonly<{
   status: LotStatus;
-}
+}>;
 
 interface StatusConfig {
   label: string;

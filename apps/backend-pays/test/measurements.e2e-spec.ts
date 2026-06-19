@@ -135,7 +135,7 @@ describe('Measurements integration (e2e, real DB)', () => {
   });
 
   it('POST /api/v1/measurements should reject a temperature out of range (400)', async () => {
-    await request(server())
+    const res = await request(server())
       .post('/api/v1/measurements')
       .send({
         warehouse: `${PREFIX}post`,
@@ -145,10 +145,11 @@ describe('Measurements integration (e2e, real DB)', () => {
       })
       .expect(400)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 400 });
   });
 
   it('POST /api/v1/measurements should reject a missing warehouse (400)', async () => {
-    await request(server())
+    const res = await request(server())
       .post('/api/v1/measurements')
       .send({
         temperatureCelsius: 22,
@@ -157,6 +158,7 @@ describe('Measurements integration (e2e, real DB)', () => {
       })
       .expect(400)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 400 });
   });
 
   it('GET /api/v1/measurements should require the warehouse param (400)', async () => {

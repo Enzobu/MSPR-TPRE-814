@@ -62,20 +62,22 @@ describe('Auth (e2e)', () => {
     await app.close();
   });
 
-  it('should reject a malformed login payload with 400', () => {
-    return request(app.getHttpServer())
+  it('should reject a malformed login payload with 400', async () => {
+    const res = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ email: 'not-an-email', password: 'x' })
       .expect(400)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 400 });
   });
 
-  it('should reject invalid credentials with 401 (RFC 7807)', () => {
-    return request(app.getHttpServer())
+  it('should reject invalid credentials with 401 (RFC 7807)', async () => {
+    const res = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ email: ADMIN_EMAIL, password: 'WrongPassword-123' })
       .expect(401)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 401 });
   });
 
   it('should log in, return an access token in the body and a refresh cookie', async () => {

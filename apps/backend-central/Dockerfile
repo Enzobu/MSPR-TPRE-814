@@ -26,9 +26,11 @@ FROM node:22-alpine AS runtime
 WORKDIR /workspace
 
 ENV NODE_ENV=production
-# L'image node fournit un utilisateur non-root `node` (uid 1000) : on lui donne
-# la propriété des artefacts et on tourne en non-root (Sonar hotspot Docker).
-COPY --from=build --chown=node:node /workspace /workspace
+# Artefacts laissés à root (proprio par défaut) : l'utilisateur non-root `node`
+# (uid 1000 fourni par l'image) peut les lire/exécuter mais PAS les modifier au
+# runtime — un process compromis ne peut pas réécrire son propre code (Sonar
+# S6504). L'app n'écrit rien dans /workspace (logs → stdout via pino).
+COPY --from=build /workspace /workspace
 WORKDIR /workspace/apps/backend-central
 USER node
 

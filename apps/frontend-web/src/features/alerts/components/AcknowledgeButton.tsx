@@ -2,11 +2,11 @@ import type { CountryCode } from '@futurekawa/contracts';
 import { Button } from '@/components/ui/button';
 import { useAcknowledgeAlert } from '@/features/alerts/hooks/useAcknowledgeAlert';
 
-interface AcknowledgeButtonProps {
+type AcknowledgeButtonProps = Readonly<{
   id: string;
   country: CountryCode;
   acknowledged: boolean;
-}
+}>;
 
 export function AcknowledgeButton({
   id,

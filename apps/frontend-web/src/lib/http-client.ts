@@ -72,7 +72,7 @@ function isAuthPath(url: string | undefined): boolean {
 httpClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const original = error.config as RetriableConfig | undefined;
+    const original: RetriableConfig | undefined = error.config;
     const shouldRefresh =
       error.response?.status === HTTP_UNAUTHORIZED &&
       original !== undefined &&
@@ -80,7 +80,7 @@ httpClient.interceptors.response.use(
       !isAuthPath(original.url);
 
     if (!shouldRefresh) {
-      return Promise.reject(error);
+      throw error;
     }
 
     try {
@@ -90,7 +90,7 @@ httpClient.interceptors.response.use(
       return httpClient(original);
     } catch (refreshError) {
       triggerForcedLogout();
-      return Promise.reject(refreshError);
+      throw refreshError;
     }
   },
 );

@@ -1,17 +1,14 @@
 import { Button } from '@/components/ui/button';
 
-interface AcknowledgedFilterProps {
+type AcknowledgedFilterProps = Readonly<{
   value?: boolean;
   onChange: (acknowledged?: boolean) => void;
-}
+}>;
 
 export function AcknowledgedFilter({ value, onChange }: AcknowledgedFilterProps) {
   return (
-    <div
-      className="flex flex-wrap gap-2"
-      role="group"
-      aria-label="Filtrer par acquittement"
-    >
+    <fieldset className="flex flex-wrap gap-2 border-0 p-0">
+      <legend className="sr-only">Filtrer par acquittement</legend>
       <Button
         type="button"
         size="sm"
@@ -39,6 +36,6 @@ export function AcknowledgedFilter({ value, onChange }: AcknowledgedFilterProps)
       >
         Acquittées
       </Button>
-    </div>
+    </fieldset>
   );
 }

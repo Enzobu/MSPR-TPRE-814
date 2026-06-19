@@ -5,10 +5,10 @@ import {
   isTemperatureOutOfTolerance,
 } from '@/features/measurements/lib/tolerance';
 
-interface MeasurementStatsProps {
+type MeasurementStatsProps = Readonly<{
   measurements: Measurement[];
   country: CountryCode;
-}
+}>;
 
 interface MetricSummary {
   min: number;
@@ -32,11 +32,11 @@ function formatNumber(value: number): string {
   return value.toFixed(1);
 }
 
-interface StatCardProps {
+type StatCardProps = Readonly<{
   title: string;
   unit: string;
   summary: MetricSummary;
-}
+}>;
 
 function StatCard({ title, unit, summary }: StatCardProps): React.ReactElement {
   return (

@@ -92,28 +92,31 @@ describe('Lots integration (e2e, real DB)', () => {
       .send(buildBody({ id: `${PREFIX}dup` }))
       .expect(201);
 
-    await request(server())
+    const res = await request(server())
       .post('/api/v1/lots')
       .send(buildBody({ id: `${PREFIX}dup` }))
       .expect(409)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 409 });
   });
 
   it('POST /api/v1/lots should reject a country other than the backend country with 422', async () => {
-    await request(server())
+    const res = await request(server())
       .post('/api/v1/lots')
       .send(buildBody({ id: `${PREFIX}ec`, country: 'EC' }))
       .expect(422)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 422 });
   });
 
   it('POST /api/v1/lots should reject an invalid payload with 400', async () => {
     // Date invalide + champs manquants.
-    await request(server())
+    const res = await request(server())
       .post('/api/v1/lots')
       .send({ id: `${PREFIX}bad`, country: 'BR', storedAt: 'not-a-date' })
       .expect(400)
       .expect('Content-Type', /application\/problem\+json/);
+    expect(res.body).toMatchObject({ status: 400 });
   });
 
   it('GET /api/v1/lots should return lots FIFO (storedAt ascending)', async () => {
@@ -220,16 +223,18 @@ describe('Lots integration (e2e, real DB)', () => {
   });
 
   it('PATCH /api/v1/lots/:id/status should reject an invalid status with 400', async () => {
-    await request(server())
+    const res = await request(server())
       .patch(`/api/v1/lots/${PREFIX}patch/status`)
       .send({ status: 'WHATEVER' })
       .expect(400);
+    expect(res.body).toMatchObject({ status: 400 });
   });
 
   it('PATCH /api/v1/lots/:id/status should return 404 for an unknown id', async () => {
-    await request(server())
+    const res = await request(server())
       .patch(`/api/v1/lots/${PREFIX}ghost/status`)
       .send({ status: 'EN_ALERTE' })
       .expect(404);
+    expect(res.body).toMatchObject({ status: 404 });
   });
 });

@@ -5,11 +5,11 @@ import { MeasurementChart } from '@/features/measurements/components/Measurement
 import { MeasurementStats } from '@/features/measurements/components/MeasurementStats';
 import { useMeasurements } from '@/features/measurements/hooks/useMeasurements';
 
-interface MeasurementsPanelProps {
+type MeasurementsPanelProps = Readonly<{
   country: CountryCode;
   warehouse: string;
   from?: string;
-}
+}>;
 
 export function MeasurementsPanel({
   country,

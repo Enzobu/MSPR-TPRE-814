@@ -22,11 +22,11 @@ import {
 
 type Metric = 'temperature' | 'humidity';
 
-interface MeasurementChartProps {
+type MeasurementChartProps = Readonly<{
   measurements: Measurement[];
   country: CountryCode;
   metric: Metric;
-}
+}>;
 
 interface ChartPoint {
   recordedAt: string;

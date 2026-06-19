@@ -78,7 +78,7 @@ export class ListAlertsUseCase {
   private sortRecentFirst(alerts: Alert[]): void {
     alerts.sort((a, b) => {
       const byDate = b.triggeredAt.localeCompare(a.triggeredAt);
-      return byDate !== 0 ? byDate : b.id.localeCompare(a.id);
+      return byDate === 0 ? b.id.localeCompare(a.id) : byDate;
     });
   }
 

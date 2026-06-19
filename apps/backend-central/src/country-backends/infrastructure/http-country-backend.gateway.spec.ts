@@ -161,4 +161,46 @@ describe('HttpCountryBackendGateway', () => {
     ).rejects.toBeInstanceOf(CountryUnavailableError);
     expect(patch).toHaveBeenCalledTimes(3);
   });
+
+  it('should treat a non-axios error as transient and retry then fail unavailable', async () => {
+    // Arrange — a raw Error (no isAxiosError flag) is considered transient.
+    const get = jest.fn().mockRejectedValue(new Error('socket hang up'));
+    const gateway = buildGateway(get);
+
+    // Act / Assert — retries 2 → 3 attempts before bubbling unavailability.
+    await expect(
+      gateway.get('BR', '/x', { correlationId: 'x' }),
+    ).rejects.toBeInstanceOf(CountryUnavailableError);
+    expect(get).toHaveBeenCalledTimes(3);
+  });
+
+  it('should resolve the EC base URL from config', async () => {
+    // Arrange
+    const get = jest.fn().mockResolvedValue({ data: { ok: true } });
+    const gateway = buildGateway(get);
+
+    // Act
+    await gateway.get('EC', '/health', { correlationId: 'x' });
+
+    // Assert
+    expect(get).toHaveBeenCalledWith(
+      '/health',
+      expect.objectContaining({ baseURL: 'http://ec:3000' }),
+    );
+  });
+
+  it('should resolve the CO base URL from config', async () => {
+    // Arrange
+    const get = jest.fn().mockResolvedValue({ data: { ok: true } });
+    const gateway = buildGateway(get);
+
+    // Act
+    await gateway.get('CO', '/health', { correlationId: 'x' });
+
+    // Assert
+    expect(get).toHaveBeenCalledWith(
+      '/health',
+      expect.objectContaining({ baseURL: 'http://co:3000' }),
+    );
+  });
 });

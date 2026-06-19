@@ -79,10 +79,10 @@ export class PrismaAlertRepository implements AlertRepository {
 
   async findMany(params: FindManyAlertsParams): Promise<AlertsPage> {
     const where = {
-      ...(params.type !== undefined ? { type: params.type } : {}),
-      ...(params.acknowledged !== undefined
-        ? { acknowledged: params.acknowledged }
-        : {}),
+      ...(params.type === undefined ? {} : { type: params.type }),
+      ...(params.acknowledged === undefined
+        ? {}
+        : { acknowledged: params.acknowledged }),
     };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.alert.findMany({

@@ -17,30 +17,27 @@ export default function LotDetailPage() {
   const { id = '' } = useParams();
   const { data: lot, isPending, isError } = useLot(id);
 
-  return (
-    <section className="space-y-4">
-      <Button asChild size="sm" variant="ghost">
-        <Link to="/lots">
-          <ArrowLeft aria-hidden />
-          Retour aux lots
-        </Link>
-      </Button>
-
-      {isPending ? (
-        <Skeleton className="h-48 w-full" />
-      ) : isError ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground"
-        >
-          Impossible de charger ce lot pour le moment. Réessayez plus tard.
-        </p>
-      ) : lot === null ? (
-        <p className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted-foreground">
-          Lot introuvable.
-        </p>
-      ) : (
-        <Card>
+  let detail: React.ReactNode;
+  if (isPending) {
+    detail = <Skeleton className="h-48 w-full" />;
+  } else if (isError) {
+    detail = (
+      <p
+        role="alert"
+        className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground"
+      >
+        Impossible de charger ce lot pour le moment. Réessayez plus tard.
+      </p>
+    );
+  } else if (lot === null) {
+    detail = (
+      <p className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted-foreground">
+        Lot introuvable.
+      </p>
+    );
+  } else {
+    detail = (
+      <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="text-lg">Lot {lot.id}</CardTitle>
             <LotStatusBadge status={lot.status} />
@@ -58,9 +55,24 @@ export default function LotDetailPage() {
             </dl>
           </CardContent>
         </Card>
-      )}
+    );
+  }
 
-      {!isPending && !isError && lot !== null && lot !== undefined ? (
+  const showMeasurements =
+    !isPending && !isError && lot !== null && lot !== undefined;
+
+  return (
+    <section className="space-y-4">
+      <Button asChild size="sm" variant="ghost">
+        <Link to="/lots">
+          <ArrowLeft aria-hidden />
+          Retour aux lots
+        </Link>
+      </Button>
+
+      {detail}
+
+      {showMeasurements ? (
         <section className="space-y-3" aria-labelledby="measurements-heading">
           <h2 id="measurements-heading" className="text-base font-semibold">
             Courbes T° et humidité

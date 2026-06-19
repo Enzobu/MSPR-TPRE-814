@@ -1,18 +1,15 @@
 import { COUNTRY_CODES, type CountryCode } from '@futurekawa/contracts';
 import { Button } from '@/components/ui/button';
 
-interface CountryFilterProps {
+type CountryFilterProps = Readonly<{
   value?: CountryCode;
   onChange: (country?: CountryCode) => void;
-}
+}>;
 
 export function CountryFilter({ value, onChange }: CountryFilterProps) {
   return (
-    <div
-      className="flex flex-wrap gap-2"
-      role="group"
-      aria-label="Filtrer par pays"
-    >
+    <fieldset className="flex flex-wrap gap-2 border-0 p-0">
+      <legend className="sr-only">Filtrer par pays</legend>
       <Button
         type="button"
         size="sm"
@@ -34,6 +31,6 @@ export function CountryFilter({ value, onChange }: CountryFilterProps) {
           {code}
         </Button>
       ))}
-    </div>
+    </fieldset>
   );
 }

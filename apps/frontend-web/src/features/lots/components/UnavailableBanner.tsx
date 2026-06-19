@@ -1,9 +1,9 @@
 import { AlertTriangle } from 'lucide-react';
 import type { CountryCode } from '@futurekawa/contracts';
 
-interface UnavailableBannerProps {
+type UnavailableBannerProps = Readonly<{
   unavailable: CountryCode[];
-}
+}>;
 
 export function UnavailableBanner({ unavailable }: UnavailableBannerProps) {
   if (unavailable.length === 0) {
