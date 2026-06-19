@@ -214,6 +214,37 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
+      # DIAGNOSTIC TEMPORAIRE (#85) : imprime les conditions de la Quality Gate.
+      # À RETIRER une fois la gate verte.
+      - name: Debug — print Quality Gate conditions
+        if: always()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: |
+          set -e
+          CE_TASK_ID=$(grep '^ceTaskId=' .scannerwork/report-task.txt | cut -d= -f2)
+          echo "ceTaskId=$CE_TASK_ID"
+          ANALYSIS_ID=""
+          for i in $(seq 1 30); do
+            TASK=$(curl -sS -u "$SONAR_TOKEN:" "$SONAR_HOST_URL/api/ce/task?id=$CE_TASK_ID")
+            STATUS=$(echo "$TASK" | jq -r '.task.status')
+            echo "CE task status: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then
+              ANALYSIS_ID=$(echo "$TASK" | jq -r '.task.analysisId')
+              break
+            fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELED" ]; then
+              echo "CE task did not succeed"; break
+            fi
+            sleep 3
+          done
+          echo "analysisId=$ANALYSIS_ID"
+          echo '===== QUALITY GATE PROJECT STATUS ====='
+          curl -sS -u "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$ANALYSIS_ID" \
+            | jq '{status: .projectStatus.status, conditions: [.projectStatus.conditions[] | {metric: .metricKey, comparator: .comparator, threshold: .errorThreshold, actual: .actualValue, status: .status}]}'
+
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
         timeout-minutes: 5
