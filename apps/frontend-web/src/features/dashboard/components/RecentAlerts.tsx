@@ -1,15 +1,20 @@
 import { Link } from 'react-router';
 import { ArrowRight } from 'lucide-react';
+import type { CountryCode } from '@futurekawa/contracts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTypeBadge } from '@/features/alerts/components/AlertTypeBadge';
 import { useRecentAlerts } from '@/features/alerts/hooks/useRecentAlerts';
 import { formatTriggeredAt } from '@/features/alerts/lib/format';
 
-// Mini-liste des dernières alertes sur le dashboard. États : chargement
-// (skeletons), erreur (message métier role=alert), vide (texte neutre).
-export function RecentAlerts() {
-  const { data, isPending, isError } = useRecentAlerts();
+type RecentAlertsProps = Readonly<{
+  country?: CountryCode;
+}>;
+
+// Mini-liste des dernières alertes sur le dashboard, scopable par pays. États :
+// chargement (skeletons), erreur (message métier role=alert), vide (texte neutre).
+export function RecentAlerts({ country }: RecentAlertsProps) {
+  const { data, isPending, isError } = useRecentAlerts(country);
 
   return (
     <Card>
