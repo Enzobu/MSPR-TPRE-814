@@ -1,0 +1,88 @@
+meta {
+  name: List alerts
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/alerts?page=1&pageSize=20&acknowledged=false
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  pageSize: 20
+  acknowledged: false
+  ~type: TEMPERATURE_OUT_OF_RANGE
+}
+
+script:post-response {
+  // Mémorise un id pour les requêtes detail / acknowledge du même dossier.
+  if (res.getStatus() === 200) {
+    const data = res.getBody().data;
+    if (Array.isArray(data) && data.length > 0) {
+      bru.setEnvVar('alertId', data[0].id);
+    }
+  }
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return a paginated envelope', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('total').that.is.a('number');
+    expect(body).to.have.property('page', 1);
+    expect(body).to.have.property('pageSize', 20);
+  });
+
+  test('should be sorted triggeredAt descending', function() {
+    const data = res.getBody().data;
+    for (let i = 1; i < data.length; i++) {
+      const prev = new Date(data[i - 1].triggeredAt).getTime();
+      const curr = new Date(data[i].triggeredAt).getTime();
+      expect(prev).to.be.at.least(curr);
+    }
+  });
+
+  test('should honour the acknowledged=false filter', function() {
+    const data = res.getBody().data;
+    data.forEach((a) => expect(a.acknowledged).to.equal(false));
+  });
+}
+
+docs {
+  # GET /api/v1/alerts
+
+  Liste paginée des alertes, **triée par `triggeredAt` décroissant** (les plus
+  récentes d'abord).
+
+  ## Query params
+  | Param | Défaut | Description |
+  |---|---|---|
+  | `page` | 1 | Page 1-based |
+  | `pageSize` | 20 | Taille de page (1–100) |
+  | `acknowledged` | — | Filtre `true`/`false` sur l'acquittement |
+  | `type` | — | Filtre `TEMPERATURE_OUT_OF_RANGE` / `HUMIDITY_OUT_OF_RANGE` / `LOT_EXPIRED` |
+
+  ## Réponse 200
+  ```json
+  { "data": [ /* AlertResponseDto[] */ ], "total": 12, "page": 1, "pageSize": 20 }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `page`/`pageSize` hors bornes, `acknowledged` non booléen, ou `type` hors enum |
+
+  ## Effets de bord
+  - `script:post-response` écrit `alertId` (premier résultat) dans l'environnement
+    actif, utilisé par les requêtes detail / acknowledge.
+
+  ## Références
+  - CDC §III.4, ADR-0004. Index DB `alerts_type_triggeredAt_idx`.
+}

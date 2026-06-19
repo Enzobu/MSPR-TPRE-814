@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router';
 import { UserMenu } from '@/features/auth/components/UserMenu';
+import { AlertsBadge } from '@/features/alerts/components/AlertsBadge';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 // Layout racine mobile-first : header + zone de contenu (rules front).
@@ -11,13 +12,14 @@ export function RootLayout() {
           <Link to="/" className="font-heading text-lg font-semibold">
             FutureKawa
           </Link>
-          <nav>
+          <nav className="flex items-center gap-4">
             <Link
               to="/lots"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Lots
             </Link>
+            <AlertsBadge />
           </nav>
         </div>
         <div className="flex items-center gap-1">

@@ -59,6 +59,10 @@ class FakeGateway implements CountryBackendGateway {
     };
     return Promise.resolve(history as T);
   }
+
+  patch<T>(): Promise<T> {
+    return Promise.reject(new Error('patch not used by /measurements'));
+  }
 }
 
 describe('Measurements proxy (e2e, mocked country backends)', () => {

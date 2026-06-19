@@ -1,0 +1,19 @@
+meta {
+  name: alerts
+  seq: 5
+}
+
+docs {
+  # Alertes (backend-central)
+
+  Agrégation siège des alertes des backends pays (ADR-0007) : liste **consolidée
+  multi-pays** (tri `triggeredAt` décroissant, pagination sur l'ensemble fusionné,
+  réponse partielle `unavailable` si un pays est injoignable — jamais 500) et
+  **proxy d'acquittement** vers le pays propriétaire.
+
+  L'ACK est une écriture ciblée : `country` est **requis** (le front connaît le
+  pays de l'alerte via la liste). Alerte inconnue côté pays → **404** ; pays
+  injoignable → **503** (jamais une fausse confirmation).
+
+  Cible l'environnement `local-central`.
+}
