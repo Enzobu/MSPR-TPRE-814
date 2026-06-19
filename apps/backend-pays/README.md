@@ -47,15 +47,28 @@ $ pnpm run start:prod
 ## Run tests
 
 ```bash
-# unit tests
+# unit tests (logique métier, deps mockées — exécutés en CI)
 $ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
 
 # test coverage
 $ pnpm run test:cov
 ```
+
+### Tests d'intégration (e2e + DB réelle)
+
+Les suites `*.e2e-spec.ts` tournent contre une vraie MariaDB jetable
+(`docker-compose.test.yml`, `tmpfs` + migrations appliquées au boot). Non
+exécutés par `pnpm -r test` (uniquement les `.spec.ts`).
+
+```bash
+# depuis la racine du monorepo
+$ docker compose -f docker-compose.test.yml up -d        # MariaDB de test sur :3399
+$ pnpm --filter backend-pays test:e2e                    # DATABASE_URL pointe sur :3399 par défaut
+$ docker compose -f docker-compose.test.yml down          # jetable, rien à nettoyer
+```
+
+> `test/setup-e2e.ts` cible la DB de test (`:3399`) par défaut : aucune variable
+> à exporter. Pour viser une autre base, surcharger `DATABASE_URL`.
 
 ## Deployment
 
