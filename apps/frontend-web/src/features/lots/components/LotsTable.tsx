@@ -3,9 +3,9 @@ import type { Lot } from '@futurekawa/contracts';
 import { LotStatusBadge } from '@/features/lots/components/LotStatusBadge';
 import { formatStoredAt } from '@/features/lots/lib/format';
 
-interface LotsTableProps {
+type LotsTableProps = Readonly<{
   lots: Lot[];
-}
+}>;
 
 export function LotsTable({ lots }: LotsTableProps) {
   return (

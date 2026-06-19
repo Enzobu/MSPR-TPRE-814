@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
 import HomePage from '@/pages/HomePage';
 
+vi.mock('sonner', () => ({ toast: { success: vi.fn() } }));
+
 describe('HomePage', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should render the app heading and the demo toast button', () => {
     // Arrange / Act
     render(<HomePage />);
@@ -14,5 +22,21 @@ describe('HomePage', () => {
     expect(
       screen.getByRole('button', { name: /afficher un toast/i }),
     ).toBeInTheDocument();
+  });
+
+  it('should fire a success toast when the demo button is clicked', async () => {
+    // Arrange
+    render(<HomePage />);
+
+    // Act
+    await userEvent.click(
+      screen.getByRole('button', { name: /afficher un toast/i }),
+    );
+
+    // Assert
+    expect(toast.success).toHaveBeenCalledWith(
+      'Backbone opérationnel',
+      expect.objectContaining({ description: expect.any(String) }),
+    );
   });
 });

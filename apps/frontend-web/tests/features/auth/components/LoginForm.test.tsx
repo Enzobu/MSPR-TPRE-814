@@ -71,6 +71,23 @@ describe('LoginForm', () => {
     expect(onSuccess).not.toHaveBeenCalled();
   });
 
+  it('should display a generic message on a non-401 server error', async () => {
+    // Arrange
+    const login = vi.fn().mockRejectedValue(new Error('network down'));
+    const { onSuccess } = renderForm({ login });
+
+    // Act
+    await userEvent.type(screen.getByLabelText(/email/i), VALID_EMAIL);
+    await userEvent.type(screen.getByLabelText(/mot de passe/i), VALID_PASSWORD);
+    await userEvent.click(screen.getByRole('button', { name: /se connecter/i }));
+
+    // Assert
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /connexion impossible/i,
+    );
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
   it('should call onSuccess after a successful login', async () => {
     // Arrange
     const { onSuccess } = renderForm();

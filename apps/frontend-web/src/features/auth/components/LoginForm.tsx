@@ -16,9 +16,9 @@ const HTTP_UNAUTHORIZED = 401;
 const INVALID_CREDENTIALS = 'Email ou mot de passe incorrect.';
 const GENERIC_ERROR = 'Connexion impossible pour le moment. Réessayez.';
 
-interface LoginFormProps {
+type LoginFormProps = Readonly<{
   onSuccess: () => void;
-}
+}>;
 
 function toErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === HTTP_UNAUTHORIZED) {

@@ -12,13 +12,12 @@ export function ProtectedRoute(): React.ReactNode {
 
   if (status === 'loading') {
     return (
-      <div
-        role="status"
+      <output
         aria-label="Chargement de la session"
         className="flex min-h-screen items-center justify-center bg-background"
       >
         <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
-      </div>
+      </output>
     );
   }
 

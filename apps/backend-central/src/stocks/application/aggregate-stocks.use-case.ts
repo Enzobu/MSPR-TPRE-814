@@ -115,13 +115,13 @@ export class AggregateStocksUseCase {
     const sign = direction === 'asc' ? 1 : -1;
     lots.sort((a, b) => {
       const byDate = a.storedAt.localeCompare(b.storedAt);
-      return sign * (byDate !== 0 ? byDate : a.id.localeCompare(b.id));
+      return sign * (byDate === 0 ? a.id.localeCompare(b.id) : byDate);
     });
   }
 
   private cacheKey(params: AggregateStocksParams): string {
     return [
-      [...params.countries].sort().join(','),
+      [...params.countries].sort((a, b) => a.localeCompare(b)).join(','),
       params.page,
       params.pageSize,
       params.direction,

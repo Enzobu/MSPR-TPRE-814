@@ -9,9 +9,9 @@ import {
 import { LotStatusBadge } from '@/features/lots/components/LotStatusBadge';
 import { formatStoredAt } from '@/features/lots/lib/format';
 
-interface LotCardProps {
+type LotCardProps = Readonly<{
   lot: Lot;
-}
+}>;
 
 export function LotCard({ lot }: LotCardProps) {
   return (

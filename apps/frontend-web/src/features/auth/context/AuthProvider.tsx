@@ -1,4 +1,10 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { AuthenticatedUser } from '@futurekawa/contracts';
 import {
   registerForcedLogoutHandler,
@@ -10,9 +16,9 @@ import {
   type AuthStatus,
 } from '@/features/auth/context/auth-context';
 
-interface AuthProviderProps {
+type AuthProviderProps = Readonly<{
   children: ReactNode;
-}
+}>;
 
 // Source de vérité de l'état d'auth côté React. L'access token vit en mémoire
 // (auth-token.ts) ; au reload il est perdu → un /auth/refresh au boot le
@@ -70,9 +76,12 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     };
   }, [clearSession]);
 
+  const value = useMemo(
+    () => ({ status, user, login, logout }),
+    [status, user, login, logout],
+  );
+
   return (
-    <AuthContext.Provider value={{ status, user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }

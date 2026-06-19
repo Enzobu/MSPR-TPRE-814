@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest';
 
 // jsdom n'expose pas un Storage utilisable selon la config : stub mémoire.
 if (
-  typeof globalThis.localStorage === 'undefined' ||
+  globalThis.localStorage === undefined ||
   typeof globalThis.localStorage.getItem !== 'function'
 ) {
   const store = new Map<string, string>();
