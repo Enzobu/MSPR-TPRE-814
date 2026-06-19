@@ -7,8 +7,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { ProblemDetailsFilter } from '@futurekawa/nest-common';
 import { AppModule } from './../src/app.module';
-import { ProblemDetailsFilter } from './../src/common/filters/problem-details.filter';
 import { BcryptPasswordHasher } from './../src/auth/infrastructure/bcrypt-password-hasher';
 import { PrismaService } from './../src/infrastructure/persistence/prisma.service';
 

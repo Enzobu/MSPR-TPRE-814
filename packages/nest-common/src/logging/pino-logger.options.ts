@@ -2,11 +2,12 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Params } from 'nestjs-pino';
 
-const CORRELATION_ID_HEADER = 'x-correlation-id';
+export const CORRELATION_ID_HEADER = 'x-correlation-id';
 
 // Logs JSON structurés + correlation_id sur chaque ligne (rules/08-observability.md).
-// Le correlation-id est lu depuis l'en-tête entrant (propagé par le frontend / le
-// backend-central) ou généré ici, puis renvoyé dans la réponse pour un traçage bout-en-bout.
+// Le correlation-id est lu depuis l'en-tête entrant (frontend / backend-central) ou
+// généré ici, puis renvoyé dans la réponse ET propageable aux appels pays (ADR-0007)
+// pour un traçage bout-en-bout.
 export function buildPinoOptions(level: string): Params {
   return {
     pinoHttp: {

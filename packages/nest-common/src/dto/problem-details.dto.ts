@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 // Représentation RFC 7807 (application/problem+json) renvoyée par le filtre global.
+// Partagée par les deux backends (@futurekawa/nest-common) : les exemples Swagger
+// sont génériques, chaque backend documente ses cas concrets dans ses contrôleurs.
 export class ProblemDetailsDto {
   @ApiProperty({
     description: 'URI identifiant le type de problème (RFC 7807).',
@@ -20,20 +22,20 @@ export class ProblemDetailsDto {
   @ApiProperty({
     description:
       "Explication lisible spécifique à cette occurrence de l'erreur.",
-    example: 'temperature must not be greater than 60',
+    example: 'Validation failed',
   })
   detail!: string;
 
   @ApiProperty({
     description: "URI de la requête ayant produit l'erreur.",
-    example: '/api/v1/measurements',
+    example: '/api/v1/resource',
   })
   instance!: string;
 
   @ApiProperty({
     description:
       'Détail des erreurs de validation, le cas échéant (un message par contrainte).',
-    example: ['temperature must be a number'],
+    example: ['field must not be empty'],
     required: false,
     type: [String],
   })

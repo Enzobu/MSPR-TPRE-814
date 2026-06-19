@@ -4,8 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { isAxiosError } from 'axios';
 import type { CountryCode } from '@futurekawa/contracts';
+import { CORRELATION_ID_HEADER } from '@futurekawa/nest-common';
 import type { Env } from '../../config/env.validation';
-import { CORRELATION_ID_HEADER } from '../../common/logging/pino-logger.options';
 import {
   CountryBackendGateway,
   CountryRequestOptions,
