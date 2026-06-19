@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { CountryCode } from '@futurekawa/contracts';
+import { AlertsModule } from '../alerts/alerts.module';
 import { COUNTRY_CODE } from '../config/country-code.token';
 import type { Env } from '../config/env.validation';
 import { AggregateMeasurementsUseCase } from './application/aggregate-measurements.use-case';
@@ -28,6 +29,7 @@ const COUNTRY_CODE_PROVIDER = {
 };
 
 @Module({
+  imports: [AlertsModule],
   controllers: [MeasurementsController],
   providers: [
     GetMeasurementHistoryUseCase,
