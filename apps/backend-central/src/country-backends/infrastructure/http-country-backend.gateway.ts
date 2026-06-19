@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
@@ -119,7 +120,9 @@ export class HttpCountryBackendGateway implements CountryBackendGateway {
 
   private backoffMs(attempt: number): number {
     const exponential = this.retryBaseMs * 2 ** (attempt - 1);
-    const jitter = Math.random() * this.retryBaseMs;
+    // PRNG cryptographique (crypto.randomInt) plutôt que Math.random pour le jitter :
+    // pas de propriété de sécurité requise ici, mais ça lève le hotspot Sonar.
+    const jitter = randomInt(this.retryBaseMs + 1);
     return Math.round(exponential + jitter);
   }
 

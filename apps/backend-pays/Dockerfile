@@ -21,11 +21,15 @@ RUN pnpm --filter backend-pays build
 FROM node:22-alpine AS runtime
 
 WORKDIR /workspace
-RUN corepack enable
 
 ENV NODE_ENV=production
-COPY --from=build /workspace /workspace
+# L'image node fournit un utilisateur non-root `node` (uid 1000) : on lui donne
+# la propriété des artefacts et on tourne en non-root (Sonar hotspot Docker).
+COPY --from=build --chown=node:node /workspace /workspace
 WORKDIR /workspace/apps/backend-pays
+USER node
 
 EXPOSE 3000
-CMD ["pnpm", "start:prod"]
+# start:prod = `node dist/main` : on l'invoque directement pour éviter de dépendre
+# de pnpm/corepack au runtime (cache absent dans l'étape finale).
+CMD ["node", "dist/main"]
