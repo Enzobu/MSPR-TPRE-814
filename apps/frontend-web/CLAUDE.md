@@ -161,12 +161,17 @@ Pas de `LotCard.test.tsx` à côté de `LotCard.tsx` — convention assumée de 
 
 ---
 
-## À trancher (bloqué sur l'architecture)
+## Stack applicative (tranchée — ADR-0005, branchée par le backbone #18)
 
-Ne **pas** introduire ces libs avant décision :
+Libs installées et configurées ; **ne pas en introduire d'autres** sans nouvel ADR :
 
-- **Router** : `react-router` v7 recommandé.
-- **Data fetching** : `@tanstack/react-query` recommandé.
-- **Charts** : `recharts` recommandé (shadcn a un wrapper `<Chart>` intégré).
-- **Tests** : `vitest` + `@testing-library/react`, e2e `playwright`.
-- **Auth** : stratégie (cookie vs token) à définir.
+- **Router** : `react-router` v7+ (data router) — routes dans `src/routes/router.tsx`.
+- **Data fetching** : `@tanstack/react-query` v5 — `QueryClient` dans `src/lib/query-client.ts`. Jamais de fetch dans un `useEffect`.
+- **HTTP** : `axios` via `src/lib/http-client.ts` (baseURL `VITE_API_URL`, correlation-id, hook 401).
+- **Charts** : `recharts` v3 (wrapper `<Chart>` shadcn) — **pas encore installé**, viendra avec la feature mesures (#30).
+- **Forms** : `react-hook-form` + `zod` v3 (schémas dérivés de `contracts`).
+- **Toasts** : `sonner` — `<Toaster>` monté dans `App.tsx` (`src/components/ui/sonner.tsx`).
+- **Theme** : `ThemeProvider` (`src/components/theme/`) + `useTheme` (`src/hooks/use-theme.ts`), classe `dark` sur `<html>`.
+- **Tests** : `vitest` + `@testing-library/react` (dans `tests/`), e2e `playwright` (`tests/e2e/`, non lancé en CI).
+
+- **Auth** : stratégie (cookie vs token) — toujours à définir (ADR-0006). Le hook 401 de `http-client.ts` est un TODO en attente.
