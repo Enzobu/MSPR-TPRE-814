@@ -4,9 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertTypeBadge } from '@/features/alerts/components/AlertTypeBadge';
 import { formatTriggeredAt } from '@/features/alerts/lib/format';
 
-interface AlertCardProps {
+type AlertCardProps = Readonly<{
   alert: Alert;
-}
+}>;
 
 export function AlertCard({ alert }: AlertCardProps) {
   return (

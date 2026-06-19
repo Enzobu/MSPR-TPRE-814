@@ -1,10 +1,10 @@
 import { ALERT_TYPES, type AlertType } from '@futurekawa/contracts';
 import { Button } from '@/components/ui/button';
 
-interface AlertTypeFilterProps {
+type AlertTypeFilterProps = Readonly<{
   value?: AlertType;
   onChange: (type?: AlertType) => void;
-}
+}>;
 
 const SHORT_LABELS: Record<AlertType, string> = {
   TEMPERATURE_OUT_OF_RANGE: 'Température',
@@ -14,11 +14,8 @@ const SHORT_LABELS: Record<AlertType, string> = {
 
 export function AlertTypeFilter({ value, onChange }: AlertTypeFilterProps) {
   return (
-    <div
-      className="flex flex-wrap gap-2"
-      role="group"
-      aria-label="Filtrer par type"
-    >
+    <fieldset className="flex flex-wrap gap-2 border-0 p-0">
+      <legend className="sr-only">Filtrer par type</legend>
       <Button
         type="button"
         size="sm"
@@ -40,6 +37,6 @@ export function AlertTypeFilter({ value, onChange }: AlertTypeFilterProps) {
           {SHORT_LABELS[type]}
         </Button>
       ))}
-    </div>
+    </fieldset>
   );
 }

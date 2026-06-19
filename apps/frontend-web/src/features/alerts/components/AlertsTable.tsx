@@ -4,9 +4,9 @@ import type { Alert } from '@futurekawa/contracts';
 import { AlertTypeBadge } from '@/features/alerts/components/AlertTypeBadge';
 import { formatTriggeredAt } from '@/features/alerts/lib/format';
 
-interface AlertsTableProps {
+type AlertsTableProps = Readonly<{
   alerts: Alert[];
-}
+}>;
 
 function targetLabel(alert: Alert): string {
   if (alert.lotId) {
