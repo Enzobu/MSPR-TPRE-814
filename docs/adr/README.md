@@ -33,10 +33,10 @@ Chaque ADR fige un choix, son contexte et ses conséquences.
 | [0005](0005-frontend-stack.md) | Stack frontend (router, query, charts, tests) | `accepted` | #25, #30 |
 | [0006](0006-auth-strategy.md) | Stratégie d'authentification | `accepted` | #19, #20, #50 |
 | [0007](0007-resilience-strategy.md) | Résilience central ↔ pays | `accepted` | #36, #37 |
-| 0008 | Stratégie de tests (pyramide, outils) | `proposed` | #26, #31, #38, #39, #42 |
+| [0008](0008-testing-strategy.md) | Stratégie de tests (pyramide, outils) | `accepted` | #26, #31, #38, #39, #42 |
 
-> Les titres des ADR `proposed` sont **provisoires** : ils fixent le périmètre
-> attendu de la décision. Le contenu définitif est rédigé dans le ticket associé.
+> La colonne **Cadre (tickets)** liste les tickets que chaque décision cadre
+> (features / infra impactées), pas le ticket de rédaction de l'ADR.
 
 ## Rédiger un nouvel ADR
 
