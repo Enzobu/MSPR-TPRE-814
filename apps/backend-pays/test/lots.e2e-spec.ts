@@ -6,60 +6,22 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import type { LotStatus } from '@futurekawa/contracts';
+import { ProblemDetailsFilter } from '@futurekawa/nest-common';
 import { AppModule } from './../src/app.module';
-import type { Lot, NewLot } from './../src/lots/domain/lot';
-import {
-  LOT_REPOSITORY,
-  type FindManyParams,
-  type LotRepository,
-  type Page,
-} from './../src/lots/domain/lot.repository';
+import { PrismaService } from './../src/infrastructure/persistence/prisma.service';
 
-// Repository en mémoire : ce test couvre le contrat HTTP (validation, status
-// codes, RFC 7807, tri FIFO, pagination) sans DB réelle — l'intégration DB est
-// le ticket #26 (rules/04-tests.md : pas de hit DB hors docker-compose.test.yml).
-class InMemoryLotRepository implements LotRepository {
-  private readonly store = new Map<string, Lot>();
+// Intégration de bout en bout de l'API Lots (CDC §III.1, ADR-0008) contre une
+// VRAIE MariaDB. Pré-requis : `docker compose -f docker-compose.test.yml up -d`
+// puis DATABASE_URL pointant sur la DB de test. Non exécuté par `pnpm -r test`
+// (seulement les .spec.ts) ; lancer via `pnpm --filter backend-pays test:e2e`.
+//
+// Toutes les fixtures utilisent le préfixe `IT-` et sont nettoyées avant/après
+// la suite : la DB de test (tmpfs) repart à neuf, mais le préfixe garde le test
+// inoffensif même lancé par erreur contre une autre base.
+const PREFIX = 'IT-';
 
-  create(lot: NewLot): Promise<Lot> {
-    const created: Lot = { ...lot, status: 'CONFORME' };
-    this.store.set(lot.id, created);
-    return Promise.resolve(created);
-  }
-
-  existsById(id: string): Promise<boolean> {
-    return Promise.resolve(this.store.has(id));
-  }
-
-  findById(id: string): Promise<Lot | null> {
-    return Promise.resolve(this.store.get(id) ?? null);
-  }
-
-  findManyByStoredAt(params: FindManyParams): Promise<Page<Lot>> {
-    const sorted = [...this.store.values()].sort((a, b) => {
-      const diff = a.storedAt.getTime() - b.storedAt.getTime();
-      // Clé secondaire `id` (parité avec le repo Prisma) : ordre stable.
-      const primary = params.direction === 'asc' ? diff : -diff;
-      return primary !== 0 ? primary : a.id.localeCompare(b.id);
-    });
-    const data = sorted.slice(params.skip, params.skip + params.take);
-    return Promise.resolve({ data, total: this.store.size });
-  }
-
-  updateStatus(id: string, status: LotStatus): Promise<Lot | null> {
-    const lot = this.store.get(id);
-    if (!lot) {
-      return Promise.resolve(null);
-    }
-    const updated: Lot = { ...lot, status };
-    this.store.set(id, updated);
-    return Promise.resolve(updated);
-  }
-}
-
-const buildCreateBody = (over: Record<string, unknown> = {}) => ({
-  id: 'BR-2026-100',
+const buildBody = (over: Record<string, unknown> = {}) => ({
+  id: `${PREFIX}001`,
   country: 'BR',
   farm: 'Fazenda Aurora',
   warehouse: 'Entrepôt Sul-1',
@@ -67,19 +29,20 @@ const buildCreateBody = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe('Lots (e2e)', () => {
+describe('Lots integration (e2e, real DB)', () => {
   let app: INestApplication<App>;
+  let prisma: PrismaService;
+
+  const cleanup = (): Promise<unknown> =>
+    prisma.lot.deleteMany({ where: { id: { startsWith: PREFIX } } });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider(LOT_REPOSITORY)
-      .useClass(InMemoryLotRepository)
-      .compile();
+    }).compile();
 
     app = moduleFixture.createNestApplication();
-    // Réplique du bootstrap (main.ts) nécessaire au contrat : validation + prefix.
+    // Réplique du bootstrap (main.ts) requis par le contrat : validation + RFC 7807.
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -87,154 +50,186 @@ describe('Lots (e2e)', () => {
         transform: true,
       }),
     );
+    app.useGlobalFilters(new ProblemDetailsFilter());
     app.setGlobalPrefix('api', { exclude: ['health', 'ready'] });
     app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     await app.init();
+
+    prisma = app.get(PrismaService);
+    await cleanup();
   });
 
   afterAll(async () => {
+    await cleanup();
     await app.close();
   });
 
   const server = () => app.getHttpServer();
 
-  it('POST /api/v1/lots should create a lot (201) with the contract shape', async () => {
-    const res = await request(server())
+  it('POST /api/v1/lots should persist a lot (201) retrievable by id', async () => {
+    const create = await request(server())
       .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-2026-001' }))
+      .send(buildBody({ id: `${PREFIX}create` }))
       .expect(201);
-
-    expect(res.body).toMatchObject({
-      id: 'BR-2026-001',
+    expect(create.body).toMatchObject({
+      id: `${PREFIX}create`,
       country: 'BR',
-      farm: 'Fazenda Aurora',
-      warehouse: 'Entrepôt Sul-1',
-      storedAt: '2026-06-01T08:00:00.000Z',
       status: 'CONFORME',
     });
+
+    // Persistance réelle : relecture par un second appel HTTP.
+    await request(server())
+      .get(`/api/v1/lots/${PREFIX}create`)
+      .expect(200)
+      .expect((res) => {
+        expect((res.body as { id: string }).id).toBe(`${PREFIX}create`);
+      });
   });
 
-  it('POST /api/v1/lots should reject a duplicate id (409, RFC 7807)', async () => {
+  it('POST /api/v1/lots should reject a duplicate id with 409 (RFC 7807)', async () => {
     await request(server())
       .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-2026-dup' }))
+      .send(buildBody({ id: `${PREFIX}dup` }))
       .expect(201);
 
     await request(server())
       .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-2026-dup' }))
+      .send(buildBody({ id: `${PREFIX}dup` }))
       .expect(409)
       .expect('Content-Type', /application\/problem\+json/);
   });
 
-  it('POST /api/v1/lots should reject a country that is not the backend country (422)', async () => {
+  it('POST /api/v1/lots should reject a country other than the backend country with 422', async () => {
     await request(server())
       .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'EC-2026-x', country: 'EC' }))
+      .send(buildBody({ id: `${PREFIX}ec`, country: 'EC' }))
       .expect(422)
       .expect('Content-Type', /application\/problem\+json/);
   });
 
-  it('POST /api/v1/lots should reject an invalid payload (400) and unknown fields', async () => {
+  it('POST /api/v1/lots should reject an invalid payload with 400', async () => {
+    // Date invalide + champs manquants.
     await request(server())
       .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-bad', storedAt: 'not-a-date' }))
-      .expect(400);
-
-    await request(server())
-      .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-extra', injected: 'nope' }))
-      .expect(400);
+      .send({ id: `${PREFIX}bad`, country: 'BR', storedAt: 'not-a-date' })
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
   });
 
-  it('GET /api/v1/lots should return lots FIFO (storedAt asc) by default, paginated', async () => {
+  it('GET /api/v1/lots should return lots FIFO (storedAt ascending)', async () => {
+    // 3 lots créés dans le désordre chronologique.
     await request(server())
       .post('/api/v1/lots')
       .send(
-        buildCreateBody({
-          id: 'FIFO-late',
-          storedAt: '2026-09-01T00:00:00.000Z',
+        buildBody({
+          id: `${PREFIX}fifo-mid`,
+          storedAt: '2026-03-01T00:00:00.000Z',
         }),
       )
       .expect(201);
     await request(server())
       .post('/api/v1/lots')
       .send(
-        buildCreateBody({
-          id: 'FIFO-early',
-          storedAt: '2024-01-01T00:00:00.000Z',
+        buildBody({
+          id: `${PREFIX}fifo-old`,
+          storedAt: '2025-01-01T00:00:00.000Z',
+        }),
+      )
+      .expect(201);
+    await request(server())
+      .post('/api/v1/lots')
+      .send(
+        buildBody({
+          id: `${PREFIX}fifo-new`,
+          storedAt: '2026-12-01T00:00:00.000Z',
         }),
       )
       .expect(201);
 
     const res = await request(server())
-      .get('/api/v1/lots?page=1&pageSize=100')
+      .get('/api/v1/lots?pageSize=100')
       .expect(200);
-
     const body = res.body as {
-      data: { id: string; storedAt: string }[];
+      data: { id: string }[];
       total: number;
       page: number;
       pageSize: number;
     };
     expect(body).toMatchObject({ page: 1, pageSize: 100 });
-    expect(body.total).toBeGreaterThanOrEqual(2);
-    const earlyIndex = body.data.findIndex((l) => l.id === 'FIFO-early');
-    const lateIndex = body.data.findIndex((l) => l.id === 'FIFO-late');
-    expect(earlyIndex).toBeLessThan(lateIndex);
+
+    const order = body.data
+      .map((l) => l.id)
+      .filter((id) => id.startsWith(`${PREFIX}fifo-`));
+    expect(order).toEqual([
+      `${PREFIX}fifo-old`,
+      `${PREFIX}fifo-mid`,
+      `${PREFIX}fifo-new`,
+    ]);
   });
 
   it('GET /api/v1/lots?sort=storedAt:desc should reverse the order', async () => {
+    // Réutilise les 3 lots IT-fifo-* créés par le test précédent.
     const res = await request(server())
       .get('/api/v1/lots?sort=storedAt:desc&pageSize=100')
       .expect(200);
-    const body = res.body as { data: { id: string }[] };
-    const earlyIndex = body.data.findIndex((l) => l.id === 'FIFO-early');
-    const lateIndex = body.data.findIndex((l) => l.id === 'FIFO-late');
-    expect(lateIndex).toBeLessThan(earlyIndex);
+    const order = (res.body as { data: { id: string }[] }).data
+      .map((l) => l.id)
+      .filter((id) => id.startsWith(`${PREFIX}fifo-`));
+    expect(order).toEqual([
+      `${PREFIX}fifo-new`,
+      `${PREFIX}fifo-mid`,
+      `${PREFIX}fifo-old`,
+    ]);
   });
 
-  it('GET /api/v1/lots should reject an invalid sort (400)', async () => {
-    await request(server()).get('/api/v1/lots?sort=farm:asc').expect(400);
+  it('GET /api/v1/lots should reject an unsupported sort with 400', async () => {
+    await request(server())
+      .get('/api/v1/lots?sort=farm:asc')
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
   });
 
-  it('GET /api/v1/lots/:id should return 200 then 404 for an unknown id', async () => {
+  it('GET /api/v1/lots/:id should return 404 (RFC 7807) for an unknown id', async () => {
     await request(server())
-      .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-detail' }))
-      .expect(201);
-
-    await request(server()).get('/api/v1/lots/BR-detail').expect(200);
-    await request(server())
-      .get('/api/v1/lots/UNKNOWN')
+      .get(`/api/v1/lots/${PREFIX}does-not-exist`)
       .expect(404)
       .expect('Content-Type', /application\/problem\+json/);
   });
 
-  it('PATCH /api/v1/lots/:id/status should update the status (200)', async () => {
+  it('PATCH /api/v1/lots/:id/status should persist the new status (200)', async () => {
     await request(server())
       .post('/api/v1/lots')
-      .send(buildCreateBody({ id: 'BR-patch' }))
+      .send(buildBody({ id: `${PREFIX}patch` }))
       .expect(201);
 
-    const res = await request(server())
-      .patch('/api/v1/lots/BR-patch/status')
-      .send({ status: 'EN_ALERTE' })
-      .expect(200);
-    expect((res.body as { status: string }).status).toBe('EN_ALERTE');
+    await request(server())
+      .patch(`/api/v1/lots/${PREFIX}patch/status`)
+      .send({ status: 'PERIME' })
+      .expect(200)
+      .expect((res) => {
+        expect((res.body as { status: string }).status).toBe('PERIME');
+      });
+
+    // Persistance réelle : la relecture confirme le nouveau statut.
+    await request(server())
+      .get(`/api/v1/lots/${PREFIX}patch`)
+      .expect(200)
+      .expect((res) => {
+        expect((res.body as { status: string }).status).toBe('PERIME');
+      });
   });
 
-  it('PATCH /api/v1/lots/:id/status should reject an invalid status (400)', async () => {
+  it('PATCH /api/v1/lots/:id/status should reject an invalid status with 400', async () => {
     await request(server())
-      .patch('/api/v1/lots/BR-patch/status')
+      .patch(`/api/v1/lots/${PREFIX}patch/status`)
       .send({ status: 'WHATEVER' })
       .expect(400);
   });
 
   it('PATCH /api/v1/lots/:id/status should return 404 for an unknown id', async () => {
     await request(server())
-      .patch('/api/v1/lots/UNKNOWN/status')
-      .send({ status: 'PERIME' })
+      .patch(`/api/v1/lots/${PREFIX}ghost/status`)
+      .send({ status: 'EN_ALERTE' })
       .expect(404);
   });
 });

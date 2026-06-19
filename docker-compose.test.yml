@@ -1,0 +1,31 @@
+# Base de données jetable pour les tests d'intégration backend-pays (#26, ADR-0008).
+# `tmpfs` : la donnée vit en RAM, rien n'est persisté — repart à neuf à chaque `up`.
+# Les migrations Prisma committées sont appliquées au premier boot via init-test-db.sh,
+# donc pas besoin de `prisma migrate` (ni de shadow DB / datasource url) côté test.
+#
+# Usage :
+#   docker compose -f docker-compose.test.yml up -d
+#   DATABASE_URL=mysql://futurekawa:futurekawa@localhost:3399/futurekawa_pays_test \
+#     pnpm --filter backend-pays test:e2e
+#   docker compose -f docker-compose.test.yml down
+services:
+  mariadb-pays-test:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: futurekawa_pays_test
+      MARIADB_USER: futurekawa
+      MARIADB_PASSWORD: futurekawa
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      # 3399 pour ne pas entrer en conflit avec les DB de dev (3306/3308/3309).
+      - "3399:3306"
+    tmpfs:
+      - /var/lib/mysql
+    volumes:
+      - ./apps/backend-pays/prisma/migrations:/migrations:ro
+      - ./apps/backend-pays/test/init-test-db.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20

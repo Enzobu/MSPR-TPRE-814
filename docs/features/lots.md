@@ -3,7 +3,7 @@ title: Lots de café vert (stock, FIFO, traçabilité)
 owner: Yanis
 status: in-progress
 cdc-ref: "§III.1"
-adr-refs: [0002]
+adr-refs: [0002, 0008]
 updated: 2026-06-19
 ---
 
@@ -131,12 +131,12 @@ pnpm --filter backend-pays db:seed
 | Niveau | Fichier | Couvre |
 |---|---|---|
 | Unit | `apps/backend-pays/src/lots/application/*.spec.ts` | règles métier des 4 use-cases (mismatch pays, doublon, not-found, pagination/FIFO) |
-| HTTP (e2e, repo en mémoire) | `apps/backend-pays/test/lots.e2e-spec.ts` | contrat des 4 endpoints : status codes, RFC 7807, tri FIFO, pagination, validation |
-| Intégration DB réelle | _ticket #26_ | `PrismaLotRepository` + API contre MariaDB |
+| Intégration (e2e + DB réelle) | `apps/backend-pays/test/lots.e2e-spec.ts` | les 4 endpoints contre MariaDB : status codes, RFC 7807, **tri FIFO** (3 lots dans le désordre → asc, et `sort=storedAt:desc` inverse), rejet d'un tri non supporté (400), pagination, validation, persistance (relecture) |
 
-> Stratégie (rules/04-tests.md) : beaucoup d'unitaires sur l'application, un test
-> de contrat HTTP avec repository en mémoire (pas de DB hors
-> `docker-compose.test.yml`). L'intégration DB réelle est le ticket **#26**.
+> Stratégie (rules/04-tests.md, ADR-0008) : beaucoup d'unitaires sur
+> l'application (deps mockées, exécutés en CI) + une suite d'intégration
+> Supertest contre une MariaDB jetable (`docker-compose.test.yml`, `tmpfs` +
+> migrations appliquées au boot). Lancement : voir le README de backend-pays.
 
 ## Documentation utilisateur
 
@@ -147,7 +147,7 @@ Lien : [`../user/lots.md`](../user/lots.md) _(à créer avec le front #25)_.
 - [x] #24 — API REST `lots` (création, liste FIFO paginée, détail, update statut)
       + DTO in/out + mapper + Swagger + Bruno.
 - [ ] #25 — front `features/lots` (liste FIFO, détail, badge statut).
-- [ ] #26 — tests d'intégration (repository Prisma + API + DB réelle).
+- [x] #26 — tests d'intégration (API + DB réelle via `docker-compose.test.yml`).
 - [ ] Transitions de statut automatiques (alerting hors-plage, cron péremption).
 - [ ] Exposition éventuelle de `harvestDate` / `qualityGrade` à l'API.
 - [ ] Documentation utilisateur métier `docs/user/lots.md`.
