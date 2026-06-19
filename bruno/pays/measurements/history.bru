@@ -1,0 +1,71 @@
+meta {
+  name: Measurement history
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/measurements?warehouse=W1&page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+params:query {
+  warehouse: W1
+  page: 1
+  pageSize: 20
+  ~from: 2026-06-01T00:00:00.000Z
+  ~to: 2026-06-02T00:00:00.000Z
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return a paginated envelope', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('total').that.is.a('number');
+    expect(body).to.have.property('page', 1);
+    expect(body).to.have.property('pageSize', 20);
+  });
+
+  test('should be sorted by recordedAt descending', function() {
+    const data = res.getBody().data;
+    for (let i = 1; i < data.length; i++) {
+      const prev = new Date(data[i - 1].recordedAt).getTime();
+      const curr = new Date(data[i].recordedAt).getTime();
+      expect(prev).to.be.at.least(curr);
+    }
+  });
+}
+
+docs {
+  # GET /api/v1/measurements
+
+  Historique paginé des relevés d'un entrepôt, **trié recordedAt décroissant**
+  (plus récent d'abord).
+
+  ## Query params
+  | Param | Requis | Défaut | Description |
+  |---|---|---|---|
+  | `warehouse` | oui | — | Entrepôt ciblé |
+  | `from` | non | — | Borne inférieure ISO 8601 (incluse) |
+  | `to` | non | — | Borne supérieure ISO 8601 (incluse) |
+  | `page` | non | 1 | Page 1-based |
+  | `pageSize` | non | 20 | Taille de page (1–100) |
+
+  ## Réponse 200
+  ```json
+  { "data": [ /* MeasurementResponseDto[] */ ], "total": 144, "page": 1, "pageSize": 20 }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `warehouse` manquant, `from`/`to` non ISO 8601, `page`/`pageSize` hors bornes |
+
+  ## Références
+  - CDC §III.2. Index DB `measurements_warehouse_recordedAt_idx`.
+}
