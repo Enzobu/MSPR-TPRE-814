@@ -29,3 +29,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+
+  # Broker MQTT jetable pour le test d'intégration d'ingestion (#28, ADR-0003).
+  # Anonyme + sans persistance (mosquitto.test.conf). Port 1893 sur l'hôte pour
+  # ne pas entrer en conflit avec un broker de dev sur 1883.
+  mosquitto-test:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1893:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.test.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      # mosquitto_sub renvoie 0 dès que le broker accepte une connexion.
+      test:
+        ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-W", "2", "-q", "1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -7,8 +7,9 @@ docs {
   # Measurements (backend-pays)
 
   Relevés T°/humidité d'un entrepôt (CDC §III.2) : historique paginé et agrégat
-  par fenêtre temporelle. Les mesures sont ingérées par MQTT (#28), pas par REST :
-  il n'y a donc **pas** de route de création ici.
+  par fenêtre temporelle. Les mesures arrivent principalement par MQTT (#28,
+  ADR-0003) ; `POST /measurements` est un **fallback REST** quand le broker est
+  indisponible.
 
   Routes sous `/api/v1/measurements`. Cibler une instance via un environnement
   `local-pays-br/ec/co`.
