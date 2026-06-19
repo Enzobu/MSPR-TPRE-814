@@ -111,6 +111,7 @@ injecté dans le use-case de création pour rejeter un lot d'un autre pays.
 - **Application** : `apps/backend-pays/src/lots/application/` (4 use-cases : create / list / get / update-status)
 - **Infrastructure** : `apps/backend-pays/src/lots/infrastructure/prisma-lot.repository.ts`
 - **Interface** : `apps/backend-pays/src/lots/interface/` (controller + DTOs + `lot.mapper.ts`)
+- **Front** : `apps/frontend-web/src/features/lots/` (api `fetchStocks`, hooks `useLots`/`useLot`/`useLotFilters`, composants `LotsTable`/`LotCard`/`LotStatusBadge`/`CountryFilter`/`UnavailableBanner`) + pages `LotsPage` (`/lots`) et `LotDetailPage` (`/lots/:id`). Consomme l'agrégation siège `GET /api/v1/stocks` ([aggregation-siege.md](aggregation-siege.md)). Filtres/tri/pagination portés par l'URL (`useSearchParams`).
 
 ### Migrer / seeder en local
 
@@ -132,6 +133,7 @@ pnpm --filter backend-pays db:seed
 |---|---|---|
 | Unit | `apps/backend-pays/src/lots/application/*.spec.ts` | règles métier des 4 use-cases (mismatch pays, doublon, not-found, pagination/FIFO) |
 | Intégration (e2e + DB réelle) | `apps/backend-pays/test/lots.e2e-spec.ts` | les 4 endpoints contre MariaDB : status codes, RFC 7807, **tri FIFO** (3 lots dans le désordre → asc, et `sort=storedAt:desc` inverse), rejet d'un tri non supporté (400), pagination, validation, persistance (relecture) |
+| UI (Vitest + RTL) | `apps/frontend-web/tests/features/lots/**`, `tests/pages/LotsPage.test.tsx` | badge de statut, lignes/liens du tableau, page liste (filtre pays, bannière `unavailable`) |
 
 > Stratégie (rules/04-tests.md, ADR-0008) : beaucoup d'unitaires sur
 > l'application (deps mockées, exécutés en CI) + une suite d'intégration
@@ -140,13 +142,13 @@ pnpm --filter backend-pays db:seed
 
 ## Documentation utilisateur
 
-Lien : [`../user/lots.md`](../user/lots.md) _(à créer avec le front #25)_.
+Lien : [`../user/lots.md`](../user/lots.md).
 
 ## Évolutions / TODO
 
 - [x] #24 — API REST `lots` (création, liste FIFO paginée, détail, update statut)
       + DTO in/out + mapper + Swagger + Bruno.
-- [ ] #25 — front `features/lots` (liste FIFO, détail, badge statut).
+- [x] #25 — front `features/lots` (liste FIFO, filtre pays, pagination, détail, badge statut).
 - [x] #26 — tests d'intégration (API + DB réelle via `docker-compose.test.yml`).
 - [ ] Transitions de statut automatiques (alerting hors-plage, cron péremption).
 - [ ] Exposition éventuelle de `harvestDate` / `qualityGrade` à l'API.

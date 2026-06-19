@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router';
+import { Link, Outlet } from 'react-router';
 import { UserMenu } from '@/features/auth/components/UserMenu';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
@@ -7,7 +7,19 @@ export function RootLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="font-heading text-lg font-semibold">FutureKawa</span>
+        <div className="flex items-center gap-4">
+          <Link to="/" className="font-heading text-lg font-semibold">
+            FutureKawa
+          </Link>
+          <nav>
+            <Link
+              to="/lots"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Lots
+            </Link>
+          </nav>
+        </div>
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <UserMenu />
