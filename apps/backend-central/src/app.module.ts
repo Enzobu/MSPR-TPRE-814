@@ -13,6 +13,7 @@ import { validateEnv } from './config/env.validation';
 import { CountryBackendsModule } from './country-backends/country-backends.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './infrastructure/persistence/prisma.module';
+import { MeasurementsModule } from './measurements/measurements.module';
 import { StocksModule } from './stocks/stocks.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { StocksModule } from './stocks/stocks.module';
     CountryBackendsModule,
     AuthModule,
     StocksModule,
+    MeasurementsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -15,3 +15,12 @@ export interface PaginatedResponse<T> {
 export interface ConsolidatedResponse<T> extends PaginatedResponse<T> {
   unavailable: CountryCode[];
 }
+
+// Liste consolidée non paginée du siège (ADR-0007) : pour les agrégats dont le
+// volume est déjà borné côté pays (ex. buckets de mesures), on renvoie la liste
+// telle quelle + les pays injoignables, sans pagination. Même garantie : jamais
+// 500 quand un backend pays est down.
+export interface ConsolidatedList<T> {
+  data: T[];
+  unavailable: CountryCode[];
+}

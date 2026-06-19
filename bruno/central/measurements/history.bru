@@ -1,0 +1,77 @@
+meta {
+  name: List warehouse measurements
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/measurements?country=BR&warehouse=W1&page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+params:query {
+  country: BR
+  warehouse: W1
+  page: 1
+  pageSize: 20
+  ~from: 2026-06-01T00:00:00.000Z
+  ~to: 2026-06-19T23:59:59.000Z
+}
+
+tests {
+  test('should return 200 (never 500, even if the country is down)', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the consolidated paginated shape', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('total').that.is.a('number');
+    expect(body).to.have.property('page', 1);
+    expect(body).to.have.property('pageSize', 20);
+    expect(body).to.have.property('unavailable').that.is.an('array');
+  });
+}
+
+docs {
+  # GET /api/v1/measurements — Historique des mesures d'un entrepôt
+
+  Proxy **mono-pays résilient** (ADR-0007) : relaie l'historique paginé du backend
+  pays via le `CountryBackendGateway` (timeout, retry+backoff, circuit breaker,
+  correlation-id). Une mesure appartient à UN pays / UN entrepôt → `country` et
+  `warehouse` sont **requis**. **Jamais 500** si le pays est down : la réponse est
+  vide + `unavailable: [country]`.
+
+  ## Query params
+  | Param | Requis | Description |
+  |---|---|---|
+  | `country` | oui | `BR\|EC\|CO` |
+  | `warehouse` | oui | identifiant d'entrepôt (non vide) |
+  | `from` | non | borne basse incluse (ISO 8601) |
+  | `to` | non | borne haute incluse (ISO 8601) |
+  | `page` | non (1) | page 1-based |
+  | `pageSize` | non (20) | taille de page (1–100) |
+
+  ## Réponse 200
+  ```json
+  {
+    "data": [ /* MeasurementDto[] */ ],
+    "total": 240,
+    "page": 1,
+    "pageSize": 20,
+    "unavailable": []
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `country` absent/invalide, `warehouse` absent, `from`/`to` non ISO 8601, `page`/`pageSize` hors bornes |
+
+  ## Notes
+  - Le siège mappe la donnée pays vers `MeasurementDto` (jamais renvoyée telle
+    quelle) → découplage du contrat pays.
+  - Pas de cache : la donnée est dynamique (à la différence de /stocks).
+  - Réfs : ADR-0007, CDC §III.5. Type partagé : `ConsolidatedResponse<Measurement>`.
+}

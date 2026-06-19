@@ -192,5 +192,6 @@ Lien : [`../user/monitoring.md`](../user/monitoring.md) *(à compléter avec le 
 
 - [x] #28 — subscriber MQTT qui persiste les relevés via `MeasurementRepository.save` (+ fallback REST `POST`).
 - [ ] #30 — front courbes T°/humidité (consomme l'historique + l'agrégat).
-- [ ] Agrégation siège multi-pays des mesures (tickets central).
+- [x] Proxy siège des mesures (`GET /api/v1/measurements` + `/aggregate`) —
+  mono-pays résilient, voir [`aggregation-siege.md`](./aggregation-siege.md).
 - [ ] Évaluation des seuils `COUNTRY_CONDITIONS` → transition de statut des lots (alerting).
