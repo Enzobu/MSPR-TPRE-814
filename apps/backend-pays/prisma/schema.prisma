@@ -34,6 +34,15 @@ enum LotStatus {
   PERIME
 }
 
+// Miroir de persistance de `AlertType` de @futurekawa/contracts.
+// Synchronisé à la main avec l'union TS. LOT_EXPIRED existe ici mais n'est
+// produit que par le cron péremption (#33), pas par l'évaluateur mesure (#32).
+enum AlertType {
+  TEMPERATURE_OUT_OF_RANGE
+  HUMIDITY_OUT_OF_RANGE
+  LOT_EXPIRED
+}
+
 // Lot de café vert (CDC §III.1 — FIFO, statut, traçabilité). Sur-ensemble du
 // type `Lot` de @futurekawa/contracts : harvestDate/qualityGrade/timestamps en
 // plus, exposés à l'API plus tard (#24). Les types Prisma ne sortent jamais
@@ -73,4 +82,24 @@ model Measurement {
   // Historique d'un entrepôt trié par date de relevé (requête principale).
   @@index([warehouse, recordedAt])
   @@map("measurements")
+}
+
+// Alerte métier (CDC §III.4, ADR-0004). Levée à l'ingestion d'une mesure hors
+// plage (#32) ou par le cron péremption (#33). La déduplication (1 alerte par
+// type+entité+jour UTC) est applicative et s'appuie sur l'index ci-dessous.
+// Sur-ensemble du type `Alert` de @futurekawa/contracts (createdAt en plus).
+model Alert {
+  id           String    @id @default(cuid())
+  country      Country
+  type         AlertType
+  message      String
+  lotId        String?
+  warehouse    String?
+  triggeredAt  DateTime
+  acknowledged Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  // Support de la dédup applicative (count par type sur une fenêtre jour).
+  @@index([type, triggeredAt])
+  @@map("alerts")
 }
