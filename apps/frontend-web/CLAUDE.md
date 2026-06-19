@@ -174,4 +174,4 @@ Libs installées et configurées ; **ne pas en introduire d'autres** sans nouvel
 - **Theme** : `ThemeProvider` (`src/components/theme/`) + `useTheme` (`src/hooks/use-theme.ts`), classe `dark` sur `<html>`.
 - **Tests** : `vitest` + `@testing-library/react` (dans `tests/`), e2e `playwright` (`tests/e2e/`, non lancé en CI).
 
-- **Auth** : stratégie (cookie vs token) — toujours à définir (ADR-0006). Le hook 401 de `http-client.ts` est un TODO en attente.
+- **Auth** : implémentée (ADR-0006, #20). Feature `src/features/auth/` : `AuthProvider`/`useAuth` (access token **en mémoire**, jamais `localStorage`), garde `<ProtectedRoute>`, page `/login` (react-hook-form + zod). Le hook 401 de `http-client.ts` tente un refresh transparent puis rejoue, sinon déconnexion forcée. `withCredentials: true` pour le cookie `fk_refresh` httpOnly. Token hors-React dans `src/lib/auth-token.ts`.

@@ -28,8 +28,8 @@ VITE_API_URL=http://localhost:3000   # URL du backend-central
 
 ## Points d'entrée
 
-- `src/main.tsx` → `src/App.tsx` (providers : ErrorBoundary, ThemeProvider, QueryClientProvider, Toaster) → `src/routes/router.tsx` (data router).
-- `src/lib/http-client.ts` : client axios partagé (baseURL `VITE_API_URL`, correlation-id, hook 401 pour l'auth à venir).
+- `src/main.tsx` → `src/App.tsx` (providers : ErrorBoundary, ThemeProvider, QueryClientProvider, **AuthProvider**, Toaster) → `src/routes/router.tsx` (data router, `/login` public + `<ProtectedRoute>`).
+- `src/lib/http-client.ts` : client axios partagé (baseURL `VITE_API_URL`, `withCredentials`, correlation-id, hook 401 → refresh transparent puis rejeu, sinon déconnexion). Auth dans `src/features/auth/` (ADR-0006).
 - Pages dans `src/pages/`, layout dans `src/components/layout/`, features dans `src/features/<nom>/`.
 
 ## Architecture & conventions

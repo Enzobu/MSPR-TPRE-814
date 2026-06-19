@@ -1,7 +1,7 @@
 ---
 title: Authentification (login / JWT / refresh)
 owner: Yanis
-status: in-progress
+status: implemented
 cdc-ref: "§V.2"
 adr-refs: [0002, 0006]
 updated: 2026-06-19
@@ -24,6 +24,10 @@ besoin sécurité du CDC §V.2 (OWASP API Top 10).
 - Access token JWT (15 min, body) + refresh token (7 j, cookie httpOnly, rotation).
 - Gardes `JwtAuthGuard` + `RolesGuard` (`@JwtAuth(...roles)`) prêtes à protéger
   les futures routes métier.
+- **Front (#20)** : page `/login`, contexte d'auth (`AuthProvider` + `useAuth`,
+  access token en mémoire), garde de routes `<ProtectedRoute>`, restauration de
+  session via `/auth/refresh` au boot, et intercepteur axios 401 → refresh
+  transparent → rejeu, sinon déconnexion forcée + redirection `/login`.
 
 **Hors scope :**
 - CRUD utilisateurs / inscription self-service (ticket ultérieur).
@@ -99,6 +103,14 @@ Clean archi (dependency rule ADR-0001) : les use-cases parlent aux ports
 - **Infrastructure** : [`src/auth/infrastructure/`](../../apps/backend-central/src/auth/infrastructure/) — Prisma repo, bcrypt, JWT.
 - **Interface** : [`src/auth/interface/`](../../apps/backend-central/src/auth/interface/) — controller, DTO, gardes, décorateurs.
 - **Seed** : [`prisma/seed.ts`](../../apps/backend-central/prisma/seed.ts).
+- **Front (#20)** : feature [`src/features/auth/`](../../apps/frontend-web/src/features/auth/)
+  (`api/auth.api.ts`, `schemas/login.schema.ts`, `context/AuthProvider.tsx` +
+  `context/auth-context.ts`, `hooks/use-auth.ts`, `components/LoginForm.tsx`,
+  `components/ProtectedRoute.tsx`, `components/UserMenu.tsx`), page
+  [`src/pages/LoginPage.tsx`](../../apps/frontend-web/src/pages/LoginPage.tsx),
+  token en mémoire + intercepteur dans
+  [`src/lib/auth-token.ts`](../../apps/frontend-web/src/lib/auth-token.ts) et
+  [`src/lib/http-client.ts`](../../apps/frontend-web/src/lib/http-client.ts).
 
 ## Tests
 
@@ -111,13 +123,17 @@ Clean archi (dependency rule ADR-0001) : les use-cases parlent aux ports
 | Unit | `src/auth/interface/guards/*.spec.ts` | 401 / 403 / attache user |
 | Unit | `src/auth/interface/refresh-cookie.spec.ts` | options cookie durcies |
 | Intégration | `test/auth.e2e-spec.ts` | login/me/refresh/logout contre une vraie DB |
+| UI | `tests/features/auth/components/LoginForm.test.tsx` | validation zod, message 401, onSuccess |
+| UI | `tests/features/auth/context/AuthProvider.test.tsx` | login→user en mémoire, logout→reset, restauration boot |
+| UI | `tests/features/auth/components/ProtectedRoute.test.tsx` | redirect non-auth, loader, contenu protégé |
+| Intégration (front) | `tests/lib/http-client.test.ts` | intercepteur 401 → refresh → rejeu, échec → logout forcé |
 
 > L'e2e d'intégration nécessite MariaDB up + migration appliquée. Le scénario
-> Playwright (#21) couvrira le parcours UI complet.
+> Playwright (#21) couvrira le parcours UI complet de bout en bout.
 
 ## Documentation utilisateur
 
-À écrire avec l'UI (#20) : [`../user/`](../user/).
+Parcours de connexion : [`../user/connexion.md`](../user/connexion.md).
 
 ## Évolutions / TODO
 
