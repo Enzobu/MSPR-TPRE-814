@@ -118,6 +118,7 @@ jobs:
 
       - name: Generate coverage reports
         run: |
+          pnpm --filter @futurekawa/nest-common test:cov
           pnpm --filter backend-central test:cov
           pnpm --filter backend-pays test:cov
           pnpm --filter frontend-web test:cov
@@ -130,6 +131,7 @@ jobs:
             apps/backend-central/coverage/lcov.info
             apps/backend-pays/coverage/lcov.info
             apps/frontend-web/coverage/lcov.info
+            packages/nest-common/coverage/lcov.info
           if-no-files-found: error
 
   e2e:
@@ -202,7 +204,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: js-ts-coverage
-          path: apps
+          # Les chemins lcov couvrent apps/ ET packages/ : la racine commune de
+          # l'artefact est le workspace, on restaure donc à la racine du repo.
+          path: .
 
       - name: Run SonarQube scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
