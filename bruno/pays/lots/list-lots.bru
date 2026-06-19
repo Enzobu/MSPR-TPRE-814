@@ -1,0 +1,66 @@
+meta {
+  name: List lots (FIFO)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/lots?page=1&pageSize=20&sort=storedAt:asc
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  pageSize: 20
+  sort: storedAt:asc
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return a paginated envelope', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('total').that.is.a('number');
+    expect(body).to.have.property('page', 1);
+    expect(body).to.have.property('pageSize', 20);
+  });
+
+  test('should be sorted FIFO (storedAt ascending)', function() {
+    const data = res.getBody().data;
+    for (let i = 1; i < data.length; i++) {
+      const prev = new Date(data[i - 1].storedAt).getTime();
+      const curr = new Date(data[i].storedAt).getTime();
+      expect(prev).to.be.at.most(curr);
+    }
+  });
+}
+
+docs {
+  # GET /api/v1/lots
+
+  Liste paginée des lots, **triée FIFO** (storedAt croissant) par défaut.
+
+  ## Query params
+  | Param | Défaut | Description |
+  |---|---|---|
+  | `page` | 1 | Page 1-based |
+  | `pageSize` | 20 | Taille de page (1–100) |
+  | `sort` | `storedAt:asc` | `storedAt:asc` (FIFO) ou `storedAt:desc` |
+
+  ## Réponse 200
+  ```json
+  { "data": [ /* LotResponseDto[] */ ], "total": 20, "page": 1, "pageSize": 20 }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `page`/`pageSize` hors bornes, ou `sort` non supporté |
+
+  ## Références
+  - CDC §III.1 (FIFO). Index DB `lots_storedAt_idx`.
+}

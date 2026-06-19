@@ -1,0 +1,97 @@
+meta {
+  name: Create lot
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lots
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "id": "{{country}}-2026-008",
+    "country": "{{country}}",
+    "farm": "Fazenda Aurora",
+    "warehouse": "Entrepôt Sul-1",
+    "storedAt": "2026-06-01T08:00:00.000Z"
+  }
+}
+
+script:post-response {
+  // Mémorise l'id créé pour les requêtes detail / patch du même dossier.
+  if (res.getStatus() === 201) {
+    const body = res.getBody();
+    if (body && body.id) {
+      bru.setEnvVar('lotId', body.id);
+    }
+  }
+}
+
+tests {
+  test('should return 201', function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test('should return the created lot with status CONFORME', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body).to.have.property('country', bru.getEnvVar('country'));
+    expect(body).to.have.property('status', 'CONFORME');
+    expect(body).to.have.property('storedAt');
+  });
+
+  test('should not expose internal Prisma fields', function() {
+    const body = res.getBody();
+    expect(body).to.not.have.property('createdAt');
+    expect(body).to.not.have.property('updatedAt');
+    expect(body).to.not.have.property('harvestDate');
+  });
+}
+
+docs {
+  # POST /api/v1/lots
+
+  Crée un lot pour le pays du backend. Le statut initial est **CONFORME**.
+
+  ## Requête
+  | Champ | Type | Obligatoire | Description |
+  |---|---|---|---|
+  | `id` | string | oui | Identifiant métier, unique au sein du pays (≤ 64 car.) |
+  | `country` | `BR\|EC\|CO` | oui | Doit correspondre au `COUNTRY_CODE` du backend |
+  | `farm` | string | oui | Exploitation d'origine (≤ 120 car.) |
+  | `warehouse` | string | oui | Entrepôt (≤ 120 car.) |
+  | `storedAt` | string | oui | Date d'entreposage ISO 8601 (clé FIFO) |
+
+  ## Réponse 201
+  ```json
+  {
+    "id": "BR-2026-008",
+    "country": "BR",
+    "farm": "Fazenda Aurora",
+    "warehouse": "Entrepôt Sul-1",
+    "storedAt": "2026-06-01T08:00:00.000Z",
+    "status": "CONFORME"
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | payload invalide (validation class-validator) |
+  | 409 | un lot avec cet id existe déjà |
+  | 422 | `country` ≠ `COUNTRY_CODE` du backend |
+
+  ## Effets de bord Bruno
+  - `script:post-response` écrit `lotId` dans l'environnement actif (utilisé par
+    detail / update status).
+
+  ## Références
+  - ADR-0002, CDC §III.1. Types : `CreateLotDto` (`packages/contracts/src/lot.ts`).
+}

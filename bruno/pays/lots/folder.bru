@@ -1,0 +1,17 @@
+meta {
+  name: lots
+  seq: 2
+}
+
+docs {
+  # Lots (backend-pays)
+
+  Gestion des lots de café vert d'un pays (CDC §III.1) : création, liste FIFO
+  paginée, détail, mise à jour de statut.
+
+  Routes sous `/api/v1/lots`. Cibler une instance via un environnement
+  `local-pays-br/ec/co`. Le `country` du body de création doit correspondre au
+  `COUNTRY_CODE` du backend ciblé (sinon 422).
+
+  Erreurs normalisées RFC 7807 (`application/problem+json`).
+}

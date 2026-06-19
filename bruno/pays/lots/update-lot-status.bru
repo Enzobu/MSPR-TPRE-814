@@ -1,0 +1,60 @@
+meta {
+  name: Update lot status
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/lots/{{lotId}}/status
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "EN_ALERTE"
+  }
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should reflect the new status', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id', bru.getEnvVar('lotId'));
+    expect(body).to.have.property('status', 'EN_ALERTE');
+  });
+}
+
+docs {
+  # PATCH /api/v1/lots/:id/status
+
+  Met à jour le statut d'un lot.
+
+  ## Requête
+  | Champ | Type | Obligatoire | Description |
+  |---|---|---|---|
+  | `status` | `CONFORME\|EN_ALERTE\|PERIME` | oui | Nouveau statut |
+
+  ## Réponse 200
+  Le lot mis à jour (même forme que `GET /lots/:id`).
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `status` absent ou hors enum |
+  | 404 | aucun lot pour cet id |
+
+  ## Prérequis Bruno
+  - `lotId` posé par `Create lot`.
+
+  ## Note
+  - Les transitions automatiques (alerting, péremption) sont hors scope de cette
+    route : elles seront pilotées par les features mesures/alertes.
+}

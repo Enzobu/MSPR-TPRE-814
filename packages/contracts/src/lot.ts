@@ -1,6 +1,9 @@
 import type { CountryCode } from './country';
 
-export type LotStatus = 'CONFORME' | 'EN_ALERTE' | 'PERIME';
+// Source unique de vérité des statuts de lot : le type dérive du tableau, qui
+// sert aussi de référentiel runtime (validation `@IsIn`, enums Swagger).
+export const LOT_STATUSES = ['CONFORME', 'EN_ALERTE', 'PERIME'] as const;
+export type LotStatus = (typeof LOT_STATUSES)[number];
 
 export interface Lot {
   id: string;
@@ -17,4 +20,8 @@ export interface CreateLotDto {
   farm: string;
   warehouse: string;
   storedAt: string;
+}
+
+export interface UpdateLotStatusDto {
+  status: LotStatus;
 }

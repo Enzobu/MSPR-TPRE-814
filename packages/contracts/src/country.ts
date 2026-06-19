@@ -1,4 +1,7 @@
-export type CountryCode = 'BR' | 'EC' | 'CO';
+// Source unique de vérité des codes pays : le type dérive du tableau, qui sert
+// aussi de référentiel runtime (validation `@IsIn`, enums Swagger, zod).
+export const COUNTRY_CODES = ['BR', 'EC', 'CO'] as const;
+export type CountryCode = (typeof COUNTRY_CODES)[number];
 
 export interface CountryConditions {
   idealTemperatureCelsius: number;
