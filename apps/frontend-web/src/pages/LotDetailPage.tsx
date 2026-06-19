@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { LotStatusBadge } from '@/features/lots/components/LotStatusBadge';
 import { useLot } from '@/features/lots/hooks/useLot';
 import { formatStoredAt } from '@/features/lots/lib/format';
+import { MeasurementsPanel } from '@/features/measurements/components/MeasurementsPanel';
 
 export default function LotDetailPage() {
   const { id = '' } = useParams();
@@ -58,6 +59,19 @@ export default function LotDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {!isPending && !isError && lot !== null && lot !== undefined ? (
+        <section className="space-y-3" aria-labelledby="measurements-heading">
+          <h2 id="measurements-heading" className="text-base font-semibold">
+            Courbes T° et humidité
+          </h2>
+          <MeasurementsPanel
+            country={lot.country}
+            warehouse={lot.warehouse}
+            from={lot.storedAt}
+          />
+        </section>
+      ) : null}
     </section>
   );
 }

@@ -168,6 +168,8 @@ parsing MQTT (constantes `@futurekawa/contracts`) — never trust the client. Le
 - **Infrastructure** : `apps/backend-pays/src/measurements/infrastructure/` (`prisma-measurement.repository.ts`, `mqtt-measurement.subscriber.ts`, `measurement-message.parser.ts`)
 - **Interface** : `apps/backend-pays/src/measurements/interface/` (controller + DTOs dont `ingest-measurement.dto.ts` + `measurement.mapper.ts`)
 - **MQTT module** : `apps/backend-pays/src/mqtt/mqtt.module.ts` (branche le subscriber, token `COUNTRY_CODE` partagé : `apps/backend-pays/src/config/country-code.token.ts`)
+- **Agrégation siège** : `apps/backend-central/src/measurements/` (proxy mono-pays résilient — voir [aggregation-siege.md](aggregation-siege.md))
+- **Front** : `apps/frontend-web/src/features/measurements/` (api `fetchMeasurements`, hook `useMeasurements`, `lib/tolerance.ts`, composants `MeasurementChart` recharts / `MeasurementStats` / `MeasurementsPanel`). Intégré sur `LotDetailPage` (période depuis `storedAt`). Lignes de référence + bande de tolérance depuis `COUNTRY_CONDITIONS`, points hors tolérance en `--destructive`.
 
 ## Tests
 
@@ -177,6 +179,7 @@ parsing MQTT (constantes `@futurekawa/contracts`) — never trust the client. Le
 | Unit | `apps/backend-pays/src/measurements/infrastructure/mqtt-measurement.subscriber.spec.ts`, `measurement-message.parser.spec.ts` | message valide → `save` appelé (warehouse du topic, country `COUNTRY_CODE`, `recordedAt` Date) ; JSON cassé / T°/humidité hors plage / topic mal formé / mauvais pays → drop + warn ; `reconnectPeriod > 0` |
 | Intégration (e2e + DB réelle) | `apps/backend-pays/test/measurements.e2e-spec.ts` | history (tri desc, pagination, filtre from/to, `warehouse` requis → 400, `from` invalide → 400) ; aggregate (buckets 1h, moyenne 1d, bucket non supporté → 400) ; **POST fallback** (201 + relecture, T° hors plage → 400, `warehouse` manquant → 400) ; **perf : 1000 mesures, `GET /measurements` paginé < 200 ms** |
 | Intégration MQTT (e2e + broker + DB réels) | `apps/backend-pays/test/mqtt-ingestion.e2e-spec.ts` | publication MQTT → persistance polled (< 5 s) ; payload invalide → rien persisté, pas de crash |
+| UI (Vitest + RTL) | `apps/frontend-web/tests/features/measurements/**` | `tolerance` (in/limite/hors plage) ; `MeasurementStats` (min/max/moy + comptage hors tolérance) ; `MeasurementChart` (rend lignes/points) ; `MeasurementsPanel` (données / vide / `unavailable`) |
 
 > Stratégie (rules/04-tests.md, ADR-0008) : unitaires sur l'application (deps
 > mockées, exécutés en CI) + suite d'intégration Supertest contre une MariaDB
@@ -186,12 +189,12 @@ persistance) au même compose.
 
 ## Documentation utilisateur
 
-Lien : [`../user/monitoring.md`](../user/monitoring.md) *(à compléter avec le front #30).*
+Lien : [`../user/monitoring.md`](../user/monitoring.md).
 
 ## Évolutions / TODO
 
 - [x] #28 — subscriber MQTT qui persiste les relevés via `MeasurementRepository.save` (+ fallback REST `POST`).
-- [ ] #30 — front courbes T°/humidité (consomme l'historique + l'agrégat).
+- [x] #30 — front courbes T°/humidité (recharts) sur la fiche lot : lignes de référence pays + highlight hors tolérance.
 - [x] Proxy siège des mesures (`GET /api/v1/measurements` + `/aggregate`) —
   mono-pays résilient, voir [`aggregation-siege.md`](./aggregation-siege.md).
 - [ ] Évaluation des seuils `COUNTRY_CONDITIONS` → transition de statut des lots (alerting).
