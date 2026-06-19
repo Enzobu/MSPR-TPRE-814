@@ -64,6 +64,10 @@ jobs:
           DATABASE_CENTRAL_URL=mysql://futurekawa:futurekawa@mariadb-central:3306/futurekawa_central
           DATABASE_PAYS_URL=mysql://futurekawa:futurekawa@mariadb-pays:3306/futurekawa_pays
           MQTT_PAYS_URL=mqtt://mosquitto-pays:1883
+          MQTT_IOT_USERNAME=iot
+          MQTT_IOT_PASSWORD=ci-iot-password
+          MQTT_BACKEND_USERNAME=backend-pays
+          MQTT_BACKEND_PASSWORD=ci-backend-password
           SMTP_HOST=ssl0.ovh.net
           SMTP_PORT=587
           SMTP_SECURE=false
