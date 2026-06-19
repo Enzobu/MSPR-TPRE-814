@@ -17,3 +17,42 @@ generator client {
 datasource db {
   provider = "mysql"
 }
+
+// Miroir de persistance de `CountryCode` de @futurekawa/contracts (BR|EC|CO).
+// Synchronisé à la main avec l'union TS — le contracts reste type-only.
+enum Country {
+  BR
+  EC
+  CO
+}
+
+// Miroir de persistance de `LotStatus` de @futurekawa/contracts.
+// Synchronisé à la main avec l'union TS.
+enum LotStatus {
+  CONFORME
+  EN_ALERTE
+  PERIME
+}
+
+// Lot de café vert (CDC §III.1 — FIFO, statut, traçabilité). Sur-ensemble du
+// type `Lot` de @futurekawa/contracts : harvestDate/qualityGrade/timestamps en
+// plus, exposés à l'API plus tard (#24). Les types Prisma ne sortent jamais
+// d'un contrôleur — mapping explicite vers les DTO contracts.
+model Lot {
+  id           String    @id @default(cuid())
+  country      Country
+  farm         String
+  warehouse    String
+  storedAt     DateTime
+  status       LotStatus @default(CONFORME)
+  harvestDate  DateTime?
+  qualityGrade String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // FIFO : tri chronologique des lots stockés (CDC §III.1).
+  @@index([storedAt])
+  // Un identifiant de lot est unique au sein d'un pays.
+  @@unique([id, country])
+  @@map("lots")
+}
