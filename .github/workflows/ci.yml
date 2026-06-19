@@ -116,10 +116,11 @@ jobs:
       - name: Test workspaces
         run: pnpm -r test
 
-      - name: Generate backend coverage reports
+      - name: Generate coverage reports
         run: |
           pnpm --filter backend-central test:cov
           pnpm --filter backend-pays test:cov
+          pnpm --filter frontend-web test:cov
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -128,6 +129,7 @@ jobs:
           path: |
             apps/backend-central/coverage/lcov.info
             apps/backend-pays/coverage/lcov.info
+            apps/frontend-web/coverage/lcov.info
           if-no-files-found: error
 
   sonarqube:

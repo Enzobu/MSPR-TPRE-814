@@ -17,5 +17,11 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
     css: true,
+    coverage: {
+      // lcov requis par SonarQube (sonar.javascript.lcov.reportPaths).
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage',
+    },
   },
 });
