@@ -74,6 +74,17 @@ export class PrismaLotRepository implements LotRepository {
     return { data: rows.map((row) => this.toDomain(row)), total };
   }
 
+  async findExpirable(cutoff: Date): Promise<Lot[]> {
+    const rows = await this.prisma.lot.findMany({
+      where: {
+        storedAt: { lt: cutoff },
+        // Les lots déjà PERIME sont définitifs : inutile de les rescanner.
+        status: { not: 'PERIME' },
+      },
+    });
+    return rows.map((row) => this.toDomain(row));
+  }
+
   async updateStatus(id: string, status: LotStatus): Promise<Lot | null> {
     try {
       const row = await this.prisma.lot.update({

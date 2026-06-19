@@ -23,5 +23,8 @@ export interface LotRepository {
   existsById(id: string): Promise<boolean>;
   findById(id: string): Promise<Lot | null>;
   findManyByStoredAt(params: FindManyParams): Promise<Page<Lot>>;
+  // Péremption (ADR-0004) : lots dont `storedAt < cutoff` ET non encore `PERIME`
+  // (ceux déjà périmés n'ont pas besoin d'être retouchés par le cron).
+  findExpirable(cutoff: Date): Promise<Lot[]>;
   updateStatus(id: string, status: LotStatus): Promise<Lot | null>;
 }

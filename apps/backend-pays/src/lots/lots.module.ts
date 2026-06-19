@@ -28,5 +28,7 @@ import { LotsController } from './interface/lots.controller';
         config.get('COUNTRY_CODE', { infer: true }),
     },
   ],
+  // LOT_REPOSITORY est exporté pour AlertsModule (cron péremption #33).
+  exports: [LOT_REPOSITORY],
 })
 export class LotsModule {}

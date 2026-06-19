@@ -40,6 +40,22 @@ export class PrismaAlertRepository implements AlertRepository {
     return count > 0;
   }
 
+  async existsForLotOnDay(
+    type: AlertType,
+    lotId: string,
+    dayUtc: Date,
+  ): Promise<boolean> {
+    const count = await this.prisma.alert.count({
+      where: {
+        type,
+        lotId,
+        // Fenêtre [début de jour UTC, début du jour suivant).
+        triggeredAt: { gte: dayUtc, lt: addDay(dayUtc) },
+      },
+    });
+    return count > 0;
+  }
+
   async save(alert: NewAlert): Promise<Alert> {
     const row = await this.prisma.alert.create({
       data: {

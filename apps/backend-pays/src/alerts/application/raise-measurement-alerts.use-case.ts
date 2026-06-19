@@ -6,6 +6,7 @@ import { evaluateMeasurement } from '../domain/alert-rule';
 import type { AlertEvaluation } from '../domain/alert-rule';
 import { ALERT_REPOSITORY } from '../domain/alert.repository';
 import type { AlertRepository } from '../domain/alert.repository';
+import { startOfDayUtc } from '../domain/day';
 
 export interface MeasurementForAlerting {
   country: CountryCode;
@@ -13,10 +14,6 @@ export interface MeasurementForAlerting {
   temperatureCelsius: number;
   humidityPercent: number;
 }
-
-// Début de la journée calendaire UTC du moment courant.
-const startOfDayUtc = (now: Date): Date =>
-  new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
 // Évalue une mesure (ADR-0004), déduplique par (type, entrepôt, jour UTC) et
 // persiste les alertes manquantes. Déclenché à chaque ingestion (MQTT + REST).
