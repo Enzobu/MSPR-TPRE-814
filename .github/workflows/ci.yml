@@ -249,15 +249,13 @@ jobs:
           curl -sS -u "$SONAR_TOKEN:" \
             "$SONAR_HOST_URL/api/issues/search?componentKeys=$PK&resolved=false&ps=100" \
             | jq '{total: .total, issues: [.issues[] | {rule, severity, type, comp: .component, line, msg: .message}]}'
-          BR="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          echo "branch=$BR"
-          echo '===== HOTSPOT MEASURES (branch) ====='
+          echo '===== HOTSPOT MEASURES (main, no branch) ====='
           curl -sS -u "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/measures/component?component=$PK&branch=$BR&metricKeys=security_hotspots,security_hotspots_reviewed,new_security_hotspots,new_security_hotspots_reviewed" \
-            | jq -c '.'
-          echo '===== HOTSPOTS RAW (branch, http code) ====='
+            "$SONAR_HOST_URL/api/measures/component?component=$PK&metricKeys=security_hotspots,security_hotspots_reviewed,new_security_hotspots,new_security_hotspots_reviewed,security_hotspots_to_review_status" \
+            | jq -c '.component.measures'
+          echo '===== HOTSPOTS RAW (no branch, http code) ====='
           curl -sS -u "$SONAR_TOKEN:" -w '\nHTTP:%{http_code}\n' \
-            "$SONAR_HOST_URL/api/hotspots/search?projectKey=$PK&branch=$BR&ps=100" | head -c 1500
+            "$SONAR_HOST_URL/api/hotspots/search?projectKey=$PK&ps=100" | head -c 2000
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
