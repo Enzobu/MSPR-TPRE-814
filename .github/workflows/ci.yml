@@ -243,7 +243,16 @@ jobs:
           echo '===== QUALITY GATE PROJECT STATUS ====='
           curl -sS -u "$SONAR_TOKEN:" \
             "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$ANALYSIS_ID" \
-            | jq '{status: .projectStatus.status, conditions: [.projectStatus.conditions[] | {metric: .metricKey, comparator: .comparator, threshold: .errorThreshold, actual: .actualValue, status: .status}]}'
+            | jq '{status: .projectStatus.status, conditions: [.projectStatus.conditions[] | select(.status=="ERROR") | {metric: .metricKey, threshold: .errorThreshold, actual: .actualValue}]}'
+          PK="Enzobu_MSPR-TPRE-814_328a41f3-b493-4fed-8e21-11fbc69b8ee6"
+          echo '===== OPEN ISSUES (unresolved) ====='
+          curl -sS -u "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/issues/search?componentKeys=$PK&resolved=false&ps=100" \
+            | jq '{total: .total, issues: [.issues[] | {rule, severity, type, comp: .component, line, msg: .message}]}'
+          echo '===== HOTSPOTS (to review) ====='
+          curl -sS -u "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/hotspots/search?projectKey=$PK&status=TO_REVIEW&ps=100" \
+            | jq '{total: (.paging.total // (.hotspots | length)), hotspots: [.hotspots[] | {key, rule: .ruleKey, comp: .component, line, msg: .message, vuln: .vulnerabilityProbability}]}'
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
