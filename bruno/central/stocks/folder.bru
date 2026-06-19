@@ -1,0 +1,14 @@
+meta {
+  name: stocks
+  seq: 3
+}
+
+docs {
+  # Stocks consolidés (backend-central)
+
+  Agrégation siège des lots des backends pays (ADR-0007) : tri FIFO, pagination
+  sur l'ensemble fusionné, réponse partielle `unavailable` si un pays est
+  injoignable (jamais 500). Filtrable par pays.
+
+  Cible l'environnement `local-central`.
+}

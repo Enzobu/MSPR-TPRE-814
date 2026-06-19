@@ -1,0 +1,81 @@
+meta {
+  name: List consolidated stocks
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/stocks?page=1&pageSize=20&sort=storedAt:asc
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  pageSize: 20
+  sort: storedAt:asc
+  ~country: BR
+}
+
+tests {
+  test('should return 200 (never 500, even if a country is down)', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the consolidated paginated shape', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('total').that.is.a('number');
+    expect(body).to.have.property('page', 1);
+    expect(body).to.have.property('pageSize', 20);
+    expect(body).to.have.property('unavailable').that.is.an('array');
+  });
+
+  test('should be sorted FIFO (storedAt ascending)', function () {
+    const data = res.getBody().data;
+    for (let i = 1; i < data.length; i++) {
+      expect(new Date(data[i - 1].storedAt).getTime())
+        .to.be.at.most(new Date(data[i].storedAt).getTime());
+    }
+  });
+}
+
+docs {
+  # GET /api/v1/stocks — Stocks consolidés (lots multi-pays)
+
+  Agrège les lots des backends pays via le `CountryBackendGateway` résilient
+  (timeout, retry+backoff, circuit breaker, correlation-id). Tri **FIFO**,
+  pagination sur l'ensemble fusionné. **Jamais 500** si un pays est down : les
+  pays injoignables sont listés dans `unavailable` (ADR-0007).
+
+  ## Query params
+  | Param | Défaut | Description |
+  |---|---|---|
+  | `country` | (tous) | `BR\|EC\|CO` — filtre ; absent → consolidation des 3 pays |
+  | `page` | 1 | page 1-based |
+  | `pageSize` | 20 | taille de page (1–100) |
+  | `sort` | `storedAt:asc` | `storedAt:asc` (FIFO) ou `storedAt:desc` |
+
+  ## Réponse 200
+  ```json
+  {
+    "data": [ /* StockLotDto[] */ ],
+    "total": 20,
+    "page": 1,
+    "pageSize": 20,
+    "unavailable": ["EC"]
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `country` invalide, `page`/`pageSize` hors bornes, `sort` non supporté |
+
+  ## Notes
+  - Le siège pagine chaque pays (100/page) jusqu'à épuisement, fusionne (k-way
+    merge des flux déjà triés), puis pagine l'ensemble → `total` exact.
+  - Réponse complète mise en cache TTL court (`STOCKS_CACHE_TTL_MS`) ; une réponse
+    partielle (`unavailable` non vide) n'est jamais cachée.
+  - Réfs : ADR-0007, CDC §III.5. Type partagé : `ConsolidatedResponse<Lot>`.
+}
