@@ -11,6 +11,7 @@ import type { Env } from './config/env.validation';
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './infrastructure/persistence/prisma.module';
+import { LotsModule } from './lots/lots.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PrismaModule } from './infrastructure/persistence/prisma.module';
     }),
     PrismaModule,
     HealthModule,
+    LotsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

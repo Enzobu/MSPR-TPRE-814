@@ -82,24 +82,35 @@ Index : `lots_storedAt_idx` (FIFO), `lots_id_country_key` (unicité).
 
 | Type | Contrat | Fichier |
 |---|---|---|
-| Types | `Lot`, `LotStatus`, `CreateLotDto` | `packages/contracts/src/lot.ts` |
+| Types | `Lot`, `LotStatus`, `CreateLotDto`, `UpdateLotStatusDto`, `PaginatedResponse` | `packages/contracts/src/lot.ts`, `pagination.ts` |
 | Prisma | modèle `Lot` | `apps/backend-pays/prisma/schema.prisma` |
-| REST | `POST /api/v1/lots`, `GET /api/v1/lots` | _à venir (#24)_ |
+| REST | `POST /api/v1/lots` | `apps/backend-pays/src/lots/interface/lots.controller.ts` |
+| REST | `GET /api/v1/lots?page&pageSize&sort` | idem |
+| REST | `GET /api/v1/lots/:id` | idem |
+| REST | `PATCH /api/v1/lots/:id/status` | idem |
 
-Swagger : `/api-docs#/Lots` _(à venir avec #24)_.
+Status codes : `201` création, `200` lecture/patch, `400` validation, `404`
+inconnu, `409` id déjà pris, `422` pays ≠ backend. Erreurs RFC 7807.
+
+Swagger : `/api-docs` (tag **lots**). Bruno : `bruno/pays/lots/`.
 
 ## Architecture technique
 
-Persistance locale au backend-pays (clean archi : modèle Prisma en
-infrastructure, jamais exposé tel quel à un contrôleur — mapping explicite vers
-les DTO `@futurekawa/contracts` côté #24).
+Persistance locale au backend-pays (clean archi). Le modèle Prisma vit en
+infrastructure et n'est jamais exposé : `PrismaLotRepository` mappe la ligne DB
+vers l'entité domaine `Lot`, puis `lot.mapper.ts` projette vers `LotResponseDto`
+(forme figée alignée sur le contrat `Lot`). Le code pays (`COUNTRY_CODE`) est
+injecté dans le use-case de création pour rejeter un lot d'un autre pays.
 
 ## Implémentation
 
 - **Schéma** : [`../../apps/backend-pays/prisma/schema.prisma`](../../apps/backend-pays/prisma/schema.prisma)
 - **Migration** : `apps/backend-pays/prisma/migrations/*_add_lot/`
 - **Seed** : [`../../apps/backend-pays/prisma/seed.ts`](../../apps/backend-pays/prisma/seed.ts)
-- **Domain / Application / Infrastructure / Interface** : _à venir (#24)_.
+- **Domain** : `apps/backend-pays/src/lots/domain/` (`lot.ts`, `lot.repository.ts`, `lot.errors.ts`)
+- **Application** : `apps/backend-pays/src/lots/application/` (4 use-cases : create / list / get / update-status)
+- **Infrastructure** : `apps/backend-pays/src/lots/infrastructure/prisma-lot.repository.ts`
+- **Interface** : `apps/backend-pays/src/lots/interface/` (controller + DTOs + `lot.mapper.ts`)
 
 ### Migrer / seeder en local
 
@@ -119,20 +130,24 @@ pnpm --filter backend-pays db:seed
 
 | Niveau | Fichier | Couvre |
 |---|---|---|
-| Intégration | `apps/backend-pays/test/lots.e2e-spec.ts` | repository + API _(à venir #26)_ |
+| Unit | `apps/backend-pays/src/lots/application/*.spec.ts` | règles métier des 4 use-cases (mismatch pays, doublon, not-found, pagination/FIFO) |
+| HTTP (e2e, repo en mémoire) | `apps/backend-pays/test/lots.e2e-spec.ts` | contrat des 4 endpoints : status codes, RFC 7807, tri FIFO, pagination, validation |
+| Intégration DB réelle | _ticket #26_ | `PrismaLotRepository` + API contre MariaDB |
 
-> #23 ne livre pas de logique métier (modèle + migration + seed uniquement) :
-> pas de test unitaire à ce stade. La couverture arrive avec l'API (#24) et les
-> tests d'intégration (#26).
+> Stratégie (rules/04-tests.md) : beaucoup d'unitaires sur l'application, un test
+> de contrat HTTP avec repository en mémoire (pas de DB hors
+> `docker-compose.test.yml`). L'intégration DB réelle est le ticket **#26**.
 
 ## Documentation utilisateur
 
-Lien : [`../user/lots.md`](../user/lots.md) _(à créer avec #24)_.
+Lien : [`../user/lots.md`](../user/lots.md) _(à créer avec le front #25)_.
 
 ## Évolutions / TODO
 
-- [ ] #24 — API REST `lots` (création, listing FIFO trié, consultation) + DTO +
-      Swagger + Bruno.
+- [x] #24 — API REST `lots` (création, liste FIFO paginée, détail, update statut)
+      + DTO in/out + mapper + Swagger + Bruno.
+- [ ] #25 — front `features/lots` (liste FIFO, détail, badge statut).
 - [ ] #26 — tests d'intégration (repository Prisma + API + DB réelle).
 - [ ] Transitions de statut automatiques (alerting hors-plage, cron péremption).
+- [ ] Exposition éventuelle de `harvestDate` / `qualityGrade` à l'API.
 - [ ] Documentation utilisateur métier `docs/user/lots.md`.

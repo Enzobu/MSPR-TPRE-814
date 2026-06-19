@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { COUNTRY_CODES } from '@futurekawa/contracts';
 import { createEnvValidator } from '@futurekawa/nest-common';
 
 // Source unique de vérité des variables d'env du backend-pays.
@@ -11,7 +12,7 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
 
   // BR | EC | CO — pilote les seuils via @futurekawa/contracts.
-  COUNTRY_CODE: z.enum(['BR', 'EC', 'CO']),
+  COUNTRY_CODE: z.enum(COUNTRY_CODES),
 
   DATABASE_URL: z.string().url(),
   MQTT_URL: z.string().url(),
