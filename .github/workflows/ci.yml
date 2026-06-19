@@ -249,10 +249,18 @@ jobs:
           curl -sS -u "$SONAR_TOKEN:" \
             "$SONAR_HOST_URL/api/issues/search?componentKeys=$PK&resolved=false&ps=100" \
             | jq '{total: .total, issues: [.issues[] | {rule, severity, type, comp: .component, line, msg: .message}]}'
-          echo '===== HOTSPOTS (to review) ====='
+          BR="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          echo "branch=$BR"
+          echo '===== HOTSPOTS (branch) ====='
           curl -sS -u "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/hotspots/search?projectKey=$PK&status=TO_REVIEW&ps=100" \
-            | jq '{total: (.paging.total // (.hotspots | length)), hotspots: [.hotspots[] | {key, rule: .ruleKey, comp: .component, line, msg: .message, vuln: .vulnerabilityProbability}]}'
+            "$SONAR_HOST_URL/api/hotspots/search?projectKey=$PK&branch=$BR&ps=100" \
+            | jq -c '{total: .paging.total, hotspots: [(.hotspots // [])[] | {rule: .ruleKey, comp: .component, line, status, msg: .message, vuln: .vulnerabilityProbability}]}' \
+            || echo "branch hotspots query failed"
+          echo '===== HOTSPOTS (default branch) ====='
+          curl -sS -u "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/hotspots/search?projectKey=$PK&ps=100" \
+            | jq -c '{total: .paging.total, hotspots: [(.hotspots // [])[] | {rule: .ruleKey, comp: .component, line, status, msg: .message, vuln: .vulnerabilityProbability}]}' \
+            || echo "default hotspots query failed"
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
