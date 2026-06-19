@@ -1,0 +1,48 @@
+meta {
+  name: Me
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/me
+  body: none
+  auth: inherit
+}
+
+tests {
+  test('should return 200 with a valid bearer token', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the current user', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body).to.have.property('email');
+    expect(body).to.have.property('role');
+  });
+
+  test('should never expose the password hash', function() {
+    expect(res.getBody()).to.not.have.property('passwordHash');
+  });
+}
+
+docs {
+  # GET /api/v1/auth/me
+
+  Renvoie l'utilisateur déduit de l'**access token** (`Authorization: Bearer`,
+  hérité de la collection via `{{accessToken}}`).
+
+  ## Pré-requis
+  Un `login` (ou `refresh`) récent pour disposer d'un `accessToken` valide.
+
+  ## Réponse 200
+  ```json
+  { "id": "clx...", "email": "admin@futurekawa.local", "role": "ADMIN", "country": null }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 401 | token absent, invalide ou expiré |
+}

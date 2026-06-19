@@ -6,10 +6,19 @@ meta {
 docs {
   # Auth (backend-central)
 
-  Endpoints d'authentification exposés par le backend siège.
+  Endpoints d'authentification exposés par le backend siège (ADR-0006).
 
-  - `POST /api/v1/auth/login` — login + émission JWT
-  - (à venir) `POST /api/v1/auth/refresh` — renouvellement du access token
-  - (à venir) `POST /api/v1/auth/logout` — révocation du refresh token
-  - (à venir) `GET  /api/v1/auth/me` — user courant (requiert bearer)
+  - `POST /api/v1/auth/login` — login + access token (body) + refresh (cookie)
+  - `POST /api/v1/auth/refresh` — rotation via cookie `fk_refresh`
+  - `POST /api/v1/auth/logout` — efface le cookie `fk_refresh`
+  - `GET  /api/v1/auth/me` — user courant (requiert bearer)
+
+  ## Parcours type
+  1. `Login` → capture `accessToken`, pose le cookie `fk_refresh`.
+  2. `Me` → vérifie le bearer hérité de la collection.
+  3. `Refresh` → nouvel `accessToken` + rotation du cookie.
+  4. `Logout` → efface le cookie.
+
+  Les identifiants (`userEmail` / `userPassword`) de l'environnement doivent
+  correspondre au compte seedé (`prisma/seed.ts`, vars `SEED_ADMIN_*`).
 }
