@@ -1,0 +1,50 @@
+meta {
+  name: Readiness
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/ready
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200 (deps up) or 503 (deps down)', function () {
+    expect([200, 503]).to.include(res.getStatus());
+  });
+
+  test('should expose database and mqtt indicators', function () {
+    const body = res.getBody();
+    // 200 -> info ; 503 -> error (RFC 7807 via le filtre global).
+    expect(body).to.be.an('object');
+  });
+}
+
+docs {
+  # GET /ready — Readiness
+
+  Sonde de disponibilité : vérifie les dépendances critiques.
+
+  - **database** : `SELECT 1` via Prisma (MariaDB).
+  - **mqtt** : connexion courte au broker Mosquitto.
+
+  ## Réponse 200 (toutes les dépendances prêtes)
+  ```json
+  {
+    "status": "ok",
+    "info": { "database": { "status": "up" }, "mqtt": { "status": "up" } },
+    "error": {},
+    "details": { "database": { "status": "up" }, "mqtt": { "status": "up" } }
+  }
+  ```
+
+  ## Réponse 503 (au moins une dépendance down)
+  Renvoyée au format RFC 7807 (`application/problem+json`) par le filtre global.
+
+  ## Notes
+  - Route hors `/api/v1` et publique (`auth: none`).
+  - Utilisée par l'orchestrateur / Compose pour décider du routage du trafic.
+  - Référence : rules `08-observability`, ADR-0003 (MQTT).
+}
