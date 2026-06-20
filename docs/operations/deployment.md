@@ -111,6 +111,40 @@ En cas de déploiement défaillant :
 > 🔁 **Rollback à tester (#51)** : valider la procédure sur l'environnement réel
 > et joindre la preuve.
 
+## 5. Checklist « avant mise en prod » (CDC §V.2, OWASP API Top 10)
+
+Config prod de référence : `apps/backend-central/.env.example.prod`,
+`apps/backend-pays/.env.example.prod` (#50).
+
+**Secrets & environnement**
+- [ ] `NODE_ENV=production` sur les deux backends.
+- [ ] Tous les secrets (`DB`, `JWT_SECRET` ≥ 32 car., `MQTT_*`, `SMTP_*`) fournis
+      par le gestionnaire de secrets du CI/CD — **aucun** en clair dans le dépôt.
+- [ ] `JWT_SECRET` distinct du local (le `docker-compose.yml` fixe une valeur
+      `change-me-for-local-compose-only` → **surchargée** en prod).
+- [ ] Identifiants du seed ADMIN forts et changés après le premier login.
+
+**Réseau & en-têtes**
+- [ ] `CORS_ORIGIN` = origine(s) HTTPS exacte(s), **jamais `*`** (vérifié sur les 2 backends).
+- [ ] **CSP** active (en-tête `Content-Security-Policy` servi par Nginx) et
+      `connect-src` restreint à l'origine réelle de l'API → **0 erreur console** au
+      chargement (à vérifier dans le navigateur sur l'image buildée).
+- [ ] En-têtes de sécurité présents : `X-Content-Type-Options`, `X-Frame-Options`,
+      `Referrer-Policy`, `Permissions-Policy` (cf. `apps/frontend-web/nginx.conf`).
+- [ ] HTTPS de bout en bout (TLS au niveau du reverse proxy / Dokploy).
+
+**Auth & cookies**
+- [ ] Cookie de refresh `fk_refresh` : `httpOnly` + `Secure` + `SameSite=Strict`
+      (auto en prod via `isProduction`, cf. `refresh-cookie.ts`).
+- [ ] Tokens d'accès **en mémoire** côté front (jamais `localStorage`).
+
+**Robustesse & limites**
+- [ ] Rate limiting resserré (`THROTTLE_LIMIT`/`THROTTLE_TTL_MS`) selon la charge attendue.
+- [ ] Broker MQTT : `allow_anonymous false`, credentials prod, ACL par pays.
+- [ ] `/health` et `/ready` répondent ; healthchecks Docker actifs.
+- [ ] Erreurs normalisées RFC 7807, **aucune** stacktrace renvoyée au client.
+- [ ] Logs en `LOG_LEVEL=info`, sans secret.
+
 ## Références
 
 - Pipeline détaillé : [`../ci-cd/github-actions.md`](../ci-cd/github-actions.md)
