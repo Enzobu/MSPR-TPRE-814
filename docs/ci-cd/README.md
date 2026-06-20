@@ -1,14 +1,19 @@
 ---
-title: Docker et déploiement local
-owner: équipe
-status: implemented
-updated: 2026-06-17
+title: CI/CD — index
+owner: Yanis
+status: in-progress
+cdc-ref: "§IV.5"
+updated: 2026-06-20
 ---
 
-# Docker et déploiement local
+# CI/CD (CDC §IV.5)
 
-Cette section documente l'environnement conteneurisé FutureKawa.
+Cette section documente la chaîne d'intégration et de déploiement continu, ainsi
+que l'environnement conteneurisé.
 
-Contenu :
+| Document | Contenu |
+|---|---|
+| [`github-actions.md`](github-actions.md) | Pipeline GitHub Actions : jobs, secrets, preuve d'exécution, politique de merge |
+| [`docker.md`](docker.md) | Images, services Docker Compose, ports et commandes |
 
-- [`docker.md`](./docker.md) : images, services Docker Compose, ports et commandes Makefile.
+Voir aussi : déploiement & rollback dans [`../operations/deployment.md`](../operations/deployment.md).

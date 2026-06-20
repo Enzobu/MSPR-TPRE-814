@@ -4,6 +4,9 @@ build/
 coverage/
 *.env*
 !.env.compose.example
+!**/.env.test.example
+!**/.env.example
+!**/.env.example.prod
 *.log
 .DS_Store
 .idea/
@@ -20,3 +23,7 @@ idea/
 # IoT firmware secrets
 apps/iot/include/secrets.h
 apps/iot/src/secrets.h
+
+# VitePress
+docs/.vitepress/cache
+docs/.vitepress/dist

@@ -27,7 +27,8 @@ docs {
   ## Auth
   - Mode : `bearer` (hérité par toutes les requêtes)
   - Token : `{{accessToken}}` (capturé à partir de la réponse du login)
-  - Refresh : `{{refreshToken}}` (capturé aussi)
+  - Refresh : cookie httpOnly `fk_refresh` posé au login, géré par le cookie
+    jar de Bruno et renvoyé automatiquement à `refresh` / `logout` (ADR-0006)
   - Pour un endpoint public : mettre `auth: none` sur la requête
 
   ## Correlation ID

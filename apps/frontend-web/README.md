@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+# frontend-web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SPA React (siège + équipes terrain) consommant `backend-central`. Voir le détail métier dans [`docs/features/`](../../docs/features/) et les conventions dans [`CLAUDE.md`](./CLAUDE.md).
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Vite 8 · React 19 · TypeScript 6 · Tailwind v4 · shadcn (preset Nova, Lucide, Geist) · react-router v7+ · @tanstack/react-query v5 · axios · sonner · react-hook-form + zod · vitest + Testing Library · Playwright. Stack figée par [ADR-0005](../../docs/adr/0005-frontend-stack.md).
 
-## React Compiler
+## Commandes
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm dev          # serveur Vite (port 5173)
+pnpm build        # tsc -b + vite build
+pnpm lint         # ESLint
+pnpm test         # tests unit/UI (vitest, une passe)
+pnpm test:watch   # vitest en watch
+pnpm test:cov     # vitest + couverture
+pnpm test:e2e     # Playwright (démarre Vite ; nécessite `pnpm exec playwright install`)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Variables d'environnement
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Préfixe `VITE_` obligatoire — **tout `VITE_*` est public** (shipped dans le bundle), jamais de secret. Voir [`.env.example`](./.env.example).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+VITE_API_URL=http://localhost:3000   # URL du backend-central
+```
+
+## Points d'entrée
+
+- `src/main.tsx` → `src/App.tsx` (providers : ErrorBoundary, ThemeProvider, QueryClientProvider, **AuthProvider**, Toaster) → `src/routes/router.tsx` (data router, `/login` public + `<ProtectedRoute>`).
+- `src/lib/http-client.ts` : client axios partagé (baseURL `VITE_API_URL`, `withCredentials`, correlation-id, hook 401 → refresh transparent puis rejeu, sinon déconnexion). Auth dans `src/features/auth/` (ADR-0006).
+- Pages dans `src/pages/`, layout dans `src/components/layout/`, features dans `src/features/<nom>/`.
+
+## Architecture & conventions
+
+Feature-first, tests dans `tests/` (pas de colocation), couleurs via variables shadcn uniquement, axios via `http-client` (jamais `fetch`). Détail : [`CLAUDE.md`](./CLAUDE.md).

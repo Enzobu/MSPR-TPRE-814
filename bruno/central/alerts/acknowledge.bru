@@ -1,0 +1,65 @@
+meta {
+  name: Acknowledge alert (proxy)
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/alerts/{{alertId}}/acknowledge?country={{alertCountry}}
+  body: none
+  auth: none
+}
+
+params:query {
+  country: {{alertCountry}}
+}
+
+tests {
+  test('should return 200', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the acknowledged alert', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('id', bru.getEnvVar('alertId'));
+    expect(body).to.have.property('acknowledged', true);
+  });
+}
+
+docs {
+  # PATCH /api/v1/alerts/:id/acknowledge — Acquittement (proxy siège)
+
+  Relaie l'acquittement vers le backend **pays propriétaire** via le
+  `CountryBackendGateway` résilient (ADR-0007). L'ACK est une **écriture ciblée** :
+  le query param `country` est **requis** (le front connaît le pays de l'alerte
+  via la liste consolidée).
+
+  Distinction d'erreurs : un 4xx du pays (alerte inconnue) **remonte tel quel**
+  (404 → 404) ; une indisponibilité (timeout / 5xx épuisés / breaker ouvert)
+  devient **503** — jamais une fausse confirmation d'acquittement.
+
+  ## Path / Query params
+  | Param | Requis | Description |
+  |---|---|---|
+  | `id` (path) | oui | identifiant de l'alerte côté pays |
+  | `country` | oui | `BR\|EC\|CO` — pays propriétaire de l'alerte |
+
+  ## Requête
+  Pas de body.
+
+  ## Réponse 200
+  L'alerte mise à jour mappée en `AlertDto`, `acknowledged: true`.
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 400 | `country` absent ou invalide |
+  | 404 | aucune alerte pour cet id côté pays |
+  | 503 | pays propriétaire injoignable |
+
+  ## Prérequis Bruno
+  - `alertId` et `alertCountry` posés depuis la liste consolidée.
+
+  ## Références
+  - CDC §III.5, ADR-0007. Type partagé : `Alert`.
+}

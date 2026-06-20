@@ -15,3 +15,13 @@ export interface IngestMeasurementDto {
   humidityPercent: number;
   recordedAt: string;
 }
+
+// Fenêtre temporelle agrégée (moyennes T°/humidité) d'un entrepôt, renvoyée par
+// GET /measurements/aggregate. `bucketStart` est l'instant ISO 8601 de début de
+// fenêtre ; `count` le nombre de mesures agrégées dans la fenêtre.
+export interface MeasurementBucket {
+  bucketStart: string;
+  avgTemperatureCelsius: number;
+  avgHumidityPercent: number;
+  count: number;
+}

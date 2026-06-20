@@ -1,13 +1,105 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Schéma Prisma — backend-pays (MariaDB via provider mysql).
+// Le client est généré dans ../generated/prisma (gitignoré, régénéré au build).
+// runtime/moduleFormat: client CJS compatible NestJS + driver adapter MariaDB
+// (pas de binaire query-engine à embarquer dans l'image alpine).
+// Voir docs/architecture/database.md pour le modèle complet (à venir avec les features).
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
 }
 
+// La connexion est fournie au runtime par le driver adapter MariaDB
+// (PrismaService), pas par une url ici : `prisma generate` n'exige donc
+// aucune env var. La url pour `prisma migrate` vient de prisma.config.ts.
 datasource db {
   provider = "mysql"
+}
+
+// Miroir de persistance de `CountryCode` de @futurekawa/contracts (BR|EC|CO).
+// Synchronisé à la main avec l'union TS — le contracts reste type-only.
+enum Country {
+  BR
+  EC
+  CO
+}
+
+// Miroir de persistance de `LotStatus` de @futurekawa/contracts.
+// Synchronisé à la main avec l'union TS.
+enum LotStatus {
+  CONFORME
+  EN_ALERTE
+  PERIME
+}
+
+// Miroir de persistance de `AlertType` de @futurekawa/contracts.
+// Synchronisé à la main avec l'union TS. LOT_EXPIRED existe ici mais n'est
+// produit que par le cron péremption (#33), pas par l'évaluateur mesure (#32).
+enum AlertType {
+  TEMPERATURE_OUT_OF_RANGE
+  HUMIDITY_OUT_OF_RANGE
+  LOT_EXPIRED
+}
+
+// Lot de café vert (CDC §III.1 — FIFO, statut, traçabilité). Sur-ensemble du
+// type `Lot` de @futurekawa/contracts : harvestDate/qualityGrade/timestamps en
+// plus, exposés à l'API plus tard (#24). Les types Prisma ne sortent jamais
+// d'un contrôleur — mapping explicite vers les DTO contracts.
+model Lot {
+  id           String    @id @default(cuid())
+  country      Country
+  farm         String
+  warehouse    String
+  storedAt     DateTime
+  status       LotStatus @default(CONFORME)
+  harvestDate  DateTime?
+  qualityGrade String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // FIFO : tri chronologique des lots stockés (CDC §III.1).
+  @@index([storedAt])
+  // Un identifiant de lot est unique au sein d'un pays.
+  @@unique([id, country])
+  @@map("lots")
+}
+
+// Relevé T°/humidité d'un entrepôt (CDC §III.2). Persisté par le subscriber MQTT
+// (#28) et exposé en historique paginé + agrégat par l'API. Sur-ensemble du type
+// `Measurement` de @futurekawa/contracts (createdAt en plus, audit interne).
+// Les types Prisma ne sortent jamais d'un contrôleur — mapping explicite.
+model Measurement {
+  id                 String   @id @default(cuid())
+  country            Country
+  warehouse          String
+  temperatureCelsius Float
+  humidityPercent    Float
+  recordedAt         DateTime
+  createdAt          DateTime @default(now())
+
+  // Historique d'un entrepôt trié par date de relevé (requête principale).
+  @@index([warehouse, recordedAt])
+  @@map("measurements")
+}
+
+// Alerte métier (CDC §III.4, ADR-0004). Levée à l'ingestion d'une mesure hors
+// plage (#32) ou par le cron péremption (#33). La déduplication (1 alerte par
+// type+entité+jour UTC) est applicative et s'appuie sur l'index ci-dessous.
+// Sur-ensemble du type `Alert` de @futurekawa/contracts (createdAt en plus).
+model Alert {
+  id           String    @id @default(cuid())
+  country      Country
+  type         AlertType
+  message      String
+  lotId        String?
+  warehouse    String?
+  triggeredAt  DateTime
+  acknowledged Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  // Support de la dédup applicative (count par type sur une fenêtre jour).
+  @@index([type, triggeredAt])
+  @@map("alerts")
 }

@@ -1,0 +1,18 @@
+meta {
+  name: measurements
+  seq: 3
+}
+
+docs {
+  # Measurements (backend-pays)
+
+  Relevés T°/humidité d'un entrepôt (CDC §III.2) : historique paginé et agrégat
+  par fenêtre temporelle. Les mesures arrivent principalement par MQTT (#28,
+  ADR-0003) ; `POST /measurements` est un **fallback REST** quand le broker est
+  indisponible.
+
+  Routes sous `/api/v1/measurements`. Cibler une instance via un environnement
+  `local-pays-br/ec/co`.
+
+  Erreurs normalisées RFC 7807 (`application/problem+json`).
+}

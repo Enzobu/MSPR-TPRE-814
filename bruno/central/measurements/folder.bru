@@ -1,0 +1,15 @@
+meta {
+  name: measurements
+  seq: 4
+}
+
+docs {
+  # Mesures (backend-central)
+
+  Proxy siège **mono-pays résilient** des mesures des backends pays (ADR-0007).
+  Une mesure appartient à UN pays / UN entrepôt → ces routes ne consolident pas
+  plusieurs pays, mais conservent la garantie partial-response : si le pays est
+  injoignable, la réponse est vide + `unavailable: [country]` (jamais 500).
+
+  Cible l'environnement `local-central`.
+}

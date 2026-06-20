@@ -1,13 +1,41 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Schéma Prisma — backend-central (MariaDB : DB siège légère users/config/audit).
+// Le client est généré dans ../src/generated/prisma (gitignoré, régénéré au build).
+// runtime/moduleFormat: client CJS compatible NestJS + driver adapter MariaDB.
+// Voir docs/architecture/database.md pour le modèle complet (à venir avec les features).
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
 }
 
+// La connexion est fournie au runtime par le driver adapter MariaDB
+// (PrismaService). La url pour `prisma migrate` vient de prisma.config.ts.
 datasource db {
   provider = "mysql"
+}
+
+// Miroir de persistance des rôles (ADR-0006). Synchronisé à la main avec
+// l'union `Role` de @futurekawa/contracts.
+enum Role {
+  ADMIN
+  MANAGER
+  OPERATOR
+  VIEWER
+}
+
+// Utilisateur du siège (ADR-0002, ADR-0006). Frontière d'auth unique : seul le
+// central porte des utilisateurs. `passwordHash` en bcrypt, jamais en clair.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  // null pour un compte siège non rattaché à un pays (BR|EC|CO sinon).
+  country      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
 }

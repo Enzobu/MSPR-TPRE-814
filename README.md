@@ -153,9 +153,21 @@ Toute la doc vit dans [`docs/`](./docs/) (structure imposée par [`.claude/rules
 - [`docs/iot/`](./docs/iot/) — hardware, protocole, firmware (§IV.4.2 CDC)
 - [`docs/testing/`](./docs/testing/) — stratégie, plan de tests (§IV.4.3 CDC)
 - [`docs/adr/`](./docs/adr/) — Architecture Decision Records (immuables)
-- [`docs/ci-cd/`](./docs/ci-cd/) — Docker et déploiement local
+- [`docs/ci-cd/`](./docs/ci-cd/) — pipeline GitHub Actions, Docker (§IV.5 CDC)
+- [`docs/operations/`](./docs/operations/) — runbook, déploiement, troubleshooting
 - [`docs/user/`](./docs/user/) — documentation utilisateur métier en français (§IV.8 CDC)
 - [`docs/phase-2/`](./docs/phase-2/) — automatisation & questionnaire (§IV.9-10 CDC)
+
+### Site de documentation utilisateur (VitePress)
+
+La doc utilisateur (`docs/user/`) est aussi servie comme **site web navigable
+avec recherche** ([ADR-0009](./docs/adr/0009-vitepress-user-docs.md)) :
+
+```bash
+pnpm docs:dev       # site en local (hot-reload)
+pnpm docs:build     # build statique (vérifié par la CI)
+pnpm docs:preview   # prévisualiser le build
+```
 
 API :
 - **Swagger** : `/api-docs` sur chaque backend

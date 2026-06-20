@@ -26,7 +26,8 @@ apps/                   code DÉPLOYABLE (process, image Docker, firmware flash�
   ├── frontend-web/     Vite + React — UI siège
   └── iot/              PlatformIO + C++ — firmware ESP8266
 packages/               code IMPORTÉ (libs TS partagées)
-  └── contracts/        @futurekawa/contracts — types/DTO/enums/seuils pays
+  ├── contracts/        @futurekawa/contracts — types/DTO/enums/seuils pays (types-only)
+  └── nest-common/      @futurekawa/nest-common — infra NestJS transverse (filtre RFC 7807, pino, validation env)
 .codex/                config Codex (agents, commands, settings)
 consigne-structuree.md  cahier des charges (source de vérité métier)
 ```
@@ -69,7 +70,8 @@ Codex charge automatiquement le AGENTS.md du dossier courant **en plus** de celu
 - `apps/backend-central/AGENTS.md` — backend siège (agrégation)
 - `apps/frontend-web/AGENTS.md` — UI React/shadcn
 - `apps/iot/AGENTS.md` — firmware ESP8266 C++
-- `packages/contracts/AGENTS.md` — lib TS partagée
+- `packages/contracts/AGENTS.md` — lib TS partagée (types-only)
+- `packages/nest-common/AGENTS.md` — infra NestJS transverse partagée par les backends
 
 ## Subagents et skills disponibles
 

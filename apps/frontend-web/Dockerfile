@@ -17,9 +17,11 @@ COPY apps/frontend-web apps/frontend-web
 RUN pnpm --filter @futurekawa/contracts build
 RUN pnpm --filter frontend-web build
 
-FROM nginx:1.27-alpine AS runtime
+# Image nginx non-privilégiée : tourne en utilisateur `nginx` (uid 101) et écoute
+# sur 8080 (> 1024, pas besoin de root) — résout le hotspot Docker root.
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
 
 COPY apps/frontend-web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/apps/frontend-web/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 8080

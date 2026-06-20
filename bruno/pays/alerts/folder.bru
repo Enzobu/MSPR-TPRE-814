@@ -1,0 +1,18 @@
+meta {
+  name: alerts
+  seq: 4
+}
+
+docs {
+  # Alerts (backend-pays)
+
+  Consultation et acquittement des alertes d'un pays (CDC §III.4, ADR-0004) :
+  liste paginée (récentes d'abord), détail, acquittement.
+
+  Routes sous `/api/v1/alerts`. Cibler une instance via un environnement
+  `local-pays-br/ec/co`. Les alertes sont produites par l'ingestion de mesures
+  hors plage et le cron de péremption ; cette feature les expose en lecture +
+  acquittement.
+
+  Erreurs normalisées RFC 7807 (`application/problem+json`).
+}

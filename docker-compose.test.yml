@@ -1,0 +1,69 @@
+# Base de données jetable pour les tests d'intégration backend-pays (#26, ADR-0008).
+# `tmpfs` : la donnée vit en RAM, rien n'est persisté — repart à neuf à chaque `up`.
+# Les migrations Prisma committées sont appliquées au premier boot via init-test-db.sh,
+# donc pas besoin de `prisma migrate` (ni de shadow DB / datasource url) côté test.
+#
+# Usage :
+#   docker compose -f docker-compose.test.yml up -d
+#   DATABASE_URL=mysql://futurekawa:futurekawa@localhost:3399/futurekawa_pays_test \
+#     pnpm --filter backend-pays test:e2e
+#   docker compose -f docker-compose.test.yml down
+services:
+  mariadb-pays-test:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: futurekawa_pays_test
+      MARIADB_USER: futurekawa
+      MARIADB_PASSWORD: futurekawa
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      # 3399 pour ne pas entrer en conflit avec les DB de dev (3306/3308/3309).
+      - "3399:3306"
+    tmpfs:
+      - /var/lib/mysql
+    volumes:
+      - ./apps/backend-pays/prisma/migrations:/migrations:ro
+      - ./apps/backend-pays/test/init-test-db.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Broker MQTT jetable pour le test d'intégration d'ingestion (#28, ADR-0003).
+  # Anonyme + sans persistance (mosquitto.test.conf). Port 1893 sur l'hôte pour
+  # ne pas entrer en conflit avec un broker de dev sur 1883.
+  mosquitto-test:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1893:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.test.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      # mosquitto_sub renvoie 0 dès que le broker accepte une connexion.
+      test:
+        ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-W", "2", "-q", "1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Faux serveur SMTP jetable pour le test d'intégration du mailer (#34, ADR-0004).
+  # SMTP sur 1026 (hôte) → 1025 (conteneur) ; UI + API REST sur 1081 → 1080. Le
+  # test interroge l'API REST (/email) pour vérifier la réception de l'alerte.
+  maildev-test:
+    image: maildev/maildev:2.1.0
+    ports:
+      - "1026:1025"
+      - "1081:1080"
+    healthcheck:
+      # L'API REST répond 200 sur /email dès que MailDev est prêt.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:1080/email',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10

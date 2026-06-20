@@ -1,0 +1,51 @@
+meta {
+  name: Get lot
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/lots/{{lotId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the requested lot', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id', bru.getEnvVar('lotId'));
+    expect(body).to.have.property('status');
+    expect(body).to.have.property('storedAt');
+  });
+}
+
+docs {
+  # GET /api/v1/lots/:id
+
+  Détail d'un lot par son identifiant métier.
+
+  ## Réponse 200
+  ```json
+  {
+    "id": "BR-2026-008",
+    "country": "BR",
+    "farm": "Fazenda Aurora",
+    "warehouse": "Entrepôt Sul-1",
+    "storedAt": "2026-06-01T08:00:00.000Z",
+    "status": "CONFORME"
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 404 | aucun lot pour cet id |
+
+  ## Prérequis Bruno
+  - `lotId` est posé par `Create lot`. Lancer la création d'abord, ou définir
+    manuellement `lotId` dans l'environnement.
+}

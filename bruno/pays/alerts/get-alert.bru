@@ -1,0 +1,53 @@
+meta {
+  name: Get alert
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/alerts/{{alertId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the requested alert', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id', bru.getEnvVar('alertId'));
+    expect(body).to.have.property('type');
+    expect(body).to.have.property('triggeredAt');
+    expect(body).to.have.property('acknowledged');
+  });
+}
+
+docs {
+  # GET /api/v1/alerts/:id
+
+  Détail d'une alerte par son identifiant (cuid).
+
+  ## Réponse 200
+  ```json
+  {
+    "id": "clz9x2k4p0000abcd1234efgh",
+    "country": "BR",
+    "type": "TEMPERATURE_OUT_OF_RANGE",
+    "message": "Température 34.2°C hors plage [26;32] pour Entrepôt Sul-1",
+    "warehouse": "Entrepôt Sul-1",
+    "triggeredAt": "2026-06-01T08:00:00.000Z",
+    "acknowledged": false
+  }
+  ```
+
+  ## Erreurs (RFC 7807)
+  | Code | Cas |
+  |---|---|
+  | 404 | aucune alerte pour cet id |
+
+  ## Prérequis Bruno
+  - `alertId` est posé par `List alerts`. Lancer la liste d'abord, ou définir
+    manuellement `alertId` dans l'environnement.
+}

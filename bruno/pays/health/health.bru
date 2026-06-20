@@ -1,0 +1,39 @@
+meta {
+  name: Liveness
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should report status ok', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('status', 'ok');
+  });
+}
+
+docs {
+  # GET /health — Liveness
+
+  Sonde de vivacité : retourne 200 dès que le process Nest répond.
+  **Ne vérifie aucune dépendance externe** (ni DB, ni MQTT).
+
+  ## Réponse 200
+  ```json
+  { "status": "ok", "info": {}, "error": {}, "details": {} }
+  ```
+
+  ## Notes
+  - Route hors `/api/v1` (exclue du préfixe global) et publique (`auth: none`).
+  - Utilisée par le `healthcheck` Docker Compose.
+  - Référence : rules `08-observability`.
+}

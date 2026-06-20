@@ -64,6 +64,10 @@ jobs:
           DATABASE_CENTRAL_URL=mysql://futurekawa:futurekawa@mariadb-central:3306/futurekawa_central
           DATABASE_PAYS_URL=mysql://futurekawa:futurekawa@mariadb-pays:3306/futurekawa_pays
           MQTT_PAYS_URL=mqtt://mosquitto-pays:1883
+          MQTT_IOT_USERNAME=iot
+          MQTT_IOT_PASSWORD=ci-iot-password
+          MQTT_BACKEND_USERNAME=backend-pays
+          MQTT_BACKEND_PASSWORD=ci-backend-password
           SMTP_HOST=ssl0.ovh.net
           SMTP_PORT=587
           SMTP_SECURE=false
@@ -100,16 +104,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # @futurekawa/contracts est consommé via son dist (gitignoré) : il faut le
+      # builder avant lint/test, sinon les types ne résolvent pas (lint error-typed)
+      # et les imports runtime échouent.
+      - name: Build workspaces
+        run: pnpm -r build
+
       - name: Lint workspaces
         run: pnpm -r lint
 
       - name: Test workspaces
         run: pnpm -r test
 
-      - name: Generate backend coverage reports
+      - name: Generate coverage reports
         run: |
+          pnpm --filter @futurekawa/contracts test:cov
+          pnpm --filter @futurekawa/nest-common test:cov
           pnpm --filter backend-central test:cov
           pnpm --filter backend-pays test:cov
+          pnpm --filter frontend-web test:cov
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -118,12 +131,97 @@ jobs:
           path: |
             apps/backend-central/coverage/lcov.info
             apps/backend-pays/coverage/lcov.info
+            apps/frontend-web/coverage/lcov.info
+            packages/nest-common/coverage/lcov.info
+            packages/contracts/coverage/lcov.info
           if-no-files-found: error
+
+  e2e:
+    name: Front e2e (Playwright)
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Le front importe @futurekawa/contracts via son dist (gitignoré) : il faut
+      # le builder avant de démarrer Vite, sinon les types/imports ne résolvent pas.
+      - name: Build workspaces
+        run: pnpm -r build
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(pnpm --filter frontend-web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright browsers
+        run: pnpm --filter frontend-web exec playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        run: pnpm --filter frontend-web test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/frontend-web/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+  docs:
+    name: Build docs site (VitePress)
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build user docs site
+        run: pnpm docs:build
 
   sonarqube:
     name: SonarQube analysis
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [tests, e2e]
 
     steps:
       - name: Checkout
@@ -135,7 +233,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: js-ts-coverage
-          path: apps
+          # Les chemins lcov couvrent apps/ ET packages/ : la racine commune de
+          # l'artefact est le workspace, on restaure donc à la racine du repo.
+          path: .
 
       - name: Run SonarQube scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
