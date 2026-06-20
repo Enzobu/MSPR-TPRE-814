@@ -37,8 +37,10 @@ export function LotMetaRow({ lot }: LotMetaRowProps) {
       {items.map((item) => {
         const Icon = item.icon;
         return (
-          <div key={item.label} className="flex items-center gap-2">
-            <Icon className="size-4 text-muted-foreground" aria-hidden />
+          <div key={item.label} className="flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Icon className="size-4" aria-hidden />
+            </span>
             <div className="leading-tight">
               <dt className="text-[11px] text-muted-foreground">
                 {item.label}

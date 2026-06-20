@@ -33,11 +33,11 @@ export default function AlertDetailPage() {
   } else {
     detail = (
       <div className="grid gap-3.5 lg:grid-cols-[1.5fr_1fr]">
-        <div className="flex flex-col gap-3.5">
+        <div className="flex min-w-0 flex-col gap-3.5">
           <AlertDetailHeader alert={alert} />
           <AlertChartCard alert={alert} />
         </div>
-        <div className="flex flex-col gap-3.5">
+        <div className="flex min-w-0 flex-col gap-3.5">
           <AlertActionCard alert={alert} />
           <AlertLotCard alert={alert} />
         </div>

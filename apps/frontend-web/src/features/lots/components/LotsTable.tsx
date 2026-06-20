@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router';
 import type { Lot } from '@futurekawa/contracts';
 import { LotStatusBadge } from '@/features/lots/components/LotStatusBadge';
+import { LotWarehouseHoverCard } from '@/features/lots/components/LotWarehouseHoverCard';
 import {
   computeExpiry,
   expiryColorClass,
@@ -64,8 +65,8 @@ export function LotsTable({ lots }: LotsTableProps) {
                 <td className="px-4 py-3 font-mono text-xs font-semibold text-muted-foreground">
                   {lot.country}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {lot.warehouse}
+                <td className="max-w-0 px-4 py-3">
+                  <LotWarehouseHoverCard lot={lot} />
                 </td>
                 <td className="px-4 py-3 font-mono text-xs tabular-nums">
                   {formatStoredAt(lot.storedAt)}

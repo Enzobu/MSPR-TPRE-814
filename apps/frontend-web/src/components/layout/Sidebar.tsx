@@ -1,5 +1,5 @@
-import { Coffee } from 'lucide-react';
 import { Link } from 'react-router';
+import { Logo } from '@/components/brand/Logo';
 import { SidebarNav } from '@/components/layout/SidebarNav';
 import { SidebarCountryNav } from '@/components/layout/SidebarCountryNav';
 import { SidebarThemeToggle } from '@/components/layout/SidebarThemeToggle';
@@ -22,9 +22,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         onClick={onNavigate}
         className="flex items-center gap-2.5 rounded-lg px-2 pb-4 pt-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-primary">
-          <Coffee className="size-[17px] text-primary-foreground" aria-hidden />
-        </span>
+        <Logo size={30} className="shrink-0" />
         <span className="flex flex-col leading-tight">
           <span className="text-sm font-semibold tracking-tight">
             FutureKawa

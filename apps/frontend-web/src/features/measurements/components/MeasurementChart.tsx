@@ -117,8 +117,8 @@ export function MeasurementChart({
   const ariaLabel = `Courbe ${config.title.toLowerCase()} (${config.unit}) pour le pays ${country}, zone conforme de ${bounds.lower} à ${bounds.upper} ${config.unit}`;
 
   return (
-    <figure className="space-y-2" aria-label={ariaLabel}>
-      <div className="h-64 w-full">
+    <figure className="min-w-0 space-y-2" aria-label={ariaLabel}>
+      <div className="h-64 w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={points}

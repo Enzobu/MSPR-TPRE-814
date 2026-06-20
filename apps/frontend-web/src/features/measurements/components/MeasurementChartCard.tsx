@@ -33,8 +33,8 @@ export function MeasurementChartCard({
 }: MeasurementChartCardProps): React.ReactElement {
   const config = CARD_CONFIG[metric];
   return (
-    <div className="rounded-xl border border-border bg-card px-4 pt-4 pb-2.5">
-      <div className="mb-1.5 flex items-center justify-between">
+    <div className="min-w-0 rounded-xl border border-border bg-card px-4 pt-4 pb-2.5">
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <div className="flex items-center gap-2.5">
           <span
             className={cn('size-2.5 rounded-sm', config.dotClassName)}

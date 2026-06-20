@@ -7,7 +7,7 @@ describe('deriveCrumbs', () => {
     const crumbs = deriveCrumbs('/');
 
     // Assert
-    expect(crumbs).toEqual([{ label: 'Dashboard', current: true }]);
+    expect(crumbs).toEqual([{ label: 'Dashboard', href: '/', current: true }]);
   });
 
   it('should map the /lots path to a "Lots" leaf crumb', () => {
@@ -15,17 +15,17 @@ describe('deriveCrumbs', () => {
     const crumbs = deriveCrumbs('/lots');
 
     // Assert
-    expect(crumbs).toEqual([{ label: 'Lots', current: true }]);
+    expect(crumbs).toEqual([{ label: 'Lots', href: '/lots', current: true }]);
   });
 
-  it('should build a trail keeping the dynamic id as the current leaf', () => {
+  it('should build a trail with a clickable parent crumb to its route', () => {
     // Arrange / Act
     const crumbs = deriveCrumbs('/lots/LOT-BR-001');
 
     // Assert
     expect(crumbs).toEqual([
-      { label: 'Lots', current: false },
-      { label: 'LOT-BR-001', current: true },
+      { label: 'Lots', href: '/lots', current: false },
+      { label: 'LOT-BR-001', href: '/lots/LOT-BR-001', current: true },
     ]);
   });
 
@@ -34,6 +34,8 @@ describe('deriveCrumbs', () => {
     const crumbs = deriveCrumbs('/alerts');
 
     // Assert
-    expect(crumbs).toEqual([{ label: 'Alertes', current: true }]);
+    expect(crumbs).toEqual([
+      { label: 'Alertes', href: '/alerts', current: true },
+    ]);
   });
 });

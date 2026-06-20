@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Coffee, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 import { LoginBrandPanel } from '@/features/auth/components/LoginBrandPanel';
+import { Logo } from '@/components/brand/Logo';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
@@ -34,9 +35,7 @@ export default function LoginPage(): React.ReactNode {
         </div>
         <div className="w-full max-w-[380px]">
           <div className="mb-9 flex items-center gap-2.5">
-            <span className="flex size-[34px] items-center justify-center rounded-[9px] bg-primary text-primary-foreground">
-              <Coffee className="size-[19px]" aria-hidden />
-            </span>
+            <Logo size={34} />
             <span className="text-[17px] font-semibold tracking-tight">
               FutureKawa
             </span>

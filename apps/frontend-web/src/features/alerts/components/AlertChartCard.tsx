@@ -30,8 +30,8 @@ export function AlertChartCard({ alert }: AlertChartCardProps) {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-[18px]">
-      <div className="mb-1.5 flex items-center gap-2.5">
+    <div className="min-w-0 rounded-xl border bg-card p-[18px]">
+      <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
         <span className="text-sm font-semibold">{CHART_TITLE[metric]}</span>
         <span className="text-xs text-muted-foreground">
           autour du déclenchement

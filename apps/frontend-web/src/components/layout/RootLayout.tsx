@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 const SIDEBAR_WIDTH = 'w-62';
 
 // App shell : sidebar gauche 248px + header contextuel + zone de contenu
-// scrollable. Sous 400px la sidebar passe en off-canvas (hamburger header).
+// scrollable. Sous `lg` (1024px) la sidebar passe en off-canvas (hamburger
+// header) — desktop (>= lg) inchangé.
 export function RootLayout() {
   // Le panneau off-canvas (mobile) se referme via onNavigate (liens sidebar),
   // le bouton X et le backdrop — pas besoin d'effet sur la route.
@@ -20,13 +21,13 @@ export function RootLayout() {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 border-r border-border min-[400px]:block ${SIDEBAR_WIDTH}`}
+        className={`sticky top-0 hidden h-screen shrink-0 border-r border-border lg:block ${SIDEBAR_WIDTH}`}
       >
         <Sidebar />
       </aside>
 
       {isMobileOpen ? (
-        <div className="fixed inset-0 z-40 min-[400px]:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
             aria-label="Fermer la navigation"
@@ -52,7 +53,7 @@ export function RootLayout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader onOpenSidebar={() => setIsMobileOpen(true)} />
-        <main className="fk-scroll flex-1 overflow-auto p-4 min-[400px]:p-7">
+        <main className="fk-scroll flex-1 overflow-auto p-4 lg:p-7">
           <Outlet />
         </main>
       </div>

@@ -25,11 +25,11 @@ export function LotsPagination({
 
   return (
     <nav
-      className="flex items-center justify-between gap-3 border-t border-border px-4 py-3"
+      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border px-4 py-3"
       aria-label="Pagination des lots"
     >
       <span className="text-xs text-muted-foreground">{rangeLabel}</span>
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <Button
           type="button"
           size="icon-sm"

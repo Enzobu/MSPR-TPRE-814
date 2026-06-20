@@ -1,5 +1,19 @@
 import '@testing-library/jest-dom/vitest';
 
+// cmdk observe la liste via ResizeObserver et appelle scrollIntoView : jsdom
+// n'implémente ni l'un ni l'autre, on les stub pour éviter un ReferenceError.
+if (globalThis.ResizeObserver === undefined) {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
+}
+
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // jsdom n'expose pas un Storage utilisable selon la config : stub mémoire.
 if (
   globalThis.localStorage === undefined ||

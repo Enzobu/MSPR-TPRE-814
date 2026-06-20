@@ -1,6 +1,8 @@
 export interface Crumb {
   label: string;
-  // Le dernier crumb est la page courante (rendu non-muted).
+  // Chemin cible du crumb (cliquable tant qu'il n'est pas la page courante).
+  href: string;
+  // Le dernier crumb est la page courante (rendu non-muted, non cliquable).
   current: boolean;
 }
 
@@ -20,11 +22,12 @@ export function deriveCrumbs(pathname: string): Crumb[] {
   const segments = pathname.split('/').filter(Boolean);
 
   if (segments.length === 0) {
-    return [{ label: 'Dashboard', current: true }];
+    return [{ label: 'Dashboard', href: '/', current: true }];
   }
 
   return segments.map((segment, index) => ({
     label: labelForSegment(segment),
+    href: '/' + segments.slice(0, index + 1).join('/'),
     current: index === segments.length - 1,
   }));
 }

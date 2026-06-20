@@ -1,11 +1,11 @@
 import { Fragment } from 'react';
-import { Bell, ChevronRight, Menu, Search } from 'lucide-react';
-import { useLocation } from 'react-router';
+import { Bell, ChevronRight, Menu } from 'lucide-react';
+import { Link, useLocation } from 'react-router';
 import { COUNTRY_LABELS } from '@/features/dashboard/lib/country';
 import { useDashboardCountry } from '@/features/dashboard/hooks/useDashboardCountry';
 import { useUnacknowledgedCount } from '@/features/alerts/hooks/useUnacknowledgedCount';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { GlobalSearch } from '@/components/layout/GlobalSearch';
 import { deriveCrumbs } from '@/components/layout/breadcrumbs';
 
 type AppHeaderProps = Readonly<{
@@ -13,8 +13,8 @@ type AppHeaderProps = Readonly<{
   onOpenSidebar: () => void;
 }>;
 
-// Header contextuel sticky : breadcrumbs + chip scope (pays), recherche
-// décorative et cloche d'alertes. Hamburger visible < sidebar breakpoint.
+// Header contextuel sticky : breadcrumbs + chip scope (pays), palette de
+// recherche globale et cloche d'alertes. Hamburger visible < sidebar breakpoint.
 export function AppHeader({ onOpenSidebar }: AppHeaderProps) {
   const location = useLocation();
   const { country } = useDashboardCountry();
@@ -25,14 +25,14 @@ export function AppHeader({ onOpenSidebar }: AppHeaderProps) {
   const hasAlerts = unackCount !== undefined && unackCount > 0;
 
   return (
-    <header className="sticky top-0 z-10 flex h-15 items-center justify-between gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md min-[400px]:px-7">
+    <header className="sticky top-0 z-10 flex h-15 items-center justify-between gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md lg:px-7">
       <div className="flex min-w-0 items-center gap-2.5">
         <Button
           variant="outline"
           size="icon"
           onClick={onOpenSidebar}
           aria-label="Ouvrir la navigation"
-          className="min-[400px]:hidden"
+          className="lg:hidden"
         >
           <Menu className="size-4" aria-hidden />
         </Button>
@@ -46,16 +46,21 @@ export function AppHeader({ onOpenSidebar }: AppHeaderProps) {
                   aria-hidden
                 />
               ) : null}
-              <span
-                aria-current={crumb.current ? 'page' : undefined}
-                className={
-                  crumb.current
-                    ? 'truncate text-sm font-semibold text-foreground'
-                    : 'truncate text-sm text-muted-foreground'
-                }
-              >
-                {crumb.label}
-              </span>
+              {crumb.current ? (
+                <span
+                  aria-current="page"
+                  className="truncate text-sm font-semibold text-foreground"
+                >
+                  {crumb.label}
+                </span>
+              ) : (
+                <Link
+                  to={crumb.href}
+                  className="truncate text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {crumb.label}
+                </Link>
+              )}
             </Fragment>
           ))}
           <span className="hidden shrink-0 rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground sm:inline">
@@ -65,18 +70,7 @@ export function AppHeader({ onOpenSidebar }: AppHeaderProps) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2.5">
-        <div className="relative hidden md:block">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-[15px] -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            aria-label="Rechercher"
-            placeholder="Rechercher un lot, un entrepôt…"
-            className="h-9 w-60 pl-9"
-          />
-        </div>
+        <GlobalSearch />
         <Button
           variant="outline"
           size="icon"

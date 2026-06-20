@@ -56,7 +56,7 @@ function StatCard({
         <span className={cn('size-2.5 rounded-sm', dotClassName)} aria-hidden />
         {title}
       </div>
-      <dl className="grid grid-cols-4 gap-2.5">
+      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {cells.map((cell) => (
           <div key={cell.key} className="rounded-lg bg-muted p-2.5">
             <dt className="mb-1 text-[11px] text-muted-foreground">

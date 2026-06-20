@@ -19,6 +19,7 @@ export function useAlerts(
     queryKey: ['alerts', filters],
     queryFn: () =>
       fetchAlerts({
+        country: filters.country,
         type: filters.type,
         acknowledged: filters.acknowledged,
         page: filters.page,

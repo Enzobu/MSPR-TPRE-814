@@ -1,8 +1,8 @@
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import type { Alert } from '@futurekawa/contracts';
 import { AcknowledgeButton } from '@/features/alerts/components/AcknowledgeButton';
 import { SeverityPill } from '@/features/alerts/components/SeverityPill';
-import { alertSeverity } from '@/features/alerts/lib/severity';
+import { AlertTypeHoverCard } from '@/features/alerts/components/AlertTypeHoverCard';
 import { formatAgo } from '@/features/alerts/lib/format';
 
 type AlertsTableProps = Readonly<{
@@ -13,7 +13,6 @@ const HEADERS = ['Sévérité', 'Lot', 'Type', 'Déclenchée', 'Action'] as cons
 
 function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
   const navigate = useNavigate();
-  const { Icon } = alertSeverity(alert.type);
 
   // La ligne entière est cliquable (confort souris), mais l'accessibilité
   // clavier repose sur le lien explicite porté par le message.
@@ -29,14 +28,7 @@ function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
         {alert.lotId ?? '—'}
       </td>
       <td className="max-w-0 px-[18px] py-3">
-        <Link
-          to={`/alerts/${alert.id}`}
-          onClick={(event) => event.stopPropagation()}
-          className="flex min-w-0 items-center gap-2 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <span className="truncate text-[13px]">{alert.message}</span>
-        </Link>
+        <AlertTypeHoverCard alert={alert} />
       </td>
       <td className="px-[18px] py-3 text-[12.5px] text-muted-foreground">
         {formatAgo(alert.triggeredAt)}

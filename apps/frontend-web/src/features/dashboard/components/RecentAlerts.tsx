@@ -36,7 +36,7 @@ export function RecentAlerts({ country }: RecentAlertsProps) {
   const alerts = data?.data ?? [];
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="min-w-0 overflow-hidden rounded-xl border bg-card">
       <div className="flex items-center justify-between border-b px-[18px] py-[15px]">
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-semibold">Alertes récentes</span>
