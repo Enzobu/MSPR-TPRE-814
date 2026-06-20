@@ -221,6 +221,7 @@ flowchart TD
 | Intégration | `apps/backend-pays/test/alerting.e2e-spec.ts` | persistance + dédup via REST + **email reçu sur MailDev** (#34), DB réelle |
 | Intégration | `apps/backend-pays/test/expiration.e2e-spec.ts` | cron péremption + idempotence, DB réelle |
 | Intégration | `apps/backend-pays/test/alerts-api.e2e-spec.ts` | API liste/détail/ACK + tri/filtres/404, DB réelle (#35) |
+| Intégration bout-en-bout | `apps/backend-pays/test/alerting-mqtt-email.e2e-spec.ts` (#39) | **anomalie publiée en MQTT** (broker réel) → alerte exposée par `GET /api/v1/alerts` → **email reçu sur MailDev** ; chaîne complète MQTT→alerte→email |
 
 ## Évolutions / TODO
 
@@ -230,3 +231,5 @@ flowchart TD
   / acknowledge).
 - [x] #36 (siège) — agrégation `GET /api/v1/alerts` + proxy `PATCH .../acknowledge`
   (backend-central). Voir [`aggregation-siege.md`](aggregation-siege.md). Reste : UI front.
+- [x] #39 — e2e bout-en-bout MQTT anomalie → alerte (`GET /alerts`) → email MailDev
+  (broker + DB + SMTP réels). Topic/payload alignés sur `/mqtt-simulate --anomaly`.
