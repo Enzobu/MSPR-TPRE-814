@@ -25,27 +25,35 @@ export function KpiCard({
   hint,
   emphasis = false,
 }: KpiCardProps) {
+  function renderValue() {
+    if (isLoading) {
+      return <Skeleton className="h-8 w-20" />;
+    }
+    if (isError) {
+      return (
+        <p className="text-2xl font-semibold tabular-nums text-muted-foreground">
+          —
+        </p>
+      );
+    }
+    return (
+      <p
+        className={cn(
+          'text-3xl font-semibold tabular-nums',
+          emphasis ? 'text-status-perime' : 'text-foreground',
+        )}
+      >
+        {value}
+      </p>
+    );
+  }
+
   return (
     <Card>
       <CardContent className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          {isLoading ? (
-            <Skeleton className="h-8 w-20" />
-          ) : isError ? (
-            <p className="text-2xl font-semibold tabular-nums text-muted-foreground">
-              —
-            </p>
-          ) : (
-            <p
-              className={cn(
-                'text-3xl font-semibold tabular-nums',
-                emphasis ? 'text-status-perime' : 'text-foreground',
-              )}
-            >
-              {value}
-            </p>
-          )}
+          {renderValue()}
           {hint && !isLoading ? (
             <p className="text-xs text-muted-foreground">{hint}</p>
           ) : null}
