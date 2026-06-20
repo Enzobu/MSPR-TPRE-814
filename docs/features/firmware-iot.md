@@ -116,10 +116,10 @@ Commande : `cd apps/iot && pio test -e native` (sans hardware) ;
 > **Limite matériel** : les critères « flash réel », « connexion < 10 s »,
 > « reconnexion à chaud observée », « publication vue via `mosquitto_sub` »
 > exigent un ESP8266 + DHT physiques et **ne sont pas vérifiables en CI**. Ils
-> sont à valider sur banc matériel par l'équipe.
+> sont à valider sur banc matériel par l'équipe (**ticket #111**).
 
 ## Évolutions / TODO
 
-- [ ] Validation sur banc matériel réel (flash + reconnexion + observation MQTT).
+- [ ] Validation sur banc matériel réel (flash + reconnexion + observation MQTT) → **ticket #111**.
 - [ ] ADR si bascule vers une lib MQTT supportant QoS 1 à la publication.
 - [ ] `docs/iot/protocol.md` + `firmware.md` (ticket #41).
