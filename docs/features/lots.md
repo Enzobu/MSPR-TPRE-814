@@ -134,6 +134,7 @@ pnpm --filter backend-pays db:seed
 | Unit | `apps/backend-pays/src/lots/application/*.spec.ts` | règles métier des 4 use-cases (mismatch pays, doublon, not-found, pagination/FIFO) |
 | Intégration (e2e + DB réelle) | `apps/backend-pays/test/lots.e2e-spec.ts` | les 4 endpoints contre MariaDB : status codes, RFC 7807, **tri FIFO** (3 lots dans le désordre → asc, et `sort=storedAt:desc` inverse), rejet d'un tri non supporté (400), pagination, validation, persistance (relecture) |
 | UI (Vitest + RTL) | `apps/frontend-web/tests/features/lots/**`, `tests/pages/LotsPage.test.tsx` | badge de statut, lignes/liens du tableau, page liste (filtre pays, bannière `unavailable`) |
+| E2E (Playwright, réseau mocké) | `apps/frontend-web/tests/e2e/fifo.spec.ts` (#38) | parcours bout-en-bout : session active → liste lots **triée FIFO (storedAt asc)** → clic lot → détail + mesures visibles. Lancé par le job CI `e2e` (rapport HTML archivé). |
 
 > Stratégie (rules/04-tests.md, ADR-0008) : beaucoup d'unitaires sur
 > l'application (deps mockées, exécutés en CI) + une suite d'intégration

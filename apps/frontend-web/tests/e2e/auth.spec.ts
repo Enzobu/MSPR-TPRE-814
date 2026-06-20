@@ -29,16 +29,17 @@ test.describe('Authentification', () => {
 
     await fillCredentials(page, VALID_EMAIL, VALID_PASSWORD);
 
-    // Redirigé vers la route d'origine (home).
+    // Redirigé vers la route d'origine (home) ; le menu utilisateur (header,
+    // présent uniquement si authentifié) confirme l'accès à l'app.
     await expect(page).toHaveURL(/\/$/);
     await expect(
-      page.getByRole('heading', { name: /café vert/i }),
+      page.getByRole('button', { name: /menu utilisateur/i }),
     ).toBeVisible();
 
     // Reload : la session est restaurée via /auth/refresh (cookie simulé).
     await page.reload();
     await expect(
-      page.getByRole('heading', { name: /café vert/i }),
+      page.getByRole('button', { name: /menu utilisateur/i }),
     ).toBeVisible();
     await expect(page).not.toHaveURL(/\/login$/);
   });
