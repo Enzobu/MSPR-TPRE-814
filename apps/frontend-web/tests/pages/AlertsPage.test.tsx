@@ -102,6 +102,6 @@ describe('AlertsPage', () => {
     await screen.findAllByText('Température trop élevée à Santos-A');
 
     // Assert
-    expect(screen.getAllByLabelText('Acquittée').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Acquittée').length).toBeGreaterThan(0);
   });
 });

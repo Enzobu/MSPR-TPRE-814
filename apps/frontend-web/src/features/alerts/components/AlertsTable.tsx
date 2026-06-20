@@ -1,77 +1,73 @@
-import { Link } from 'react-router';
-import { Check, Minus } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import type { Alert } from '@futurekawa/contracts';
-import { AlertTypeBadge } from '@/features/alerts/components/AlertTypeBadge';
-import { formatTriggeredAt } from '@/features/alerts/lib/format';
+import { AcknowledgeButton } from '@/features/alerts/components/AcknowledgeButton';
+import { SeverityPill } from '@/features/alerts/components/SeverityPill';
+import { AlertTypeHoverCard } from '@/features/alerts/components/AlertTypeHoverCard';
+import { formatAgo } from '@/features/alerts/lib/format';
 
 type AlertsTableProps = Readonly<{
   alerts: Alert[];
 }>;
 
-function targetLabel(alert: Alert): string {
-  if (alert.lotId) {
-    return `${alert.warehouse ?? '—'} · ${alert.lotId}`;
-  }
-  return alert.warehouse ?? '—';
+const HEADERS = ['Sévérité', 'Lot', 'Type', 'Déclenchée', 'Action'] as const;
+
+function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
+  const navigate = useNavigate();
+
+  // La ligne entière est cliquable (confort souris), mais l'accessibilité
+  // clavier repose sur le lien explicite porté par le message.
+  return (
+    <tr
+      className="cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent"
+      onClick={() => navigate(`/alerts/${alert.id}`)}
+    >
+      <td className="px-[18px] py-3">
+        <SeverityPill type={alert.type} />
+      </td>
+      <td className="px-[18px] py-3 font-mono text-[13px] font-semibold">
+        {alert.lotId ?? '—'}
+      </td>
+      <td className="max-w-0 px-[18px] py-3">
+        <AlertTypeHoverCard alert={alert} />
+      </td>
+      <td className="px-[18px] py-3 text-[12.5px] text-muted-foreground">
+        {formatAgo(alert.triggeredAt)}
+      </td>
+      <td className="px-[18px] py-3">
+        {/* L'acquittement ne doit pas déclencher la navigation de ligne. */}
+        <div onClick={(event) => event.stopPropagation()}>
+          <AcknowledgeButton
+            id={alert.id}
+            country={alert.country}
+            acknowledged={alert.acknowledged}
+          />
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 export function AlertsTable({ alerts }: AlertsTableProps) {
   return (
-    <div className="overflow-x-auto rounded-xl ring-1 ring-foreground/10">
-      <table className="w-full border-collapse text-sm">
+    <div className="overflow-x-auto rounded-xl border bg-card">
+      <table className="w-full min-w-[760px] border-collapse text-sm">
         <caption className="sr-only">Liste des alertes</caption>
         <thead>
-          <tr className="border-b border-border text-left text-muted-foreground">
-            <th scope="col" className="px-4 py-3 font-medium">
-              Type
-            </th>
-            <th scope="col" className="px-4 py-3 font-medium">
-              Message
-            </th>
-            <th scope="col" className="px-4 py-3 font-medium">
-              Entrepôt / Lot
-            </th>
-            <th scope="col" className="px-4 py-3 font-medium">
-              Déclenchée le
-            </th>
-            <th scope="col" className="px-4 py-3 font-medium">
-              Acquittée
-            </th>
+          <tr className="border-b border-border bg-muted">
+            {HEADERS.map((header) => (
+              <th
+                key={header}
+                scope="col"
+                className="px-[18px] py-[11px] text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                {header}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {alerts.map((alert) => (
-            <tr
-              key={alert.id}
-              className="border-b border-border last:border-0 hover:bg-accent/50"
-            >
-              <td className="px-4 py-3">
-                <Link
-                  to={`/alerts/${alert.id}`}
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  <AlertTypeBadge type={alert.type} />
-                </Link>
-              </td>
-              <td className="px-4 py-3">{alert.message}</td>
-              <td className="px-4 py-3">{targetLabel(alert)}</td>
-              <td className="px-4 py-3 tabular-nums">
-                {formatTriggeredAt(alert.triggeredAt)}
-              </td>
-              <td className="px-4 py-3">
-                {alert.acknowledged ? (
-                  <Check
-                    className="size-4 text-status-conforme"
-                    aria-label="Acquittée"
-                  />
-                ) : (
-                  <Minus
-                    className="size-4 text-muted-foreground"
-                    aria-label="Non acquittée"
-                  />
-                )}
-              </td>
-            </tr>
+            <AlertRow key={alert.id} alert={alert} />
           ))}
         </tbody>
       </table>

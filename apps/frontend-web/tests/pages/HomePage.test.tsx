@@ -10,6 +10,10 @@ import type {
 import HomePage from '@/pages/HomePage';
 import { fetchStocks } from '@/features/lots/api/lots.api';
 import { fetchAlerts } from '@/features/alerts/api/alerts.api';
+import {
+  AuthContext,
+  type AuthContextValue,
+} from '@/features/auth/context/auth-context';
 
 vi.mock('@/features/lots/api/lots.api');
 vi.mock('@/features/alerts/api/alerts.api');
@@ -47,15 +51,31 @@ function unackResponse(total: number): ConsolidatedResponse<Alert> {
   return { data: [], total, page: 1, pageSize: 1, unavailable: [] };
 }
 
+// La refonte ajoute un DashboardHero qui consomme useAuth (salutation
+// personnalisée) : on fournit un AuthContext authentifié au harness.
+const AUTH_VALUE: AuthContextValue = {
+  status: 'authenticated',
+  user: {
+    id: 'U1',
+    email: 'ana.lima@futurekawa.co',
+    role: 'MANAGER',
+    country: null,
+  },
+  login: vi.fn().mockResolvedValue(undefined),
+  logout: vi.fn().mockResolvedValue(undefined),
+};
+
 function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/']}>
-        <HomePage />
-      </MemoryRouter>
+      <AuthContext.Provider value={AUTH_VALUE}>
+        <MemoryRouter initialEntries={['/']}>
+          <HomePage />
+        </MemoryRouter>
+      </AuthContext.Provider>
     </QueryClientProvider>,
   );
 }
@@ -72,15 +92,19 @@ describe('HomePage', () => {
     );
   });
 
-  it('should render the dashboard hero and KPI labels', () => {
+  it('should render the dashboard hero and KPI labels', async () => {
     // Arrange / Act
     renderPage();
 
     // Assert
+    // La refonte remplace le titre « FutureKawa » par une salutation
+    // personnalisée dérivée de l'email de l'utilisateur authentifié.
     expect(
-      screen.getByRole('heading', { name: 'FutureKawa', level: 1 }),
+      screen.getByRole('heading', { name: /Bonjour Ana/i, level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Lots en stock')).toBeInTheDocument();
+    // Les KpiCard affichent un skeleton pendant le chargement : le libellé
+    // n'apparaît qu'une fois la donnée consolidée résolue.
+    expect(await screen.findByText('Lots en stock')).toBeInTheDocument();
     expect(screen.getByText('Alertes non acquittées')).toBeInTheDocument();
     expect(screen.getByText('Pays indisponibles')).toBeInTheDocument();
   });

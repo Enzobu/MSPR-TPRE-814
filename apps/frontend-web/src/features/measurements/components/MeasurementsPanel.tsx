@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import type { CountryCode } from '@futurekawa/contracts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MeasurementChart } from '@/features/measurements/components/MeasurementChart';
+import { MeasurementChartCard } from '@/features/measurements/components/MeasurementChartCard';
 import { MeasurementStats } from '@/features/measurements/components/MeasurementStats';
 import { useMeasurements } from '@/features/measurements/hooks/useMeasurements';
 
@@ -69,17 +69,17 @@ export function MeasurementsPanel({
         </p>
       ) : (
         <>
-          <MeasurementStats measurements={measurements} country={country} />
-          <MeasurementChart
+          <MeasurementChartCard
             measurements={measurements}
             country={country}
             metric="temperature"
           />
-          <MeasurementChart
+          <MeasurementChartCard
             measurements={measurements}
             country={country}
             metric="humidity"
           />
+          <MeasurementStats measurements={measurements} country={country} />
         </>
       )}
     </div>

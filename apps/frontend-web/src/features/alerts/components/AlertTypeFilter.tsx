@@ -1,10 +1,18 @@
 import { ALERT_TYPES, type AlertType } from '@futurekawa/contracts';
-import { Button } from '@/components/ui/button';
+import {
+  SegmentedChips,
+  type SegmentedOption,
+} from '@/features/alerts/components/SegmentedChips';
 
 type AlertTypeFilterProps = Readonly<{
   value?: AlertType;
   onChange: (type?: AlertType) => void;
 }>;
+
+// Sentinelle pour l'option « Tous » (le filtre type est porté par l'URL via
+// useAlertFilters → param API `type`).
+const ALL = 'ALL' as const;
+type TypeChoice = typeof ALL | AlertType;
 
 const SHORT_LABELS: Record<AlertType, string> = {
   TEMPERATURE_OUT_OF_RANGE: 'Température',
@@ -12,31 +20,19 @@ const SHORT_LABELS: Record<AlertType, string> = {
   LOT_EXPIRED: 'Péremption',
 };
 
+const OPTIONS: SegmentedOption<TypeChoice>[] = [
+  { value: ALL, label: 'Tous' },
+  ...ALERT_TYPES.map((type) => ({ value: type, label: SHORT_LABELS[type] })),
+];
+
 export function AlertTypeFilter({ value, onChange }: AlertTypeFilterProps) {
   return (
-    <fieldset className="flex flex-wrap gap-2 border-0 p-0">
-      <legend className="sr-only">Filtrer par type</legend>
-      <Button
-        type="button"
-        size="sm"
-        variant={value === undefined ? 'default' : 'outline'}
-        aria-pressed={value === undefined}
-        onClick={() => onChange(undefined)}
-      >
-        Tous
-      </Button>
-      {ALERT_TYPES.map((type) => (
-        <Button
-          key={type}
-          type="button"
-          size="sm"
-          variant={value === type ? 'default' : 'outline'}
-          aria-pressed={value === type}
-          onClick={() => onChange(type)}
-        >
-          {SHORT_LABELS[type]}
-        </Button>
-      ))}
-    </fieldset>
+    <SegmentedChips
+      legend="Filtrer par type"
+      options={OPTIONS}
+      value={value ?? ALL}
+      isSelected={(option, current) => option === current}
+      onChange={(choice) => onChange(choice === ALL ? undefined : choice)}
+    />
   );
 }

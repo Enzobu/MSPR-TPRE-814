@@ -1,9 +1,9 @@
 import type { CountryCode, Measurement } from '@futurekawa/contracts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   isHumidityOutOfTolerance,
   isTemperatureOutOfTolerance,
 } from '@/features/measurements/lib/tolerance';
+import { cn } from '@/lib/utils';
 
 type MeasurementStatsProps = Readonly<{
   measurements: Measurement[];
@@ -14,7 +14,8 @@ interface MetricSummary {
   min: number;
   max: number;
   avg: number;
-  outOfTolerance: number;
+  last: number;
+  lastOut: boolean;
 }
 
 function summarize(
@@ -24,56 +25,71 @@ function summarize(
   const min = Math.min(...values);
   const max = Math.max(...values);
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
-  const outOfTolerance = values.filter(isOut).length;
-  return { min, max, avg, outOfTolerance };
+  const last = values[values.length - 1];
+  return { min, max, avg, last, lastOut: isOut(last) };
 }
 
-function formatNumber(value: number): string {
-  return value.toFixed(1);
+function formatNumber(value: number, unit: string): string {
+  return `${value.toFixed(1)} ${unit}`;
+}
+
+interface StatCell {
+  key: string;
+  value: string;
+  colorClass?: string;
 }
 
 type StatCardProps = Readonly<{
   title: string;
-  unit: string;
-  summary: MetricSummary;
+  dotClassName: string;
+  cells: StatCell[];
 }>;
 
-function StatCard({ title, unit, summary }: StatCardProps): React.ReactElement {
+function StatCard({
+  title,
+  dotClassName,
+  cells,
+}: StatCardProps): React.ReactElement {
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm tabular-nums">
-          <dt className="text-muted-foreground">Min</dt>
-          <dd>
-            {formatNumber(summary.min)} {unit}
-          </dd>
-          <dt className="text-muted-foreground">Max</dt>
-          <dd>
-            {formatNumber(summary.max)} {unit}
-          </dd>
-          <dt className="text-muted-foreground">Moyenne</dt>
-          <dd>
-            {formatNumber(summary.avg)} {unit}
-          </dd>
-          <dt className="text-muted-foreground">Hors tolérance</dt>
-          <dd
-            className={
-              summary.outOfTolerance > 0
-                ? 'font-medium text-destructive'
-                : undefined
-            }
-          >
-            {summary.outOfTolerance}
-          </dd>
-        </dl>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-3.5 flex items-center gap-2 text-sm font-semibold">
+        <span className={cn('size-2.5 rounded-sm', dotClassName)} aria-hidden />
+        {title}
+      </div>
+      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {cells.map((cell) => (
+          <div key={cell.key} className="rounded-lg bg-muted p-2.5">
+            <dt className="mb-1 text-[11px] text-muted-foreground">
+              {cell.key}
+            </dt>
+            <dd
+              className={cn(
+                'font-mono text-base font-semibold tabular-nums',
+                cell.colorClass,
+              )}
+            >
+              {cell.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
+}
+
+function buildCells(summary: MetricSummary, unit: string): StatCell[] {
+  return [
+    { key: 'Min', value: formatNumber(summary.min, unit) },
+    { key: 'Moy.', value: formatNumber(summary.avg, unit) },
+    { key: 'Max', value: formatNumber(summary.max, unit) },
+    {
+      key: 'Dernière',
+      value: formatNumber(summary.last, unit),
+      colorClass: summary.lastOut
+        ? 'text-status-perime-foreground'
+        : 'text-status-conforme-foreground',
+    },
+  ];
 }
 
 export function MeasurementStats({
@@ -94,9 +110,17 @@ export function MeasurementStats({
   );
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <StatCard title="Température" unit="°C" summary={temperature} />
-      <StatCard title="Humidité" unit="%" summary={humidity} />
+    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+      <StatCard
+        title="Température"
+        dotClassName="bg-chart-2"
+        cells={buildCells(temperature, '°C')}
+      />
+      <StatCard
+        title="Humidité"
+        dotClassName="bg-chart-3"
+        cells={buildCells(humidity, '%')}
+      />
     </div>
   );
 }

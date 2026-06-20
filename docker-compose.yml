@@ -7,8 +7,8 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-    ports:
-      - "${MARIADB_CENTRAL_PORT}:3306"
+    expose:
+      - 3306
     volumes:
       - ./volume/mariadb-central-data:/var/lib/mysql
     healthcheck:
@@ -25,8 +25,8 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-    ports:
-      - "${MARIADB_PAYS_PORT}:3306"
+    expose:
+      - 3306
     volumes:
       - ./volume/mariadb-pays-data:/var/lib/mysql
     healthcheck:
@@ -94,8 +94,8 @@ services:
       SENTRY_DSN: ${BACKEND_PAYS_SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
-    ports:
-      - "${BACKEND_PAYS_PORT}:3000"
+    expose:
+      - 3000
     depends_on:
       mariadb-pays:
         condition: service_healthy

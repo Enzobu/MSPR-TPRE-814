@@ -4,7 +4,7 @@ import type { Measurement } from '@futurekawa/contracts';
 import { MeasurementStats } from '@/features/measurements/components/MeasurementStats';
 
 // BR : T° 29±3 (26/32), humidité 55±2 (53/57).
-// Point 2 (T°=35) hors tolérance T° ; point 3 (humidité=60) hors tolérance humidité.
+// Dernière mesure (M3) : T°=28 (dans la tolérance), humidité=60 (hors tolérance).
 const MEASUREMENTS: Measurement[] = [
   {
     id: 'M1',
@@ -32,13 +32,25 @@ const MEASUREMENTS: Measurement[] = [
   },
 ];
 
+// La refonte remplace la <Card> shadcn (data-slot="card") par une carte stylée
+// `rounded-xl border`. On localise la carte par son titre.
 function cardFor(title: string): HTMLElement {
   const heading = screen.getByText(title);
-  const card = heading.closest('[data-slot="card"]');
+  const card = heading.closest('div.rounded-xl');
   if (card === null) {
     throw new Error(`card for ${title} not found`);
   }
   return card as HTMLElement;
+}
+
+// Récupère la valeur (<dd>) associée à un libellé de cellule (<dt>).
+function cellValue(card: HTMLElement, label: string): HTMLElement {
+  const dt = within(card).getByText(label).closest('dt');
+  const dd = dt?.parentElement?.querySelector('dd');
+  if (!dd) {
+    throw new Error(`value cell for ${label} not found`);
+  }
+  return dd as HTMLElement;
 }
 
 describe('MeasurementStats', () => {
@@ -47,30 +59,32 @@ describe('MeasurementStats', () => {
     render(<MeasurementStats measurements={MEASUREMENTS} country="BR" />);
 
     // Assert : T° = [29, 35, 28] → min 28.0, max 35.0, avg 30.7
-    const card = within(cardFor('Température'));
-    expect(card.getByText('28.0 °C')).toBeInTheDocument();
-    expect(card.getByText('35.0 °C')).toBeInTheDocument();
-    expect(card.getByText('30.7 °C')).toBeInTheDocument();
+    const card = cardFor('Température');
+    expect(cellValue(card, 'Min')).toHaveTextContent('28.0 °C');
+    expect(cellValue(card, 'Max')).toHaveTextContent('35.0 °C');
+    expect(cellValue(card, 'Moy.')).toHaveTextContent('30.7 °C');
   });
 
-  it('should count temperature points out of tolerance', () => {
+  it('should flag the last temperature reading as in tolerance', () => {
     // Arrange / Act
     render(<MeasurementStats measurements={MEASUREMENTS} country="BR" />);
 
-    // Assert : seul T°=35 dépasse 32 → 1 point hors tolérance
-    const card = within(cardFor('Température'));
-    const outRow = card.getByText('Hors tolérance').closest('dt');
-    expect(outRow?.nextElementSibling).toHaveTextContent('1');
+    // Assert : dernière T°=28 est dans la tolérance BR (26/32) → couleur conforme.
+    // La refonte exprime le hors-tolérance sur la « Dernière » mesure, pas via
+    // un compteur dédié.
+    const last = cellValue(cardFor('Température'), 'Dernière');
+    expect(last).toHaveTextContent('28.0 °C');
+    expect(last.className).toContain('text-status-conforme-foreground');
   });
 
-  it('should count humidity points out of tolerance', () => {
+  it('should flag the last humidity reading as out of tolerance', () => {
     // Arrange / Act
     render(<MeasurementStats measurements={MEASUREMENTS} country="BR" />);
 
-    // Assert : seul humidité=60 dépasse 57 → 1 point hors tolérance
-    const card = within(cardFor('Humidité'));
-    const outRow = card.getByText('Hors tolérance').closest('dt');
-    expect(outRow?.nextElementSibling).toHaveTextContent('1');
+    // Assert : dernière humidité=60 dépasse 57 (BR 55±2) → couleur hors-tolérance.
+    const last = cellValue(cardFor('Humidité'), 'Dernière');
+    expect(last).toHaveTextContent('60.0 %');
+    expect(last.className).toContain('text-status-perime-foreground');
   });
 
   it('should render nothing when there is no measurement', () => {

@@ -42,7 +42,7 @@ describe('RootLayout', () => {
     vi.clearAllMocks();
   });
 
-  it('should render the segmented navigation links', () => {
+  it('should render the sidebar navigation links', () => {
     // Arrange
     vi.mocked(fetchAlerts).mockResolvedValue(unackResponse(0));
 
@@ -50,11 +50,11 @@ describe('RootLayout', () => {
     renderLayout();
 
     // Assert
-    expect(screen.getByRole('link', { name: 'Accueil' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Lots' })).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'Alertes' }),
+      screen.getByRole('link', { name: 'Dashboard' }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lots' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Alertes' })).toBeInTheDocument();
   });
 
   it('should mark the active route with aria-current', () => {
@@ -70,7 +70,7 @@ describe('RootLayout', () => {
       'page',
     );
     expect(
-      screen.getByRole('link', { name: 'Accueil' }),
+      screen.getByRole('link', { name: 'Dashboard' }),
     ).not.toHaveAttribute('aria-current');
   });
 
@@ -83,7 +83,7 @@ describe('RootLayout', () => {
 
     // Assert
     expect(
-      await screen.findByRole('link', { name: /7 non acquittées/i }),
+      await screen.findByLabelText('7 non acquittées'),
     ).toBeInTheDocument();
     expect(await screen.findByText('7')).toBeInTheDocument();
   });

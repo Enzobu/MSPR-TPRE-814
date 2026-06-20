@@ -50,11 +50,12 @@ describe('AcknowledgeButton', () => {
     expect(acknowledgeAlert).toHaveBeenCalledWith('AL-BR-001', 'BR');
   });
 
-  it('should be disabled when already acknowledged', () => {
+  it('should show an acknowledged label without an action button', () => {
     // Arrange / Act
     renderButton(true);
 
     // Assert
-    expect(screen.getByRole('button', { name: 'Acquittée' })).toBeDisabled();
+    expect(screen.getByText('Acquittée')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

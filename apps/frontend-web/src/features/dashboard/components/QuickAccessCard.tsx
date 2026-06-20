@@ -1,7 +1,6 @@
 import { type ComponentType, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, type LucideProps } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { ChevronRight, type LucideProps } from 'lucide-react';
 
 type QuickAccessCardProps = Readonly<{
   to: string;
@@ -11,8 +10,8 @@ type QuickAccessCardProps = Readonly<{
   badge?: ReactNode;
 }>;
 
-// Grande carte-CTA cliquable du dashboard. Hover : léger soulèvement + ring,
-// flèche qui glisse. Lien react-router (a11y native, pas de div onClick).
+// Ligne d'accès rapide du dashboard (design L674-680) : chip icône + titre +
+// sous-titre + chevron. Lien react-router (a11y native, pas de div onClick).
 export function QuickAccessCard({
   to,
   title,
@@ -23,28 +22,24 @@ export function QuickAccessCard({
   return (
     <Link
       to={to}
-      className="group rounded-xl transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex items-center gap-3 rounded-[9px] border bg-card p-[11px] text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <Card className="h-full transition-shadow duration-200 group-hover:ring-2 group-hover:ring-ring/40">
-        <CardContent className="flex h-full items-center gap-4">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Icon className="size-5" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-heading text-base font-medium text-foreground">
-                {title}
-              </h3>
-              {badge}
-            </div>
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
-          <ArrowRight
-            className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-1 group-hover:text-foreground"
-            aria-hidden
-          />
-        </CardContent>
-      </Card>
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-primary">
+        <Icon className="size-4" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-semibold">{title}</span>
+          {badge}
+        </div>
+        <p className="truncate text-[11.5px] text-muted-foreground">
+          {description}
+        </p>
+      </div>
+      <ChevronRight
+        className="size-4 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
     </Link>
   );
 }

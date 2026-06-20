@@ -1,23 +1,41 @@
-import { Bean } from 'lucide-react';
+import type { CountryCode } from '@futurekawa/contracts';
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { COUNTRY_LABELS } from '@/features/dashboard/lib/country';
 
-// Hero d'accueil : dégradé subtil entre tokens chart, arrondi + ombre. Le texte
-// reste lisible (couche de fond translucide derrière, foreground en surimpression).
-export function DashboardHero() {
+type DashboardHeroProps = Readonly<{
+  country?: CountryCode;
+}>;
+
+// Affiche le prénom dérivé de l'email (partie locale avant @), à défaut l'email.
+function greetingName(email: string | undefined): string {
+  if (!email) {
+    return 'à vous';
+  }
+  const localPart = email.split('@')[0] ?? email;
+  const firstSegment = localPart.split(/[._-]/)[0] ?? localPart;
+  return firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1);
+}
+
+function scopeSentence(country?: CountryCode): string {
+  if (!country) {
+    return 'Vue consolidée — tous les pays surveillés.';
+  }
+  return `Périmètre : ${COUNTRY_LABELS[country]}.`;
+}
+
+// En-tête du dashboard (design L561-565) : salutation personnalisée (useAuth) +
+// sous-titre décrivant le périmètre pays sélectionné.
+export function DashboardHero({ country }: DashboardHeroProps) {
+  const { user } = useAuth();
+
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[color:var(--chart-2)] to-[color:var(--chart-4)] p-6 shadow-sm ring-1 ring-border sm:p-8">
-      <div className="absolute inset-0 bg-background/70" aria-hidden />
-      <div className="relative space-y-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border">
-          <Bean className="size-3.5" aria-hidden />
-          FutureKawa
-        </span>
-        <h1 className="font-heading text-3xl font-semibold text-foreground sm:text-4xl">
-          FutureKawa
-        </h1>
-        <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
-          Suivi des stocks de café vert — Brésil · Équateur · Colombie
-        </p>
-      </div>
-    </section>
+    <div>
+      <h1 className="mb-1 text-[23px] font-semibold tracking-tight">
+        Bonjour {greetingName(user?.email)}
+      </h1>
+      <p className="text-[13.5px] text-muted-foreground">
+        {scopeSentence(country)}
+      </p>
+    </div>
   );
 }

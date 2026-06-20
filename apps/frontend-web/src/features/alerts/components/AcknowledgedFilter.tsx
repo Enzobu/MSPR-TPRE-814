@@ -1,41 +1,32 @@
-import { Button } from '@/components/ui/button';
+import {
+  SegmentedChips,
+  type SegmentedOption,
+} from '@/features/alerts/components/SegmentedChips';
 
 type AcknowledgedFilterProps = Readonly<{
   value?: boolean;
   onChange: (acknowledged?: boolean) => void;
 }>;
 
+// Statut porté par l'URL via useAlertFilters → param API `acknowledged`.
+// 'ALL' = pas de filtre (undefined), sinon true/false.
+const ALL = 'ALL' as const;
+type StatusChoice = typeof ALL | boolean;
+
+const OPTIONS: SegmentedOption<StatusChoice>[] = [
+  { value: ALL, label: 'Tous' },
+  { value: false, label: 'Non acquittées' },
+  { value: true, label: 'Acquittées' },
+];
+
 export function AcknowledgedFilter({ value, onChange }: AcknowledgedFilterProps) {
   return (
-    <fieldset className="flex flex-wrap gap-2 border-0 p-0">
-      <legend className="sr-only">Filtrer par acquittement</legend>
-      <Button
-        type="button"
-        size="sm"
-        variant={value === undefined ? 'default' : 'outline'}
-        aria-pressed={value === undefined}
-        onClick={() => onChange(undefined)}
-      >
-        Toutes
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant={value === false ? 'default' : 'outline'}
-        aria-pressed={value === false}
-        onClick={() => onChange(false)}
-      >
-        Non acquittées
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant={value === true ? 'default' : 'outline'}
-        aria-pressed={value === true}
-        onClick={() => onChange(true)}
-      >
-        Acquittées
-      </Button>
-    </fieldset>
+    <SegmentedChips
+      legend="Filtrer par acquittement"
+      options={OPTIONS}
+      value={value ?? ALL}
+      isSelected={(option, current) => option === current}
+      onChange={(choice) => onChange(choice === ALL ? undefined : choice)}
+    />
   );
 }

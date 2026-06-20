@@ -59,7 +59,7 @@ describe('LoginForm', () => {
     const { onSuccess } = renderForm({ login });
 
     // Act
-    await userEvent.type(screen.getByLabelText(/email/i), VALID_EMAIL);
+    await userEvent.type(screen.getByLabelText(/adresse e-mail/i), VALID_EMAIL);
     await userEvent.type(screen.getByLabelText(/mot de passe/i), VALID_PASSWORD);
     await userEvent.click(screen.getByRole('button', { name: /se connecter/i }));
 
@@ -77,7 +77,7 @@ describe('LoginForm', () => {
     const { onSuccess } = renderForm({ login });
 
     // Act
-    await userEvent.type(screen.getByLabelText(/email/i), VALID_EMAIL);
+    await userEvent.type(screen.getByLabelText(/adresse e-mail/i), VALID_EMAIL);
     await userEvent.type(screen.getByLabelText(/mot de passe/i), VALID_PASSWORD);
     await userEvent.click(screen.getByRole('button', { name: /se connecter/i }));
 
@@ -93,7 +93,7 @@ describe('LoginForm', () => {
     const { onSuccess } = renderForm();
 
     // Act
-    await userEvent.type(screen.getByLabelText(/email/i), VALID_EMAIL);
+    await userEvent.type(screen.getByLabelText(/adresse e-mail/i), VALID_EMAIL);
     await userEvent.type(screen.getByLabelText(/mot de passe/i), VALID_PASSWORD);
     await userEvent.click(screen.getByRole('button', { name: /se connecter/i }));
 

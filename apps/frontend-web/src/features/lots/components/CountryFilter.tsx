@@ -1,36 +1,30 @@
 import { COUNTRY_CODES, type CountryCode } from '@futurekawa/contracts';
-import { Button } from '@/components/ui/button';
+import {
+  SegmentedChips,
+  type SegmentedChipOption,
+} from '@/features/lots/components/SegmentedChips';
 
 type CountryFilterProps = Readonly<{
   value?: CountryCode;
   onChange: (country?: CountryCode) => void;
 }>;
 
+const ALL_VALUE = 'ALL';
+type CountryChipValue = CountryCode | typeof ALL_VALUE;
+
+const OPTIONS: SegmentedChipOption<CountryChipValue>[] = [
+  { value: ALL_VALUE, label: 'Tous' },
+  ...COUNTRY_CODES.map((code) => ({ value: code, label: code })),
+];
+
+// Branché sur l'état URL via `useLotFilters` (la page passe value/onChange).
 export function CountryFilter({ value, onChange }: CountryFilterProps) {
   return (
-    <fieldset className="flex flex-wrap gap-2 border-0 p-0">
-      <legend className="sr-only">Filtrer par pays</legend>
-      <Button
-        type="button"
-        size="sm"
-        variant={value === undefined ? 'default' : 'outline'}
-        aria-pressed={value === undefined}
-        onClick={() => onChange(undefined)}
-      >
-        Tous
-      </Button>
-      {COUNTRY_CODES.map((code) => (
-        <Button
-          key={code}
-          type="button"
-          size="sm"
-          variant={value === code ? 'default' : 'outline'}
-          aria-pressed={value === code}
-          onClick={() => onChange(code)}
-        >
-          {code}
-        </Button>
-      ))}
-    </fieldset>
+    <SegmentedChips
+      legend="Filtrer par pays"
+      options={OPTIONS}
+      value={value ?? ALL_VALUE}
+      onChange={(next) => onChange(next === ALL_VALUE ? undefined : next)}
+    />
   );
 }
