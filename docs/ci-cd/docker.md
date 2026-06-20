@@ -18,6 +18,7 @@ Les URLs locales, ports exposés, URLs internes et credentials MariaDB sont déf
 | Service | Rôle |
 |---|---|
 | `frontend-web` | SPA React servie par Nginx |
+| `docs` | Site de documentation utilisateur (VitePress) servi par Nginx (ADR-0009/0010) |
 | `backend-central` | API siège et agrégation pays |
 | `backend-pays` | API pays configurée par `COUNTRY_CODE` |
 | `mariadb-central` | Base siège |

@@ -132,6 +132,16 @@ services:
       backend-central:
         condition: service_started
 
+  # Site de documentation utilisateur (VitePress, ADR-0009/0010). Statique et
+  # autonome : aucune dépendance runtime. Buildé avec la stack (donc en CI via
+  # docker compose build) → pas de job CI dédié.
+  docs:
+    build:
+      context: .
+      dockerfile: docs/Dockerfile
+    ports:
+      - "${DOCS_WEB_PORT}:8080"
+
 volumes:
   mariadb-central-data:
   mariadb-pays-data:
