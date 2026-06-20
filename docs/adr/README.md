@@ -2,7 +2,7 @@
 title: Index des ADR
 owner: Yanis
 status: in-progress
-updated: 2026-06-19
+updated: 2026-06-20
 ---
 
 # ADR — Architecture Decision Records
@@ -35,6 +35,8 @@ Chaque ADR fige un choix, son contexte et ses conséquences.
 | [0007](0007-resilience-strategy.md) | Résilience central ↔ pays | `accepted` | #36, #37 |
 | [0008](0008-testing-strategy.md) | Stratégie de tests (pyramide, outils) | `accepted` | #26, #31, #38, #39, #42 |
 | [0009](0009-vitepress-user-docs.md) | VitePress pour la doc utilisateur | `accepted` | #44, #58 |
+| [0010](0010-docs-site-deployment.md) | Déploiement du site de doc (service Docker) | `accepted` | #58 |
+| [0011](0011-error-monitoring-sentry.md) | Suivi des erreurs (Sentry SaaS, région EU) | `accepted` | #127 |
 
 > La colonne **Cadre (tickets)** liste les tickets que chaque décision cadre
 > (features / infra impactées), pas le ticket de rédaction de l'ADR.

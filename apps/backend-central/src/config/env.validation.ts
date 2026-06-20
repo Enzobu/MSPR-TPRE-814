@@ -44,6 +44,12 @@ export const envSchema = z.object({
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
     .default('info'),
 
+  // Suivi des erreurs (Sentry, ADR-0011). Optionnel : sans DSN, le SDK est no-op
+  // (dev/test). Lu directement par src/instrument.ts au boot, AVANT Nest.
+  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_RELEASE: z.string().optional(),
+
   // Jamais '*' en prod : liste blanche séparée par des virgules (rules/07-security.md).
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 

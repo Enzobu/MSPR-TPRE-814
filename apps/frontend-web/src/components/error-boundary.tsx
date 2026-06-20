@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 
 // Fallback UI métier (jamais de stacktrace remontée à l'utilisateur — rules front).
 export function DefaultErrorFallback() {
@@ -36,7 +37,14 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('Unhandled UI error', error, info);
+    // Remonte à Sentry avec le componentStack React (ADR-0011). No-op si le SDK
+    // n'est pas initialisé (VITE_SENTRY_DSN absent).
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: info.componentStack } },
+    });
+    if (import.meta.env.DEV) {
+      console.error('Unhandled UI error', error, info);
+    }
   }
 
   render(): ReactNode {

@@ -1,6 +1,7 @@
 services:
   mariadb-central:
     image: mariadb:11.4
+    restart: unless-stopped
     environment:
       MARIADB_DATABASE: ${MARIADB_CENTRAL_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
@@ -9,15 +10,16 @@ services:
     ports:
       - "${MARIADB_CENTRAL_PORT}:3306"
     volumes:
-      - mariadb-central-data:/var/lib/mysql
+      - ./volume/mariadb-central-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   mariadb-pays:
     image: mariadb:11.4
+    restart: unless-stopped
     environment:
       MARIADB_DATABASE: ${MARIADB_PAYS_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
@@ -26,15 +28,16 @@ services:
     ports:
       - "${MARIADB_PAYS_PORT}:3306"
     volumes:
-      - mariadb-pays-data:/var/lib/mysql
+      - ./volume/mariadb-pays-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   mosquitto-pays:
     image: eclipse-mosquitto:2.0
+    restart: unless-stopped
     entrypoint: ["/bin/sh", "/mosquitto/entrypoint.sh"]
     environment:
       COUNTRY_CODE: ${COUNTRY_CODE}
@@ -47,10 +50,11 @@ services:
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./infra/mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
-      - mosquitto-pays-data:/mosquitto/data
+      - ./volume/mosquitto-pays-data:/mosquitto/data
 
   phpmyadmin:
     image: phpmyadmin:5.2-apache
+    restart: unless-stopped
     environment:
       PMA_HOSTS: ${PHPMYADMIN_HOSTS}
       PMA_VERBOSES: ${PHPMYADMIN_VERBOSES}
@@ -68,6 +72,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend-pays/Dockerfile
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -86,6 +91,9 @@ services:
       ALERT_RECIPIENT: ${ALERT_RECIPIENT}
       LOG_LEVEL: info
       CORS_ORIGIN: ${BACKEND_PAYS_CORS_ORIGIN}
+      SENTRY_DSN: ${BACKEND_PAYS_SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     ports:
       - "${BACKEND_PAYS_PORT}:3000"
     depends_on:
@@ -98,6 +106,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend-central/Dockerfile
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -108,10 +117,15 @@ services:
       PAYS_REQUEST_TIMEOUT_MS: 3000
       PAYS_REQUEST_RETRIES: 2
       CORS_ORIGIN: ${BACKEND_CENTRAL_CORS_ORIGIN}
-      JWT_SECRET: change-me-for-local-compose-only
+      JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_TTL: 15m
       JWT_REFRESH_TTL: 7d
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
       LOG_LEVEL: info
+      SENTRY_DSN: ${BACKEND_CENTRAL_SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     ports:
       - "${BACKEND_CENTRAL_PORT}:3000"
     depends_on:
@@ -126,13 +140,24 @@ services:
       dockerfile: apps/frontend-web/Dockerfile
       args:
         VITE_API_URL: ${BACKEND_CENTRAL_URL}
+        VITE_SENTRY_DSN: ${FRONTEND_SENTRY_DSN:-}
+        VITE_SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+        SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
+    restart: unless-stopped
     ports:
       - "${FRONTEND_WEB_PORT}:8080"
     depends_on:
       backend-central:
         condition: service_started
 
-volumes:
-  mariadb-central-data:
-  mariadb-pays-data:
-  mosquitto-pays-data:
+  # Site de documentation utilisateur (VitePress, ADR-0009/0010). Statique et
+  # autonome : aucune dépendance runtime. Buildé avec la stack (donc en CI via
+  # docker compose build) → pas de job CI dédié.
+  docs:
+    build:
+      context: .
+      dockerfile: docs/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${DOCS_WEB_PORT}:8080"
