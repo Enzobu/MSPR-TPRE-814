@@ -12,7 +12,7 @@ async function fillCredentials(
   email: string,
   password: string,
 ): Promise<void> {
-  await page.getByLabel(/email/i).fill(email);
+  await page.getByLabel(/adresse e-mail/i).fill(email);
   await page.getByLabel(/mot de passe/i).fill(password);
   await page.getByRole('button', { name: /se connecter/i }).click();
 }

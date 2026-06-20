@@ -19,20 +19,27 @@ test('liste FIFO triée par date asc → détail lot → mesures visibles', asyn
   await expect(table).toBeVisible();
 
   // Ordre FIFO : les ids de lot apparaissent dans l'ordre storedAt ascendant.
-  const renderedIds = (await table.getByRole('link').allInnerTexts()).map(
-    (text) => text.trim(),
-  );
+  // La référence du lot vit dans la 2e colonne (« Référence »), rendue comme un
+  // lien accessible (focusable, Enter natif) vers le détail.
+  const rows = table.locator('tbody tr');
+  const renderedIds = (
+    await rows.locator('td:nth-child(2)').allInnerTexts()
+  ).map((text) => text.trim());
   expect(renderedIds).toEqual(FIFO_LOT_IDS);
 
-  // Cliquer le lot le plus ancien (premier en FIFO) → page détail.
-  await table.getByRole('link', { name: FIFO_LOT_IDS[0] }).click();
+  // Naviguer via le lien de référence du lot le plus ancien (premier en FIFO).
+  // On le focalise puis on valide au clavier (Enter) pour couvrir l'a11y.
+  const oldestLink = page.getByRole('link', { name: FIFO_LOT_IDS[0] });
+  await oldestLink.focus();
+  await expect(oldestLink).toBeFocused();
+  await oldestLink.press('Enter');
   await expect(page).toHaveURL(new RegExp(`/lots/${FIFO_LOT_IDS[0]}$`));
 
-  // Le détail identifie le lot et affiche ses mesures (stats T°/humidité).
-  await expect(page.getByText(`Lot ${FIFO_LOT_IDS[0]}`)).toBeVisible();
+  // Le détail identifie le lot (titre = référence) et affiche ses mesures :
+  // cartes T°/humidité avec leur légende « zone conforme » (bande de tolérance).
   await expect(
-    page.getByRole('heading', { name: /Courbes T° et humidité/i }),
+    page.getByRole('heading', { name: FIFO_LOT_IDS[0] }),
   ).toBeVisible();
   await expect(page.getByText('Température').first()).toBeVisible();
-  await expect(page.getByText('Hors tolérance').first()).toBeVisible();
+  await expect(page.getByText('zone conforme').first()).toBeVisible();
 });
