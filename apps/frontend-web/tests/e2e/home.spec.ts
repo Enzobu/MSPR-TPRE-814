@@ -18,9 +18,9 @@ test('home affiche le dashboard consolidé (hero + sélecteur pays)', async ({
   await page.goto('/');
 
   // Hero du dashboard d'accueil (#102/#37) — contenu statique, sans dépendance
-  // réseau.
+  // réseau. Sans pays sélectionné, le sous-titre décrit le périmètre consolidé.
   await expect(
-    page.getByText(/Suivi des stocks de café vert/i),
+    page.getByText(/Vue consolidée — tous les pays surveillés/i),
   ).toBeVisible();
 
   // Sélecteur pays global : « Tous » + une option par pays.

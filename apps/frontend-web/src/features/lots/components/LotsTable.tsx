@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import type { Lot } from '@futurekawa/contracts';
 import { LotStatusBadge } from '@/features/lots/components/LotStatusBadge';
 import { LotWarehouseHoverCard } from '@/features/lots/components/LotWarehouseHoverCard';
@@ -60,7 +60,17 @@ export function LotsTable({ lots }: LotsTableProps) {
                   <LotStatusBadge status={lot.status} />
                 </td>
                 <td className="px-4 py-3 font-mono text-[13px] font-semibold">
-                  {lot.id}
+                  <Link
+                    to={`/lots/${lot.id}`}
+                    // La ligne entière reste cliquable au survol/souris ; le lien
+                    // porte l'accessibilité clavier (focus + Enter natif). On stoppe
+                    // la propagation pour éviter la double navigation via le `onClick`
+                    // de la ligne.
+                    onClick={(event) => event.stopPropagation()}
+                    className="rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    {lot.id}
+                  </Link>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs font-semibold text-muted-foreground">
                   {lot.country}
