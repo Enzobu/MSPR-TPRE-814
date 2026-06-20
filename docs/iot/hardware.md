@@ -9,9 +9,9 @@ cdc-ref: "§III.2"
 # Matériel IoT — ESP8266 + capteur DHT
 
 Ce document décrit le câblage du nœud de surveillance T°/humidité (CDC §III.2),
-les choix matériel et leurs limites. L'archi du firmware et le protocole MQTT
-détaillé feront l'objet de `firmware.md` / `protocol.md` (ticket #41) ; la
-convention MQTT figée est dans l'[ADR-0003](../adr/0003-mqtt-convention.md).
+les choix matériel et leurs limites. L'architecture du firmware est documentée
+dans [`firmware.md`](firmware.md) et le protocole MQTT dans
+[`protocol.md`](protocol.md) ; la convention figée est l'[ADR-0003](../adr/0003-mqtt-convention.md).
 
 ## Composants
 
@@ -104,8 +104,7 @@ dans `apps/iot/include/config.h` (`DHT22` → `DHT11`).
   est acceptable (intervalle 30 s, pas de buffer hors-ligne — ADR-0003).
 - **QoS MQTT** : la lib `PubSubClient` ne publie qu'en **QoS 0** alors que
   l'ADR-0003 vise QoS 1. Mitigation : LWT (`status` retain) + publication
-  fréquente. Une évolution vers une lib MQTT supportant QoS 1 ferait l'objet
-  d'un ADR dédié.
+  fréquente. Détail et évolution possible : [`firmware.md`](firmware.md#limites).
 - **Longueur de câble DATA** : garder le DHT proche de l'ESP (< 20 cm) sans
   pull-up renforcé ; au-delà, réduire la valeur de pull-up ou rapprocher le
   capteur.
@@ -114,7 +113,7 @@ dans `apps/iot/include/config.h` (`DHT22` → `DHT11`).
 
 - ADR-0003 — convention MQTT (topics, payload, QoS, fréquence) :
   [`../adr/0003-mqtt-convention.md`](../adr/0003-mqtt-convention.md)
-- Firmware (archi) & protocole MQTT détaillé : `firmware.md` / `protocol.md` — ticket #41
+- Firmware (archi) : [`firmware.md`](firmware.md) · Protocole MQTT : [`protocol.md`](protocol.md)
 - Feature cross-app : [`../features/firmware-iot.md`](../features/firmware-iot.md)
 - Config matérielle : `apps/iot/include/config.h`
 - Datasheet DHT11 : `apps/iot/doc/DHT11.PDF`
