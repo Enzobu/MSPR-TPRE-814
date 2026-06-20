@@ -23,6 +23,7 @@ le déploiement, voir [`deployment.md`](deployment.md) ; pour les incidents,
 | `backend-pays` | `apps/backend-pays/Dockerfile` | `BACKEND_PAYS_PORT` → 3000 | mariadb-pays, mosquitto-pays |
 | `backend-central` | `apps/backend-central/Dockerfile` | `BACKEND_CENTRAL_PORT` → 3000 | mariadb-central, backend-pays |
 | `frontend-web` | `apps/frontend-web/Dockerfile` | `FRONTEND_WEB_PORT` → 8080 | backend-central |
+| `docs` | `docs/Dockerfile` (VitePress) | `DOCS_WEB_PORT` → 8080 | — |
 
 ## Démarrer / arrêter
 

@@ -48,7 +48,9 @@ jobs:
           PHPMYADMIN_WEB_URL=http://localhost:40064
           PHPMYADMIN_HOSTS=mariadb-central,mariadb-pays
           PHPMYADMIN_VERBOSES=Central,Pays
+          DOCS_WEB_URL=http://localhost:40065
           FRONTEND_WEB_PORT=40050
+          DOCS_WEB_PORT=40065
           BACKEND_CENTRAL_PORT=40051
           BACKEND_PAYS_PORT=40052
           MARIADB_CENTRAL_PORT=40056
@@ -190,6 +192,9 @@ jobs:
           path: apps/frontend-web/playwright-report
           retention-days: 7
           if-no-files-found: ignore
+
+  # Le site de doc (VitePress) est désormais un service de la stack Docker : il est
+  # construit par le job `docker-build` (docker compose build) → pas de job dédié.
 
   sonarqube:
     name: SonarQube analysis

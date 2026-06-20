@@ -161,13 +161,16 @@ Toute la doc vit dans [`docs/`](./docs/) (structure imposée par [`.claude/rules
 ### Site de documentation utilisateur (VitePress)
 
 La doc utilisateur (`docs/user/`) est aussi servie comme **site web navigable
-avec recherche** ([ADR-0009](./docs/adr/0009-vitepress-user-docs.md)) :
+avec recherche** ([ADR-0009](./docs/adr/0009-vitepress-user-docs.md)). En local :
 
 ```bash
 pnpm docs:dev       # site en local (hot-reload)
-pnpm docs:build     # build statique (vérifié par la CI)
+pnpm docs:build     # build statique
 pnpm docs:preview   # prévisualiser le build
 ```
+
+En production, c'est le **service Docker `docs`** de la stack compose (buildé avec
+le reste, déployé par Dokploy — [ADR-0010](./docs/adr/0010-docs-site-deployment.md)).
 
 API :
 - **Swagger** : `/api-docs` sur chaque backend

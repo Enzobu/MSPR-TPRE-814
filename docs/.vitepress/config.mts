@@ -12,7 +12,10 @@ export default defineConfig({
   // Le README.md sert d'index GitHub du dossier (règle 05) ; la home du site
   // est index.md → on exclut README.md du routage pour éviter une page /README.
   srcExclude: ['README.md'],
-  lastUpdated: true,
+  // lastUpdated désactivé : il exécute `git log` par page, indisponible dans le
+  // build Docker hermétique (pas de .git dans l'image). La fraîcheur reste portée
+  // par le frontmatter `updated` de chaque page (règle 05).
+  lastUpdated: false,
   cleanUrls: true,
 
   themeConfig: {
