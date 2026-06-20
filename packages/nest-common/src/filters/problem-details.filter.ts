@@ -25,12 +25,13 @@ export class ProblemDetailsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    // `id` est posé sur la requête par nestjs-pino (genReqId) = correlation-id.
+    const request = ctx.getRequest<Request & { id?: unknown }>();
 
     const { status, title, detail, errors } = this.describe(exception);
 
     if (status >= MIN_SERVER_ERROR_STATUS) {
-      const correlationId = (request as Request & { id?: unknown }).id;
+      const correlationId = request.id;
       Sentry.captureException(exception, {
         tags: {
           correlation_id:
