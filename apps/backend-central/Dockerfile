@@ -35,6 +35,7 @@ WORKDIR /workspace/apps/backend-central
 USER node
 
 EXPOSE 3000
-# start:prod = `node dist/main` : on l'invoque directement pour éviter de dépendre
-# de pnpm/corepack au runtime (cache absent dans l'étape finale).
-CMD ["node", "dist/main"]
+# entrypoint.sh : applique les migrations Prisma (+ seed admin idempotent) avant
+# de lancer `node dist/main`. Le binaire prisma est appelé directement
+# (node_modules/.bin) pour ne pas dépendre de pnpm/corepack au runtime.
+CMD ["sh", "entrypoint.sh"]
