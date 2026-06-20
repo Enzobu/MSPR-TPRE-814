@@ -3,8 +3,15 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { ProblemDetailsFilter } from './problem-details.filter';
 import { ProblemDetailsDto } from '../dto/problem-details.dto';
+
+jest.mock('@sentry/nestjs', () => ({
+  captureException: jest.fn(),
+}));
+
+const captureException = Sentry.captureException as jest.Mock;
 
 interface CapturedResponse {
   statusCode?: number;
@@ -15,6 +22,7 @@ interface CapturedResponse {
 function mockHost(
   url = '/api/v1/resource',
   method = 'GET',
+  correlationId?: string,
 ): {
   host: ArgumentsHost;
   captured: CapturedResponse;
@@ -38,7 +46,8 @@ function mockHost(
       return response;
     },
   };
-  const request = { url, method };
+  // `id` est posé par nestjs-pino (genReqId) = correlation-id propagé.
+  const request = { url, method, id: correlationId };
 
   const host = {
     switchToHttp: () => ({
@@ -55,6 +64,7 @@ describe('ProblemDetailsFilter', () => {
 
   beforeEach(() => {
     filter = new ProblemDetailsFilter();
+    captureException.mockClear();
   });
 
   it('should map a validation error to an RFC 7807 problem with field errors', () => {
@@ -109,5 +119,31 @@ describe('ProblemDetailsFilter', () => {
     expect(captured.statusCode).toBe(500);
     expect(captured.body?.title).toBe('Internal Server Error');
     expect(captured.body?.detail).toBe('An unexpected error occurred.');
+  });
+
+  it('should report a 5xx to Sentry with the correlation id', () => {
+    // Arrange
+    const { host } = mockHost('/api/v1/items', 'POST', 'corr-123');
+    const exception = new Error('boom');
+
+    // Act
+    filter.catch(exception, host);
+
+    // Assert
+    expect(captureException).toHaveBeenCalledTimes(1);
+    expect(captureException).toHaveBeenCalledWith(exception, {
+      tags: { correlation_id: 'corr-123' },
+    });
+  });
+
+  it('should not report a 4xx to Sentry (expected business noise)', () => {
+    // Arrange
+    const { host } = mockHost('/api/v1/items/42');
+
+    // Act
+    filter.catch(new NotFoundException('Item not found'), host);
+
+    // Assert
+    expect(captureException).not.toHaveBeenCalled();
   });
 });

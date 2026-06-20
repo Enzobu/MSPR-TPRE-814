@@ -1,3 +1,5 @@
+// Doit rester le tout premier import : Sentry s'initialise avant le reste (ADR-0011).
+import './instrument';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';

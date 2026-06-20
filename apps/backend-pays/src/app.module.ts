@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SentryModule } from '@sentry/nestjs/setup';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import {
@@ -18,6 +19,9 @@ import { MqttModule } from './mqtt/mqtt.module';
 
 @Module({
   imports: [
+    // En premier : branche Sentry sur le cycle de requête Nest (contexte/erreurs).
+    // No-op si SENTRY_DSN absent (src/instrument.ts n'a pas initialisé le SDK).
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     LoggerModule.forRootAsync({
       inject: [ConfigService],
