@@ -10,7 +10,8 @@ adr-refs: [0003]
 # MQTT — broker Mosquitto
 
 La **convention de topics, payload, QoS, retain et LWT** est figée par
-[ADR-0003](../adr/0003-mqtt-convention.md) — non répétée ici. Ce document couvre la
+[ADR-0003](../adr/0003-mqtt-convention.md) et détaillée côté contrat dans
+[`../iot/protocol.md`](../iot/protocol.md) — non répétée ici. Ce document couvre la
 **configuration du broker** : auth, ACL, persistance.
 
 ## Topologie
