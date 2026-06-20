@@ -9,9 +9,9 @@ services:
     ports:
       - "${MARIADB_CENTRAL_PORT}:3306"
     volumes:
-      - mariadb-central-data:/var/lib/mysql
+      - ./volume/mariadb-central-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -26,9 +26,9 @@ services:
     ports:
       - "${MARIADB_PAYS_PORT}:3306"
     volumes:
-      - mariadb-pays-data:/var/lib/mysql
+      - ./volume/mariadb-pays-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -47,7 +47,7 @@ services:
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./infra/mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
-      - mosquitto-pays-data:/mosquitto/data
+      - ./volume/mosquitto-pays-data:/mosquitto/data
 
   phpmyadmin:
     image: phpmyadmin:5.2-apache
@@ -143,8 +143,3 @@ services:
       dockerfile: docs/Dockerfile
     ports:
       - "${DOCS_WEB_PORT}:8080"
-
-volumes:
-  mariadb-central-data:
-  mariadb-pays-data:
-  mosquitto-pays-data:
