@@ -5,6 +5,8 @@ coverage/
 *.env*
 !.env.compose.example
 !**/.env.test.example
+!**/.env.example
+!**/.env.example.prod
 *.log
 .DS_Store
 .idea/
