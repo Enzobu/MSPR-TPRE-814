@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as Sentry from '@sentry/react';
 import {
   DefaultErrorFallback,
   ErrorBoundary,
 } from '@/components/error-boundary';
+
+vi.mock('@sentry/react', () => ({
+  captureException: vi.fn(),
+}));
 
 function Boom(): never {
   throw new Error('boom');
@@ -52,6 +57,21 @@ describe('ErrorBoundary', () => {
 
     // Assert
     expect(screen.getByText('custom fallback')).toBeInTheDocument();
+  });
+
+  it('should report the caught error to Sentry', () => {
+    // Arrange / Act
+    render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>,
+    );
+
+    // Assert
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'boom' }),
+      expect.objectContaining({ contexts: expect.any(Object) }),
+    );
   });
 });
 

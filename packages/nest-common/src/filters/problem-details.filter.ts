@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { Request, Response } from 'express';
 import { ProblemDetailsDto } from '../dto/problem-details.dto';
 
@@ -13,7 +14,10 @@ const MIN_SERVER_ERROR_STATUS = 500;
 
 // Filtre global : normalise TOUTE exception en RFC 7807 (application/problem+json).
 // Jamais de stacktrace ni de détail interne renvoyé au client (rules/07-security.md) ;
-// les 5xx sont loguées côté serveur avec le correlation_id propagé par pino.
+// les 5xx sont loguées côté serveur avec le correlation_id propagé par pino ET
+// remontées à Sentry (ADR-0011). Les 4xx (validation, not found…) sont du bruit
+// métier attendu → jamais envoyées à Sentry. captureException est un no-op si le
+// SDK n'est pas initialisé (SENTRY_DSN absent).
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
   private readonly logger = new Logger(ProblemDetailsFilter.name);
@@ -26,6 +30,13 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const { status, title, detail, errors } = this.describe(exception);
 
     if (status >= MIN_SERVER_ERROR_STATUS) {
+      const correlationId = (request as Request & { id?: unknown }).id;
+      Sentry.captureException(exception, {
+        tags: {
+          correlation_id:
+            typeof correlationId === 'string' ? correlationId : undefined,
+        },
+      });
       this.logger.error(
         `Unhandled exception on ${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : String(exception),
