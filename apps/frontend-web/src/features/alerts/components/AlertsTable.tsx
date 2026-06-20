@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import type { Alert } from '@futurekawa/contracts';
 import { AcknowledgeButton } from '@/features/alerts/components/AcknowledgeButton';
 import { SeverityPill } from '@/features/alerts/components/SeverityPill';
@@ -14,18 +14,33 @@ const HEADERS = ['Sévérité', 'Lot', 'Type', 'Déclenchée', 'Action'] as cons
 function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
   const navigate = useNavigate();
 
-  // La ligne entière est cliquable (confort souris), mais l'accessibilité
-  // clavier repose sur le lien explicite porté par le message.
+  // La ligne entière est cliquable (confort souris) ; l'accessibilité clavier
+  // repose sur le lien explicite porté par la référence de lot. Un clic sur un
+  // bouton de la ligne (acquittement) ne doit pas déclencher la navigation.
   return (
     <tr
       className="cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent"
-      onClick={() => navigate(`/alerts/${alert.id}`)}
+      onClick={(event) => {
+        if (
+          event.target instanceof HTMLElement &&
+          event.target.closest('button')
+        ) {
+          return;
+        }
+        navigate(`/alerts/${alert.id}`);
+      }}
     >
       <td className="px-[18px] py-3">
         <SeverityPill type={alert.type} />
       </td>
       <td className="px-[18px] py-3 font-mono text-[13px] font-semibold">
-        {alert.lotId ?? '—'}
+        <Link
+          to={`/alerts/${alert.id}`}
+          onClick={(event) => event.stopPropagation()}
+          className="rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          {alert.lotId ?? '—'}
+        </Link>
       </td>
       <td className="max-w-0 px-[18px] py-3">
         <AlertTypeHoverCard alert={alert} />
@@ -34,14 +49,11 @@ function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
         {formatAgo(alert.triggeredAt)}
       </td>
       <td className="px-[18px] py-3">
-        {/* L'acquittement ne doit pas déclencher la navigation de ligne. */}
-        <div onClick={(event) => event.stopPropagation()}>
-          <AcknowledgeButton
-            id={alert.id}
-            country={alert.country}
-            acknowledged={alert.acknowledged}
-          />
-        </div>
+        <AcknowledgeButton
+          id={alert.id}
+          country={alert.country}
+          acknowledged={alert.acknowledged}
+        />
       </td>
     </tr>
   );
