@@ -50,7 +50,7 @@ export function AlertChartCard({ alert }: AlertChartCardProps) {
           metric={metric}
         />
       ) : null}
-      {data && data.data.length === 0 ? (
+      {data?.data.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">
           Aucune mesure enregistrée pour cet entrepôt.
         </p>
