@@ -33,7 +33,7 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 // withCredentials : indispensable pour que le cookie httpOnly `fk_refresh` parte
 // vers /auth/refresh et /auth/logout (ADR-0006, CORS central `credentials: true`).
 export const httpClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL as string | undefined,
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
