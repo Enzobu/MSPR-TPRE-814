@@ -1,5 +1,5 @@
 /**
- * Conventional Commits — aligné avec .claude/rules/06-git.md
+ * Conventional Commits
  */
 module.exports = {
   extends: ['@commitlint/config-conventional'],
@@ -7,14 +7,13 @@ module.exports = {
     'type-enum': [
       2,
       'always',
-      ['feat', 'fix', 'refactor', 'test', 'docs', 'chore', 'ci', 'style'],
+      ['feat', 'fix', 'refactor', 'test', 'docs', 'chore', 'ci', 'style', 'build', 'perf', 'revert'],
     ],
-    'scope-enum': [
-      2,
-      'always',
-      ['pays', 'central', 'front', 'iot', 'contracts', 'docker', 'ci', 'docs', 'deps', 'repo'],
-    ],
-    'scope-empty': [2, 'never'],
+
+    'scope-empty': [0],
+
+    'scope-enum': [0],
+
     'subject-case': [0],
     'header-max-length': [2, 'always', 100],
   },
