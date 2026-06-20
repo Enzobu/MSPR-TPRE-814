@@ -20,6 +20,10 @@ idea/
 .codex/settings.local.toml
 .codex/settings.local.json
 
+# Skill /sonar — token Sonar hardcodé dedans, gardé hors git (local only)
+.claude/commands/sonar.md
+.agents/skills/sonar/SKILL.md
+
 # IoT firmware secrets
 apps/iot/include/secrets.h
 apps/iot/src/secrets.h
