@@ -14,8 +14,8 @@ DHT), qui publie ses relevés en MQTT vers le `backend-pays` (ADR-0003).
 | Document | Contenu | Statut |
 |---|---|---|
 | [`hardware.md`](hardware.md) | Câblage ESP8266 ↔ DHT, choix matériel (DHT22/DHT11), limites | implemented |
-| `protocol.md` | Topics / payloads / fréquences MQTT détaillés | à venir — ticket #41 |
-| `firmware.md` | Archi du firmware + reconnexion | à venir — ticket #41 |
+| [`protocol.md`](protocol.md) | Topics, payloads JSON, QoS, fréquences MQTT (ADR-0003) | implemented |
+| [`firmware.md`](firmware.md) | Architecture du firmware, boucle non bloquante, reconnexion | implemented |
 
 ## Voir aussi
 
