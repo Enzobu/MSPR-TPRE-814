@@ -1,14 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { Coffee, Lock } from 'lucide-react';
 import { LoginForm } from '@/features/auth/components/LoginForm';
+import { LoginBrandPanel } from '@/features/auth/components/LoginBrandPanel';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 interface LocationState {
@@ -32,26 +27,38 @@ export default function LoginPage(): React.ReactNode {
   }, [status, navigate, redirectTo]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="font-heading text-lg font-semibold">FutureKawa</span>
-        <ThemeToggle />
-      </header>
-      <main className="flex flex-1 items-center justify-center px-4 py-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Connexion</CardTitle>
-            <CardDescription>
-              Accédez au suivi des stocks de café vert.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LoginForm
-              onSuccess={() => navigate(redirectTo, { replace: true })}
-            />
-          </CardContent>
-        </Card>
-      </main>
+    <div className="grid min-h-screen bg-background text-foreground lg:grid-cols-[1.05fr_1fr]">
+      <div className="relative flex items-center justify-center px-5 py-10 sm:px-10">
+        <div className="absolute right-5 top-5">
+          <ThemeToggle />
+        </div>
+        <div className="w-full max-w-[380px]">
+          <div className="mb-9 flex items-center gap-2.5">
+            <span className="flex size-[34px] items-center justify-center rounded-[9px] bg-primary text-primary-foreground">
+              <Coffee className="size-[19px]" aria-hidden />
+            </span>
+            <span className="text-[17px] font-semibold tracking-tight">
+              FutureKawa
+            </span>
+          </div>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight">
+            Connexion
+          </h1>
+          <p className="mb-7 text-sm leading-relaxed text-muted-foreground">
+            Accédez au suivi des stocks de café vert et à la surveillance IoT.
+          </p>
+
+          <LoginForm
+            onSuccess={() => navigate(redirectTo, { replace: true })}
+          />
+
+          <div className="mt-6 flex items-center gap-2 border-t border-border pt-5 text-xs text-muted-foreground">
+            <Lock className="size-3.5 shrink-0" aria-hidden />
+            Connexion chiffrée · accès réservé aux équipes siège et entrepôt
+          </div>
+        </div>
+      </div>
+      <LoginBrandPanel />
     </div>
   );
 }

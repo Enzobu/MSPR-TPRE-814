@@ -11,7 +11,7 @@ type DashboardKpisProps = Readonly<{
 
 // Trois KPI alimentés par les vraies données consolidées (lots, alertes, pays
 // injoignables), scopables par pays. Chaque carte gère son propre
-// chargement/erreur.
+// chargement/erreur. Grille responsive (1 → 2 → 3 colonnes).
 export function DashboardKpis({ country }: DashboardKpisProps) {
   const stocks = useStocksSummary(country);
   const unack = useUnacknowledgedCount(country);
@@ -22,14 +22,14 @@ export function DashboardKpis({ country }: DashboardKpisProps) {
   const scopeHint = country ? COUNTRY_LABELS[country] : 'Tous pays confondus';
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
       <KpiCard
         label="Lots en stock"
         icon={Boxes}
         isLoading={stocks.isPending}
         isError={stocks.isError}
         value={stocks.data?.total ?? 0}
-        hint={scopeHint}
+        note={scopeHint}
       />
       <KpiCard
         label="Alertes non acquittées"
@@ -38,7 +38,7 @@ export function DashboardKpis({ country }: DashboardKpisProps) {
         isError={unack.isError}
         value={unackCount}
         emphasis={unackCount > 0}
-        hint={unackCount > 0 ? 'Action requise' : 'Rien à signaler'}
+        note={unackCount > 0 ? 'Action requise' : 'Rien à signaler'}
       />
       <KpiCard
         label="Pays indisponibles"
@@ -47,7 +47,7 @@ export function DashboardKpis({ country }: DashboardKpisProps) {
         isError={stocks.isError}
         value={hasUnavailable ? unavailable.join(', ') : 'Tous connectés'}
         emphasis={hasUnavailable}
-        hint={hasUnavailable ? 'Données partielles' : undefined}
+        note={hasUnavailable ? 'Données partielles' : undefined}
       />
     </div>
   );

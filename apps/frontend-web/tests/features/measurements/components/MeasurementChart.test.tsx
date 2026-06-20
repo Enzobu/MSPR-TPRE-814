@@ -73,7 +73,7 @@ describe('MeasurementChart', () => {
     ).not.toBeNull();
   });
 
-  it('should render reference lines for the tolerance bounds', () => {
+  it('should render the conformity band and the tolerance bound lines', () => {
     // Arrange / Act
     const { container } = render(
       <MeasurementChart
@@ -83,8 +83,12 @@ describe('MeasurementChart', () => {
       />,
     );
 
-    // Assert : idéal + bornes haute/basse = au moins 3 lignes de référence
+    // Assert : la refonte matérialise la zone conforme par une bande
+    // (ReferenceArea) bornée par deux lignes (haute/basse).
+    expect(
+      container.querySelector('.recharts-reference-area'),
+    ).not.toBeNull();
     const refLines = container.querySelectorAll('.recharts-reference-line');
-    expect(refLines.length).toBeGreaterThanOrEqual(3);
+    expect(refLines.length).toBe(2);
   });
 });

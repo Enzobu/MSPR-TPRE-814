@@ -1,7 +1,8 @@
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
@@ -40,6 +41,8 @@ const METRIC_CONFIG: Record<
   {
     title: string;
     unit: string;
+    // Token de couleur de la métrique : temp = chart-2, humidité = chart-3.
+    colorVar: string;
     bounds: (country: CountryCode) => ToleranceBounds;
     value: (m: Measurement) => number;
     isOut: (value: number, country: CountryCode) => boolean;
@@ -48,6 +51,7 @@ const METRIC_CONFIG: Record<
   temperature: {
     title: 'Température',
     unit: '°C',
+    colorVar: 'var(--chart-2)',
     bounds: temperatureBounds,
     value: (m) => m.temperatureCelsius,
     isOut: isTemperatureOutOfTolerance,
@@ -55,27 +59,37 @@ const METRIC_CONFIG: Record<
   humidity: {
     title: 'Humidité',
     unit: '%',
+    colorVar: 'var(--chart-3)',
     bounds: humidityBounds,
     value: (m) => m.humidityPercent,
     isOut: isHumidityOutOfTolerance,
   },
 };
 
-// Dot personnalisé : les points hors tolérance sont rendus en `--destructive`,
-// les autres en `--chart-1`. Le rayon est augmenté hors tolérance pour l'alerte.
-function MeasurementDot(
-  props: DotProps & { payload?: ChartPoint },
-): React.ReactElement {
-  const { cx, cy, payload } = props;
+type DotRenderProps = DotProps & {
+  index?: number;
+  payload?: ChartPoint;
+  lastIndex?: number;
+  colorVar?: string;
+};
+
+// Dot rendu via clonage recharts : seul le dernier point est marqué en
+// permanence (dot final), les autres n'apparaissent qu'hors tolérance.
+function MeasurementDot(props: DotRenderProps): React.ReactElement {
+  const { cx, cy, index, payload, lastIndex, colorVar } = props;
+  const isLast = index === lastIndex;
   const out = payload?.outOfTolerance ?? false;
+  if (!isLast && !out) {
+    return <g />;
+  }
   return (
     <circle
       cx={cx}
       cy={cy}
-      r={out ? 4 : 2.5}
-      fill={out ? 'var(--destructive)' : 'var(--chart-1)'}
+      r={isLast ? 4.5 : 3.5}
+      fill={out ? 'var(--status-perime)' : (colorVar ?? 'var(--chart-1)')}
       stroke="var(--background)"
-      strokeWidth={1}
+      strokeWidth={1.5}
     />
   );
 }
@@ -87,6 +101,7 @@ export function MeasurementChart({
 }: MeasurementChartProps): React.ReactElement {
   const config = METRIC_CONFIG[metric];
   const bounds = config.bounds(country);
+  const gradientId = `meas-gradient-${metric}`;
 
   const points: ChartPoint[] = measurements.map((m) => {
     const value = config.value(m);
@@ -98,19 +113,23 @@ export function MeasurementChart({
     };
   });
 
-  const ariaLabel = `Courbe ${config.title.toLowerCase()} (${config.unit}) pour le pays ${country}, avec bande de tolérance ${bounds.lower} à ${bounds.upper} ${config.unit}`;
+  const lastIndex = points.length - 1;
+  const ariaLabel = `Courbe ${config.title.toLowerCase()} (${config.unit}) pour le pays ${country}, zone conforme de ${bounds.lower} à ${bounds.upper} ${config.unit}`;
 
   return (
     <figure className="space-y-2" aria-label={ariaLabel}>
-      <figcaption className="text-sm font-medium">
-        {config.title} ({config.unit})
-      </figcaption>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
+          <ComposedChart
             data={points}
             margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
           >
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={config.colorVar} stopOpacity={0.22} />
+                <stop offset="100%" stopColor={config.colorVar} stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis
               dataKey="label"
@@ -138,46 +157,46 @@ export function MeasurementChart({
             <ReferenceArea
               y1={bounds.lower}
               y2={bounds.upper}
-              fill="var(--muted)"
-              fillOpacity={0.4}
+              fill="var(--status-conforme)"
+              fillOpacity={0.1}
               stroke="none"
               ifOverflow="extendDomain"
             />
             <ReferenceLine
-              y={bounds.ideal}
-              stroke="var(--chart-2)"
-              strokeDasharray="4 2"
-              ifOverflow="extendDomain"
-              label={{
-                value: 'Idéal',
-                position: 'insideTopRight',
-                fill: 'var(--muted-foreground)',
-                fontSize: 11,
-              }}
-            />
-            <ReferenceLine
               y={bounds.upper}
-              stroke="var(--muted-foreground)"
-              strokeDasharray="2 2"
+              stroke="var(--status-conforme)"
+              strokeOpacity={0.42}
+              strokeDasharray="4 4"
               ifOverflow="extendDomain"
             />
             <ReferenceLine
               y={bounds.lower}
-              stroke="var(--muted-foreground)"
-              strokeDasharray="2 2"
+              stroke="var(--status-conforme)"
+              strokeOpacity={0.42}
+              strokeDasharray="4 4"
               ifOverflow="extendDomain"
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="none"
+              fill={`url(#${gradientId})`}
+              isAnimationActive={false}
+              activeDot={false}
             />
             <Line
               type="monotone"
               dataKey="value"
               name={config.title}
-              stroke="var(--chart-1)"
+              stroke={config.colorVar}
               strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
               isAnimationActive={false}
-              dot={<MeasurementDot />}
+              dot={<MeasurementDot lastIndex={lastIndex} colorVar={config.colorVar} />}
               activeDot={{ r: 5 }}
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </figure>

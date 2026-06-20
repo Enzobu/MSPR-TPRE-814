@@ -1,4 +1,3 @@
-import { CountrySelector } from '@/features/dashboard/components/CountrySelector';
 import { DashboardHero } from '@/features/dashboard/components/DashboardHero';
 import { DashboardKpis } from '@/features/dashboard/components/DashboardKpis';
 import { DashboardQuickAccess } from '@/features/dashboard/components/DashboardQuickAccess';
@@ -7,31 +6,30 @@ import { RecentAlerts } from '@/features/dashboard/components/RecentAlerts';
 import { useDashboardCountry } from '@/features/dashboard/hooks/useDashboardCountry';
 import { useStocksSummary } from '@/features/lots/hooks/useStocksSummary';
 
-// Dashboard d'accueil : vue d'ensemble (hero + KPI temps réel) scopable par
-// pays (état dans l'URL), accès rapides vers lots/alertes. Données consolidées
-// via les hooks de feature. La query stocks est partagée avec DashboardKpis
-// (même queryKey ['stocks','summary',country]) : TanStack dédoublonne, pas de
-// double-fetch — on réutilise ici son `unavailable` pour le banner.
+// Dashboard d'accueil (design L558-701) : salutation + KPI temps réel scopables
+// par pays (état dans l'URL, piloté depuis la sidebar via useDashboardCountry),
+// alertes récentes + accès rapides. La query stocks est partagée avec
+// DashboardKpis (même queryKey) : TanStack dédoublonne, pas de double-fetch — on
+// réutilise ici son `unavailable` pour le bandeau.
+//
+// « Stock par pays » du design est omis : le central n'expose pas de tonnage ni
+// de comptage de lots par pays (useStocksSummary ne renvoie que `total` et
+// `unavailable`). Pas de donnée inventée — la carte sera ajoutée quand l'API la
+// fournira.
 export default function HomePage() {
-  const { country, setCountry } = useDashboardCountry();
+  const { country } = useDashboardCountry();
   const stocks = useStocksSummary(country);
   const unavailable = stocks.data?.unavailable ?? [];
 
   return (
-    <div className="space-y-8">
-      <DashboardHero />
-      <div className="space-y-4">
-        <CountrySelector value={country} onChange={setCountry} />
-        <DashboardUnavailableBanner unavailable={unavailable} />
-        <DashboardKpis country={country} />
+    <div className="space-y-[18px]">
+      <DashboardHero country={country} />
+      <DashboardUnavailableBanner unavailable={unavailable} />
+      <DashboardKpis country={country} />
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1.55fr_1fr]">
+        <RecentAlerts country={country} />
+        <DashboardQuickAccess country={country} />
       </div>
-      <section className="space-y-3">
-        <h2 className="font-heading text-lg font-medium text-foreground">
-          Accès rapides
-        </h2>
-        <DashboardQuickAccess />
-      </section>
-      <RecentAlerts country={country} />
     </div>
   );
 }

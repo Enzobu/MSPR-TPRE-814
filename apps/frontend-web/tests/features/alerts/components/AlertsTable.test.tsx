@@ -1,5 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { Alert } from '@futurekawa/contracts';
 import { AlertsTable } from '@/features/alerts/components/AlertsTable';
@@ -26,14 +28,26 @@ const ALERTS: Alert[] = [
   },
 ];
 
+function renderTable() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/alerts']}>
+        <Routes>
+          <Route path="/alerts" element={<AlertsTable alerts={ALERTS} />} />
+          <Route path="/alerts/:id" element={<p>Détail alerte</p>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 describe('AlertsTable', () => {
   it('should render one row per alert', () => {
     // Arrange / Act
-    render(
-      <MemoryRouter>
-        <AlertsTable alerts={ALERTS} />
-      </MemoryRouter>,
-    );
+    renderTable();
 
     // Assert
     expect(
@@ -42,36 +56,37 @@ describe('AlertsTable', () => {
     expect(screen.getByText('Lot périmé à Bogota-B')).toBeInTheDocument();
   });
 
-  it('should link each alert to its detail route', () => {
-    // Arrange / Act
-    render(
-      <MemoryRouter>
-        <AlertsTable alerts={ALERTS} />
-      </MemoryRouter>,
+  it('should navigate to the alert detail when a row is clicked', async () => {
+    // Arrange
+    renderTable();
+
+    // Act
+    await userEvent.click(
+      screen.getByText('Température trop élevée à Santos-A'),
     );
 
     // Assert
-    const row = screen
-      .getByText('Température trop élevée à Santos-A')
-      .closest('tr');
-    expect(row).not.toBeNull();
-    const link = within(row as HTMLElement).getByRole('link');
-    expect(link).toHaveAttribute('href', '/alerts/AL-BR-001');
+    expect(screen.getByText('Détail alerte')).toBeInTheDocument();
   });
 
   it('should mark acknowledged alerts', () => {
     // Arrange / Act
-    render(
-      <MemoryRouter>
-        <AlertsTable alerts={ALERTS} />
-      </MemoryRouter>,
-    );
+    renderTable();
 
     // Assert
     const row = screen.getByText('Lot périmé à Bogota-B').closest('tr');
     expect(row).not.toBeNull();
-    expect(
-      within(row as HTMLElement).getByLabelText('Acquittée'),
-    ).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByText('Acquittée')).toBeInTheDocument();
+  });
+
+  it('should not navigate when the acknowledge button is clicked', async () => {
+    // Arrange
+    renderTable();
+
+    // Act
+    await userEvent.click(screen.getByRole('button', { name: 'Acquitter' }));
+
+    // Assert : on reste sur la liste, le détail n'est pas monté.
+    expect(screen.queryByText('Détail alerte')).not.toBeInTheDocument();
   });
 });

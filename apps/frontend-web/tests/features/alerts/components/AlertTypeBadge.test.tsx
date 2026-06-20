@@ -8,7 +8,7 @@ describe('AlertTypeBadge', () => {
     render(<AlertTypeBadge type="TEMPERATURE_OUT_OF_RANGE" />);
 
     // Assert
-    expect(screen.getByText('Température hors plage')).toBeInTheDocument();
+    expect(screen.getByText('Température')).toBeInTheDocument();
   });
 
   it('should render the humidity label', () => {
@@ -16,7 +16,7 @@ describe('AlertTypeBadge', () => {
     render(<AlertTypeBadge type="HUMIDITY_OUT_OF_RANGE" />);
 
     // Assert
-    expect(screen.getByText('Humidité hors plage')).toBeInTheDocument();
+    expect(screen.getByText('Humidité')).toBeInTheDocument();
   });
 
   it('should render the expired lot label', () => {
@@ -24,6 +24,6 @@ describe('AlertTypeBadge', () => {
     render(<AlertTypeBadge type="LOT_EXPIRED" />);
 
     // Assert
-    expect(screen.getByText('Lot périmé')).toBeInTheDocument();
+    expect(screen.getByText('Péremption')).toBeInTheDocument();
   });
 });
