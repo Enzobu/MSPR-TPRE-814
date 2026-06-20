@@ -1,10 +1,15 @@
 import { expect, test } from '@playwright/test';
 import { setupAuthMock } from './support/auth-mock';
+import { setupDashboardMock } from './support/dashboard-mock';
 
 // Depuis #20 les routes hors /login sont derrière <ProtectedRoute> : on simule
 // une session déjà active (refresh au boot → 200) pour atteindre l'app.
+// Le dashboard d'accueil interroge /stocks et /alerts : on les mocke aussi, sinon
+// en CI (sans VITE_API_URL) ces appels reçoivent l'index.html de Vite et cassent
+// le rendu du dashboard.
 test.beforeEach(async ({ page }) => {
   await setupAuthMock(page, { initiallyAuthenticated: true });
+  await setupDashboardMock(page);
 });
 
 test('home affiche le dashboard consolidé (hero + sélecteur pays)', async ({
