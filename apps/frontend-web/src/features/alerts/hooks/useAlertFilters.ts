@@ -1,14 +1,24 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import { ALERT_TYPES, type AlertType } from '@futurekawa/contracts';
+import {
+  ALERT_TYPES,
+  COUNTRY_CODES,
+  type AlertType,
+  type CountryCode,
+} from '@futurekawa/contracts';
 
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_PAGE_SIZE = 20;
 
 export interface AlertFilters {
+  country?: CountryCode;
   type?: AlertType;
   acknowledged?: boolean;
   page: number;
+}
+
+function parseCountry(raw: string | null): CountryCode | undefined {
+  return COUNTRY_CODES.find((code) => code === raw);
 }
 
 function parseType(raw: string | null): AlertType | undefined {
@@ -32,6 +42,7 @@ function parsePage(raw: string | null): number {
 
 export interface UseAlertFiltersResult {
   filters: AlertFilters;
+  setCountry: (country?: CountryCode) => void;
   setType: (type?: AlertType) => void;
   setAcknowledged: (acknowledged?: boolean) => void;
   setPage: (page: number) => void;
@@ -44,11 +55,28 @@ export function useAlertFilters(): UseAlertFiltersResult {
 
   const filters = useMemo<AlertFilters>(
     () => ({
+      country: parseCountry(searchParams.get('country')),
       type: parseType(searchParams.get('type')),
       acknowledged: parseAcknowledged(searchParams.get('acknowledged')),
       page: parsePage(searchParams.get('page')),
     }),
     [searchParams],
+  );
+
+  const setCountry = useCallback(
+    (country?: CountryCode) => {
+      setSearchParams((previous) => {
+        const next = new URLSearchParams(previous);
+        if (country) {
+          next.set('country', country);
+        } else {
+          next.delete('country');
+        }
+        next.set('page', String(DEFAULT_PAGE));
+        return next;
+      });
+    },
+    [setSearchParams],
   );
 
   const setType = useCallback(
@@ -94,5 +122,5 @@ export function useAlertFilters(): UseAlertFiltersResult {
     [setSearchParams],
   );
 
-  return { filters, setType, setAcknowledged, setPage };
+  return { filters, setCountry, setType, setAcknowledged, setPage };
 }

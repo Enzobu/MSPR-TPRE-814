@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { AcknowledgedFilter } from '@/features/alerts/components/AcknowledgedFilter';
 import { AlertCard } from '@/features/alerts/components/AlertCard';
 import { AlertTypeFilter } from '@/features/alerts/components/AlertTypeFilter';
+import { AlertsEmptyState } from '@/features/alerts/components/AlertsEmptyState';
 import { AlertsListSkeleton } from '@/features/alerts/components/AlertsListSkeleton';
 import { AlertsTable } from '@/features/alerts/components/AlertsTable';
 import { AlertsUnavailableBanner } from '@/features/alerts/components/AlertsUnavailableBanner';
@@ -11,6 +12,14 @@ import {
   useAlertFilters,
 } from '@/features/alerts/hooks/useAlertFilters';
 
+function countLabel(total: number): string {
+  if (total === 0) {
+    return 'Aucune alerte';
+  }
+  const noun = total > 1 ? 'alertes' : 'alerte';
+  return `${total} ${noun}, plus récentes d'abord`;
+}
+
 export default function AlertsPage() {
   const { filters, setType, setAcknowledged, setPage } = useAlertFilters();
   const { data, isPending, isError } = useAlerts(filters);
@@ -18,18 +27,21 @@ export default function AlertsPage() {
   const totalPages = data ? Math.ceil(data.total / DEFAULT_PAGE_SIZE) : 1;
   const hasNextPage = filters.page < totalPages;
   const hasPreviousPage = filters.page > 1;
+  const isFiltered =
+    filters.type !== undefined || filters.acknowledged !== undefined;
+  const alerts = data?.data ?? [];
 
   return (
     <section className="space-y-4">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">Alertes</h1>
-        <p className="text-muted-foreground">
-          Alertes consolidées, triées par date de déclenchement (plus récentes
-          d'abord).
+        <h1 className="text-2xl font-semibold tracking-tight">Alertes</h1>
+        <p className="text-sm text-muted-foreground">
+          {data ? countLabel(data.total) : 'Chargement des alertes…'}
         </p>
       </header>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
+        {/* Type et statut sont des filtres API portés par l'URL (useAlertFilters). */}
         <AlertTypeFilter value={filters.type} onChange={setType} />
         <AcknowledgedFilter
           value={filters.acknowledged}
@@ -44,25 +56,23 @@ export default function AlertsPage() {
       {isError ? (
         <p
           role="alert"
-          className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground"
+          className="rounded-xl border border-border bg-muted px-4 py-3 text-sm text-muted-foreground"
         >
           Impossible de charger les alertes pour le moment. Réessayez plus tard.
         </p>
       ) : null}
 
-      {data?.data.length === 0 ? (
-        <p className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted-foreground">
-          Aucune alerte ne correspond à ces critères.
-        </p>
+      {data && alerts.length === 0 ? (
+        <AlertsEmptyState filtered={isFiltered} />
       ) : null}
 
-      {data && data.data.length > 0 ? (
+      {data && alerts.length > 0 ? (
         <>
           <div className="hidden md:block">
-            <AlertsTable alerts={data.data} />
+            <AlertsTable alerts={alerts} />
           </div>
-          <div className="space-y-3 md:hidden">
-            {data.data.map((alert) => (
+          <div className="grid gap-3 md:hidden">
+            {alerts.map((alert) => (
               <AlertCard key={alert.id} alert={alert} />
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConsolidatedResponse, Lot } from '@futurekawa/contracts';
@@ -48,26 +48,33 @@ describe('LotsPage', () => {
     renderPage();
 
     // Assert
-    // La table (md+) et la liste de cartes (mobile) sont toutes deux dans le DOM
-    // jsdom (pas de media queries appliquées), d'où getAllByText.
-    const cells = await screen.findAllByText('Fazenda Sol');
+    // La refonte a retiré la colonne « Exploitation » : les lots sont identifiés
+    // par leur référence. La table (md+) et la liste de cartes (mobile) sont
+    // toutes deux dans le DOM jsdom (pas de media queries appliquées), d'où
+    // getAllByText.
+    const cells = await screen.findAllByText('LOT-BR-001');
     expect(cells.length).toBeGreaterThan(0);
   });
 
   it('should render the country filter', async () => {
     // Arrange / Act
     renderPage();
-    await screen.findAllByText('Fazenda Sol');
+    await screen.findAllByText('LOT-BR-001');
 
     // Assert
-    expect(screen.getByRole('group', { name: /pays/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Tous' })).toBeInTheDocument();
+    // La refonte ajoute un filtre statut qui possède aussi un chip « Tous » :
+    // on scope l'assertion au groupe pays pour lever l'ambiguïté.
+    const countryGroup = screen.getByRole('group', { name: /pays/i });
+    expect(countryGroup).toBeInTheDocument();
+    expect(
+      within(countryGroup).getByRole('button', { name: 'Tous' }),
+    ).toBeInTheDocument();
   });
 
   it('should warn about unavailable countries', async () => {
     // Arrange / Act
     renderPage();
-    await screen.findAllByText('Fazenda Sol');
+    await screen.findAllByText('LOT-BR-001');
 
     // Assert
     const alert = screen.getByRole('alert');

@@ -1,7 +1,7 @@
 import { type ComponentType, type ReactNode } from 'react';
 import type { LucideProps } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type KpiCardProps = Readonly<{
@@ -10,65 +10,66 @@ type KpiCardProps = Readonly<{
   isLoading: boolean;
   isError?: boolean;
   value?: ReactNode;
-  hint?: ReactNode;
+  unit?: string;
+  note?: ReactNode;
   emphasis?: boolean;
 }>;
 
-// Carte KPI du dashboard : libellé + icône, grande valeur en tabular-nums.
-// `emphasis` colore la valeur en statut périmé/destructif (ex. alertes > 0).
+// Carte KPI du dashboard (design L599-617) : libellé + chip icône en haut, grande
+// valeur tabular-nums, ligne de note dessous. `emphasis` teinte la valeur et le
+// chip en statut périmé (ex. alertes non acquittées > 0).
 export function KpiCard({
   label,
   icon: Icon,
   isLoading,
   isError = false,
   value,
-  hint,
+  unit,
+  note,
   emphasis = false,
 }: KpiCardProps) {
-  function renderValue() {
-    if (isLoading) {
-      return <Skeleton className="h-8 w-20" />;
-    }
-    if (isError) {
-      return (
-        <p className="text-2xl font-semibold tabular-nums text-muted-foreground">
-          —
-        </p>
-      );
-    }
+  if (isLoading) {
     return (
-      <p
-        className={cn(
-          'text-3xl font-semibold tabular-nums',
-          emphasis ? 'text-status-perime' : 'text-foreground',
-        )}
-      >
-        {value}
-      </p>
+      <Card className="gap-0 p-[18px] [--card-spacing:0]">
+        <Skeleton className="mb-4 h-[11px] w-[46%]" />
+        <Skeleton className="mb-3 h-[26px] w-[62%]" />
+        <Skeleton className="h-2.5 w-[38%]" />
+      </Card>
     );
   }
 
   return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          {renderValue()}
-          {hint && !isLoading ? (
-            <p className="text-xs text-muted-foreground">{hint}</p>
-          ) : null}
-        </div>
+    <Card className="gap-0 px-[18px] py-[17px] shadow-sm [--card-spacing:0]">
+      <div className="mb-3.5 flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{label}</span>
         <span
           className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-lg',
+            'flex size-7 items-center justify-center rounded-lg',
             emphasis
-              ? 'bg-destructive/10 text-status-perime'
+              ? 'bg-status-perime/12 text-status-perime'
               : 'bg-muted text-muted-foreground',
           )}
         >
           <Icon className="size-4" aria-hidden />
         </span>
-      </CardContent>
+      </div>
+      <div className="flex items-baseline gap-1.5">
+        <span
+          className={cn(
+            'text-[27px] font-semibold tracking-tight tabular-nums',
+            isError && 'text-muted-foreground',
+            emphasis && 'text-status-perime',
+          )}
+        >
+          {isError ? '—' : value}
+        </span>
+        {unit && !isError ? (
+          <span className="text-[13px] text-muted-foreground">{unit}</span>
+        ) : null}
+      </div>
+      {note && !isError ? (
+        <div className="mt-2 text-xs text-muted-foreground">{note}</div>
+      ) : null}
     </Card>
   );
 }

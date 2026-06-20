@@ -1,78 +1,62 @@
-import { type ComponentType } from 'react';
-import { Link, NavLink, Outlet } from 'react-router';
-import { Bean, Boxes, Home, type LucideProps } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { UserMenu } from '@/features/auth/components/UserMenu';
-import { HeaderAlertsLink } from '@/features/alerts/components/HeaderAlertsLink';
-import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { useState } from 'react';
+import { Outlet } from 'react-router';
+import { X } from 'lucide-react';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { AppHeader } from '@/components/layout/AppHeader';
+import { Button } from '@/components/ui/button';
 
-// Nav segmented control (variante 05) : groupe de pills inset sur fond muted,
-// item actif « surélevé ». Le style actif est piloté par NavLink isActive.
-const ITEM_BASE =
-  'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-const ITEM_ACTIVE =
-  'bg-background font-medium text-foreground shadow-sm ring-1 ring-border';
-const ITEM_INACTIVE = 'text-muted-foreground hover:text-foreground';
+// Largeur de la sidebar (248px) imposée par le design.
+const SIDEBAR_WIDTH = 'w-62';
 
-interface HeaderNavItem {
-  to: string;
-  label: string;
-  icon: ComponentType<LucideProps>;
-  end?: boolean;
-}
-
-// `/` doit être actif uniquement sur l'index (end), sinon il matcherait toutes
-// les routes enfants.
-const NAV_ITEMS: readonly HeaderNavItem[] = [
-  { to: '/', label: 'Accueil', icon: Home, end: true },
-  { to: '/lots', label: 'Lots', icon: Boxes },
-];
-
-// Layout racine mobile-first : header segmented + zone de contenu (rules front).
+// App shell : sidebar gauche 248px + header contextuel + zone de contenu
+// scrollable. Sous `lg` (1024px) la sidebar passe en off-canvas (hamburger
+// header) — desktop (>= lg) inchangé.
 export function RootLayout() {
+  // Le panneau off-canvas (mobile) se referme via onNavigate (liens sidebar),
+  // le bouton X et le backdrop — pas besoin d'effet sur la route.
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const closeMobile = (): void => setIsMobileOpen(false);
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sm:px-6">
-        <Link
-          to="/"
-          className="flex shrink-0 items-center gap-2 rounded-lg font-heading text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Bean className="size-4 shrink-0" aria-hidden />
-          <span className="hidden min-[360px]:inline">FutureKawa</span>
-        </Link>
+    <div className="flex min-h-screen bg-background text-foreground">
+      <aside
+        className={`sticky top-0 hidden h-screen shrink-0 border-r border-border lg:block ${SIDEBAR_WIDTH}`}
+      >
+        <Sidebar />
+      </aside>
 
-        <nav
-          aria-label="Navigation principale"
-          className="flex items-center gap-0.5 rounded-xl bg-muted p-1"
-        >
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                cn(ITEM_BASE, isActive ? ITEM_ACTIVE : ITEM_INACTIVE)
-              }
-            >
-              <Icon className="size-4 shrink-0" aria-hidden />
-              <span className="hidden sm:inline">{label}</span>
-            </NavLink>
-          ))}
-          <HeaderAlertsLink
-            itemBaseClassName={ITEM_BASE}
-            itemActiveClassName={ITEM_ACTIVE}
-            itemInactiveClassName={ITEM_INACTIVE}
+      {isMobileOpen ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            type="button"
+            aria-label="Fermer la navigation"
+            onClick={closeMobile}
+            className="absolute inset-0 bg-foreground/40"
           />
-        </nav>
-
-        <div className="flex shrink-0 items-center gap-1">
-          <ThemeToggle />
-          <UserMenu />
+          <div
+            className={`absolute inset-y-0 left-0 ${SIDEBAR_WIDTH} max-w-[85vw] border-r border-border shadow-lg`}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={closeMobile}
+              aria-label="Fermer la navigation"
+              className="absolute right-2 top-2 z-10"
+            >
+              <X className="size-4" aria-hidden />
+            </Button>
+            <Sidebar onNavigate={closeMobile} />
+          </div>
         </div>
-      </header>
-      <main className="mx-auto w-full max-w-5xl px-4 py-6">
-        <Outlet />
-      </main>
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AppHeader onOpenSidebar={() => setIsMobileOpen(true)} />
+        <main className="fk-scroll flex-1 overflow-auto p-4 lg:p-7">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/features/auth/hooks/use-auth';
@@ -47,13 +47,17 @@ export function LoginForm({ onSuccess }: LoginFormProps): React.ReactNode {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+    <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="email" className="text-[13px] font-medium">
+          Adresse e-mail
+        </Label>
         <Input
           id="email"
           type="email"
           autoComplete="email"
+          placeholder="operateur@futurekawa.co"
+          className="h-[42px]"
           aria-invalid={errors.email !== undefined}
           {...register('email')}
         />
@@ -62,12 +66,15 @@ export function LoginForm({ onSuccess }: LoginFormProps): React.ReactNode {
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe</Label>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="password" className="text-[13px] font-medium">
+          Mot de passe
+        </Label>
         <Input
           id="password"
           type="password"
           autoComplete="current-password"
+          className="h-[42px]"
           aria-invalid={errors.password !== undefined}
           {...register('password')}
         />
@@ -82,9 +89,19 @@ export function LoginForm({ onSuccess }: LoginFormProps): React.ReactNode {
         </p>
       )}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
-        Se connecter
+      <Button
+        type="submit"
+        className="mt-1 h-[42px] w-full font-semibold"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <Loader2 className="animate-spin" aria-hidden />
+        ) : (
+          <>
+            Se connecter
+            <ArrowRight aria-hidden />
+          </>
+        )}
       </Button>
     </form>
   );
