@@ -32,3 +32,5 @@ apps/iot/src/secrets.h
 docs/.vitepress/cache
 docs/.vitepress/dist
 *.tsbuildinfo
+
+/volumes/

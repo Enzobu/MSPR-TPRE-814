@@ -10,7 +10,7 @@ services:
     expose:
       - 3306
     volumes:
-      - /etc/dokploy_volumes/mspr814/mariadb-central-data:/var/lib/mysql
+      - ${VOLUME_BASE_PATH}/mariadb-central-data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 10s
@@ -28,7 +28,7 @@ services:
     expose:
       - 3306
     volumes:
-      - /etc/dokploy_volumes/mspr814/mariadb-pays-data:/var/lib/mysql
+      - ${VOLUME_BASE_PATH}/mariadb-pays-data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 10s
@@ -50,7 +50,7 @@ services:
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./infra/mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
-      - /etc/dokploy_volumes/mspr814/mosquitto-pays-data:/mosquitto/data
+      - ${VOLUME_BASE_PATH}/mosquitto-pays-data:/mosquitto/data
 
   phpmyadmin:
     image: phpmyadmin:5.2-apache
