@@ -1,4 +1,4 @@
-import type { LotStatus } from '@futurekawa/contracts';
+import type { CountryCode, LotStatus } from '@futurekawa/contracts';
 import type { Lot, NewLot } from './lot';
 
 // Port (ADR-0001 dependency rule) : l'application parle à cette interface,
@@ -11,6 +11,10 @@ export interface FindManyParams {
   skip: number;
   take: number;
   direction: SortDirection;
+  // Filtre pays optionnel. En déploiement réel, une instance pays ne détient
+  // qu'un pays (filtre sans effet) ; en démo mono-instance (1 DB multi-pays),
+  // il évite que le siège agrège le même lot via ses 3 URLs pays.
+  country?: CountryCode;
 }
 
 export interface Page<T> {

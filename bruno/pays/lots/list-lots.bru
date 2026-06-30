@@ -14,6 +14,7 @@ params:query {
   page: 1
   pageSize: 20
   sort: storedAt:asc
+  ~country: BR
 }
 
 tests {
@@ -50,6 +51,7 @@ docs {
   | `page` | 1 | Page 1-based |
   | `pageSize` | 20 | Taille de page (1–100) |
   | `sort` | `storedAt:asc` | `storedAt:asc` (FIFO) ou `storedAt:desc` |
+  | `country` | _(absent)_ | Optionnel : `BR` \| `EC` \| `CO`. Omis = tous les lots du backend. Le siège le passe pour scoper chaque appel à un pays (évite les doublons en démo mono-instance). |
 
   ## Réponse 200
   ```json
