@@ -92,6 +92,7 @@ export class LotsController {
       page: query.page,
       pageSize: query.pageSize,
       direction,
+      country: query.country,
     });
     return { ...result, data: result.data.map(toLotResponse) };
   }
