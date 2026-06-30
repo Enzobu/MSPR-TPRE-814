@@ -19,11 +19,15 @@ async function bootstrap(): Promise<void> {
 
   app.use(helmet());
 
-  // CORS explicite via env, jamais '*' (rules/07-security.md).
-  const corsOrigins = config
-    .get('CORS_ORIGIN', { infer: true })
-    .split(',')
-    .map((origin) => origin.trim());
+  // CORS explicite via env, jamais '*' en prod (rules/07-security.md).
+  // CORS_ORIGIN='*' (dev local uniquement) → reflète l'origine de la requête :
+  // équivalent "tout autorisé" mais COMPATIBLE avec credentials (un vrai '*'
+  // littéral est rejeté par les navigateurs dès que credentials: true).
+  const corsConfig = config.get('CORS_ORIGIN', { infer: true });
+  const corsOrigins =
+    corsConfig.trim() === '*'
+      ? true
+      : corsConfig.split(',').map((origin) => origin.trim());
   app.enableCors({ origin: corsOrigins, credentials: true });
 
   app.useGlobalPipes(
