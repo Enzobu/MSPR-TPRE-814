@@ -116,12 +116,12 @@ cp .env.compose.example .env.compose
 ```
 
 ```bash
-make docker-build     # build des images applicatives
-make docker-up        # démarre l'environnement complet en arrière-plan
-make docker-logs      # suit les logs
-make docker-ps        # liste les services
-make docker-down      # arrête les services
-make docker-clean     # arrête et supprime les volumes
+make build     # build des images applicatives
+make up        # démarre l'environnement complet en arrière-plan
+make logs      # suit les logs
+make ps        # liste les services
+make down      # arrête les services
+make clean     # arrête et supprime les volumes
 ```
 
 Services exposés par défaut :
