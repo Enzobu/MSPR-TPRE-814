@@ -46,7 +46,11 @@ export const envSchema = z.object({
 
   // Suivi des erreurs (Sentry, ADR-0011). Optionnel : sans DSN, le SDK est no-op
   // (dev/test). Lu directement par src/instrument.ts au boot, AVANT Nest.
-  SENTRY_DSN: z.string().url().optional(),
+  // Une chaîne vide (Docker Compose injecte "" via ${VAR:-}) vaut "désactivé".
+  SENTRY_DSN: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().url().optional(),
+  ),
   SENTRY_ENVIRONMENT: z.string().optional(),
   SENTRY_RELEASE: z.string().optional(),
 

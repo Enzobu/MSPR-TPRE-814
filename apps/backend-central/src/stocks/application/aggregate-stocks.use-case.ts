@@ -91,7 +91,10 @@ export class AggregateStocksUseCase {
   ): Promise<Lot[]> {
     const all: Lot[] = [];
     for (let page = 1; page <= MAX_PAGES_PER_COUNTRY; page += 1) {
-      const path = `/api/v1/lots?page=${page}&pageSize=${PAGE_SIZE}&sort=storedAt:${direction}`;
+      // `country` scope l'appel à ce pays : en démo mono-instance (1 backend
+      // pays, 1 DB multi-pays derrière les 3 URLs), évite d'agréger le même lot
+      // 3×. En déploiement réel (1 instance/pays), le filtre est sans effet.
+      const path = `/api/v1/lots?page=${page}&pageSize=${PAGE_SIZE}&sort=storedAt:${direction}&country=${country}`;
       const res = await this.gateway.get<PaginatedResponse<Lot>>(
         country,
         path,

@@ -61,15 +61,17 @@ export class PrismaLotRepository implements LotRepository {
   }
 
   async findManyByStoredAt(params: FindManyParams): Promise<Page<Lot>> {
+    const where = params.country ? { country: params.country } : {};
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.lot.findMany({
+        where,
         skip: params.skip,
         take: params.take,
         // `id` en clé secondaire : ordre stable entre pages quand des lots
         // partagent le même storedAt (sinon pagination non déterministe).
         orderBy: [{ storedAt: params.direction }, { id: 'asc' }],
       }),
-      this.prisma.lot.count(),
+      this.prisma.lot.count({ where }),
     ]);
     return { data: rows.map((row) => this.toDomain(row)), total };
   }
