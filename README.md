@@ -11,8 +11,11 @@ Projet pédagogique — **MSPR Bloc 4**, certification **RNCP 35584** (Expert en
 - [Contexte](#contexte)
 - [Stack](#stack)
 - [Arborescence](#arborescence)
-- [Prise en main](#prise-en-main)
-- [Commandes workspace](#commandes-workspace)
+- [Démarrage rapide (Docker)](#démarrage-rapide-docker)
+- [Développement local (sans Docker)](#développement-local-sans-docker)
+- [Firmware IoT](#firmware-iot)
+- [Commandes utiles](#commandes-utiles)
+- [Dépannage](#dépannage)
 - [Documentation](#documentation)
 - [Conventions & règles](#conventions--règles)
 - [Équipe](#équipe)
@@ -40,7 +43,7 @@ Cahier des charges complet : [`consigne-structuree.md`](./consigne-structuree.md
 | IoT firmware | PlatformIO · C++ Arduino · ESP8266 (esp12e) |
 | Base de données | MariaDB |
 | Broker IoT | Mosquitto (MQTT) |
-| CI/CD | À définir |
+| CI/CD | GitHub Actions ([`.github/workflows/ci.yml`](./.github/workflows/ci.yml)) |
 | Conteneurisation | Docker · Docker Compose |
 | API testing | Bruno (collection versionnée) |
 | Monorepo | pnpm workspaces |
@@ -65,54 +68,129 @@ Cahier des charges complet : [`consigne-structuree.md`](./consigne-structuree.md
 
 Vue détaillée des conventions dans [`CLAUDE.md`](./CLAUDE.md).
 
-## Prise en main
+## Pré-requis
 
-### Pré-requis
+| Outil | Version | Pourquoi |
+|---|---|---|
+| **Node** | 22 LTS (voir [`.nvmrc`](./.nvmrc)) | runtime des backends + build front. `nvm use` |
+| **pnpm** | 9+ | gestionnaire du monorepo (`corepack enable` suffit) |
+| **Docker** + Compose v2 | récent | stack complète (DB, MQTT, backends, front, docs) |
+| PlatformIO CLI | — | uniquement pour flasher le firmware IoT |
+| Bruno | — | uniquement pour tester l'API ([usebruno.com](https://www.usebruno.com/)) |
 
-- Node **22 LTS** (voir `.nvmrc`) — `nvm use` ou équivalent
-- pnpm **9+**
-- Docker + Docker Compose (pour MariaDB, Mosquitto et la démo conteneurisée)
-- PlatformIO CLI (pour flasher le firmware IoT)
-- Bruno (pour tester l'API) — [usebruno.com](https://www.usebruno.com/)
+> ⚠️ **Toujours** lancer pnpm depuis la **racine** du repo (`pnpm install`, `pnpm --filter …`).
+> Jamais de `npm install` dans un sous-dossier — ça casse le workspace.
 
-### Installation
+---
+
+## Démarrage rapide (Docker)
+
+C'est la voie **recommandée** : une seule commande lève toute la stack (2× MariaDB,
+Mosquitto, backend pays + siège, frontend, phpMyAdmin, site de docs). Le `Makefile`
+injecte automatiquement `.env.compose` à Docker Compose.
 
 ```bash
-pnpm install
+# 1. Cloner + créer le fichier d'env de la stack (valeurs de dev par défaut, prêtes à l'emploi)
+cp .env.compose.example .env.compose
+
+# 2. Builder les images puis démarrer en arrière-plan
+make build
+make up
+
+# 3. Suivre le démarrage (Ctrl-C pour quitter les logs, la stack continue)
+make logs
 ```
 
-### Configuration
+Au premier `up`, les migrations Prisma s'appliquent et un utilisateur **admin** est
+seedé automatiquement. Patiente ~15 s puis ouvre le front.
 
-Copier chaque `.env.example` en `.env` (ou `.env.local` pour le front) et ajuster :
+### Services exposés
+
+| Service | URL | Notes |
+|---|---|---|
+| **Frontend** | http://localhost:5173 | UI siège — login ci-dessous |
+| **Backend siège (API)** | http://localhost:3000 | health : `/health` · `/ready` |
+| **Swagger** | http://localhost:3000/api-docs | doc API interactive |
+| **phpMyAdmin** | http://localhost:8080 | serveurs `central` / `pays` |
+| **Docs (VitePress)** | http://localhost:8081 | doc utilisateur métier |
+| Backend pays | interne (réseau Docker) | abonné MQTT `futurekawa/<pays>/…` |
+| Broker MQTT | `localhost:1883` | Mosquitto |
+
+**Identifiants par défaut** (modifiables dans `.env.compose`) :
+
+- **App** (front + Swagger) : `admin@futurekawa.local` / `Adm1n-FutureKawa`
+- **phpMyAdmin / MariaDB** : `futurekawa` / `futurekawa`
+
+### Données de démo (lots)
+
+Le `up` applique les migrations et seede l'**admin**, mais **pas les lots** (données
+métier). Pour peupler ~20 lots de démo (BR/EC/CO) une fois la stack lancée :
 
 ```bash
+docker compose --env-file .env.compose exec -w /workspace/apps/backend-pays backend-pays \
+  sh -c 'export PATH="$PWD/node_modules/.bin:$PATH"; prisma db seed'
+```
+
+Sans ça, la liste des lots est vide (les mesures T°/humidité, elles, arrivent par MQTT
+— voir `/mqtt-simulate`).
+
+### Cibles `make` disponibles
+
+```bash
+make build     # build (ou rebuild) des images applicatives
+make up        # démarre toute la stack en arrière-plan (-d)
+make logs      # suit les logs de tous les services
+make ps        # état des conteneurs
+make restart   # redémarre les services
+make down      # arrête les conteneurs (les données MariaDB sont conservées)
+make clean     # arrête + supprime volumes et orphelins (RESET complet)
+```
+
+> 💡 Après une **modification de code**, refais `make build` avant `make up`
+> (les images embarquent le build, elles ne montent pas tes sources).
+
+---
+
+## Développement local (sans Docker)
+
+Pour itérer avec hot-reload sur une app précise. Tu as besoin d'un MariaDB et d'un
+Mosquitto joignables (le plus simple : `make up` puis travailler sur l'app voulue
+en local, ou lancer tes propres instances).
+
+```bash
+# 1. Installer les dépendances du monorepo
+pnpm install
+
+# 2. Builder les packages partagés AU MOINS UNE FOIS (leur dist/ est gitignoré)
+pnpm -r build        # ou, ciblé : pnpm --filter @futurekawa/contracts build
+
+# 3. Créer les fichiers d'env applicatifs (gitignorés)
 cp apps/backend-pays/.env.example    apps/backend-pays/.env
 cp apps/backend-central/.env.example apps/backend-central/.env
 cp apps/frontend-web/.env.example    apps/frontend-web/.env.local
-cp apps/iot/include/secrets.h.example apps/iot/include/secrets.h
 ```
 
-### Démarrer en dev
+Puis, dans des terminaux séparés :
 
 ```bash
-# backends (terminaux séparés)
-pnpm --filter backend-pays    start:dev
-pnpm --filter backend-central start:dev
-
-# frontend
-pnpm --filter frontend-web dev
-
-# firmware IoT (depuis apps/iot)
-pio run -t upload
-pio device monitor
+pnpm --filter backend-pays    start:dev      # API pays + subscriber MQTT  (port 3010)
+pnpm --filter backend-central start:dev      # API siège                   (port 3000)
+pnpm --filter frontend-web    dev            # UI Vite                     (port 5173)
 ```
 
-### Démarrer avec Docker
+> Les `@futurekawa/contracts` sont consommés depuis leur `dist/` compilé (gitignoré).
+> Après toute modif du package, **rebuild-le** (`pnpm --filter @futurekawa/contracts build`),
+> sinon les apps voient des types/constantes périmés (erreurs du type `undefined` au runtime).
 
-Les URLs, ports exposés et credentials MariaDB locaux sont centralisés dans `.env.compose`, à créer depuis [`.env.compose.example`](./.env.compose.example). Utiliser le `Makefile` pour injecter ce fichier à Docker Compose :
+---
+
+## Firmware IoT
 
 ```bash
-cp .env.compose.example .env.compose
+cp apps/iot/include/secrets.h.example apps/iot/include/secrets.h   # WiFi + MQTT, gitignoré
+cd apps/iot
+pio run -t upload        # compile + flashe l'ESP8266
+pio device monitor       # logs série
 ```
 
 ```bash
@@ -124,25 +202,54 @@ make down      # arrête les services
 make clean     # arrête et supprime les volumes
 ```
 
-Services exposés par défaut :
+---
 
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend central | http://localhost:3000 |
-| Backend pays | Configuré via `BACKEND_PAYS_URL` dans `.env.compose` |
-| Broker MQTT pays | Configuré via `MOSQUITTO_PAYS_PORT` dans `.env.compose` |
-| phpMyAdmin | Configuré via `PHPMYADMIN_WEB_URL` dans `.env.compose` |
+## Commandes utiles
 
-## Commandes workspace
+### Workspace (pnpm, depuis la racine)
 
 ```bash
-pnpm -r build              # build tous les workspaces
+pnpm install               # installe tout le workspace
+pnpm -r build              # build tous les workspaces (contracts inclus)
 pnpm -r lint               # lint tous
-pnpm -r test               # tests tous
+pnpm -r test               # tests unitaires de tous
 pnpm format                # Prettier sur tout
-pnpm --filter <app> <cmd>  # cibler une app
+pnpm --filter <app> <cmd>  # cibler une app (ex: pnpm --filter backend-pays test)
 ```
+
+### Base de données (Prisma, par backend)
+
+```bash
+pnpm --filter backend-pays exec prisma migrate dev   # créer/appliquer une migration
+pnpm --filter backend-pays exec prisma studio        # explorer la DB
+```
+
+### Documentation utilisateur (VitePress)
+
+```bash
+pnpm docs:dev       # site doc en local (hot-reload)
+pnpm docs:build     # build statique
+pnpm docs:preview   # prévisualiser le build
+```
+
+### Simuler l'IoT sans firmware
+
+`/mqtt-simulate <pays>` (Claude Code / Codex) injecte des relevés T°/humidité
+factices dans Mosquitto pour tester le backend pays et l'alerting.
+
+---
+
+## Dépannage
+
+| Symptôme | Cause probable | Solution |
+|---|---|---|
+| `Cannot read properties of undefined (reading 'map')` (front) | `@futurekawa/contracts` pas (re)buildé après un pull | `pnpm --filter @futurekawa/contracts build` puis relancer le front |
+| Un backend Docker redémarre en boucle (`Restarting`) | erreur au boot | `make logs` puis lire l'erreur (env invalide, DB pas prête…) |
+| `Invalid environment variables` au boot d'un backend | variable manquante/invalide dans `.env.compose` | comparer avec `.env.compose.example`, corriger, `make up` |
+| phpMyAdmin / front inaccessibles | stack pas démarrée, ou ports déjà pris | `make ps` ; libérer les ports 5173/3000/8080/8081/1883 ou les changer dans `.env.compose` |
+| MariaDB ne devient jamais *healthy* | `VOLUME_BASE_PATH` vide ou creds manquants | vérifier `.env.compose` (repartir de `.env.compose.example`) |
+| Changement de code non pris en compte (Docker) | image pas reconstruite | `make build && make up` |
+| Tout est cassé, repartir propre | volumes/état corrompus | `make clean` puis `make build && make up` (⚠️ efface les données) |
 
 ## Documentation
 

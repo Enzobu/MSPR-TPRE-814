@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
+import { COUNTRY_CODES, type CountryCode } from '@futurekawa/contracts';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -48,4 +49,16 @@ export class ListLotsQueryDto {
     message: 'sort must be storedAt:asc or storedAt:desc',
   })
   sort: string = 'storedAt:asc';
+
+  @ApiPropertyOptional({
+    description:
+      'Filtre par pays. Omis = tous les lots du backend. Utilisé par le ' +
+      'siège pour scoper chaque appel à une instance pays (évite les doublons ' +
+      'en démo mono-instance).',
+    example: 'BR',
+    enum: COUNTRY_CODES,
+  })
+  @IsOptional()
+  @IsIn(COUNTRY_CODES, { message: 'country must be one of BR, EC, CO' })
+  country?: CountryCode;
 }

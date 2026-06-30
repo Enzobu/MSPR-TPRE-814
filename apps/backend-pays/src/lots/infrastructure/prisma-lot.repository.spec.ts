@@ -148,12 +148,37 @@ describe('PrismaLotRepository', () => {
 
       // Assert
       expect(lot.findMany).toHaveBeenCalledWith({
+        where: {},
         skip: 20,
         take: 20,
         orderBy: [{ storedAt: 'desc' }, { id: 'asc' }],
       });
+      expect(lot.count).toHaveBeenCalledWith({ where: {} });
       expect(page.total).toBe(5);
       expect(page.data[0].id).toBe('BR-1');
+    });
+
+    it('should scope findMany and count to the country when provided', async () => {
+      // Arrange
+      lot.findMany.mockResolvedValue([buildRow({ id: 'EC-1', country: 'EC' })]);
+      lot.count.mockResolvedValue(2);
+
+      // Act
+      await repository.findManyByStoredAt({
+        skip: 0,
+        take: 20,
+        direction: 'asc',
+        country: 'EC',
+      });
+
+      // Assert
+      expect(lot.findMany).toHaveBeenCalledWith({
+        where: { country: 'EC' },
+        skip: 0,
+        take: 20,
+        orderBy: [{ storedAt: 'asc' }, { id: 'asc' }],
+      });
+      expect(lot.count).toHaveBeenCalledWith({ where: { country: 'EC' } });
     });
   });
 
