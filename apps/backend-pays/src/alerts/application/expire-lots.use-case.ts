@@ -19,7 +19,7 @@ const expiredMessage = (lotId: string): string =>
   `Lot ${lotId} périmé : stocké depuis plus de ${LOT_MAX_AGE_DAYS} jours`;
 
 // Marque les lots > LOT_MAX_AGE_DAYS jours en PERIME et lève une alerte
-// LOT_EXPIRED dédupliquée par (lot, jour UTC) (ADR-0004). Idempotent : un 2e
+// LOT_EXPIRED dédupliquée par (pays, lot, jour UTC) (ADR-0004). Idempotent : un 2e
 // passage le même jour ne crée pas de doublon et ne « re-périme » pas un lot.
 // Best-effort par lot : une erreur sur un lot n'interrompt pas le scan.
 @Injectable()
@@ -70,6 +70,7 @@ export class ExpireLotsUseCase {
     dayUtc: Date,
   ): Promise<boolean> {
     const alreadyRaised = await this.alerts.existsForLotOnDay(
+      lot.country,
       LOT_EXPIRED,
       lot.id,
       dayUtc,

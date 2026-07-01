@@ -64,22 +64,24 @@ describe('PrismaAlertRepository', () => {
   });
 
   describe('existsForWarehouseOnDay', () => {
-    it('should count alerts within the UTC day window for the warehouse', async () => {
+    it('should count alerts within the UTC day window for the country and warehouse', async () => {
       // Arrange
       const dayUtc = new Date('2026-06-01T00:00:00.000Z');
       alert.count.mockResolvedValue(1);
 
       // Act
       const exists = await repository.existsForWarehouseOnDay(
+        'BR',
         'TEMP_HIGH',
         'W1',
         dayUtc,
       );
 
-      // Assert
+      // Assert — la clé de dédup inclut `country` (#147).
       expect(exists).toBe(true);
       expect(alert.count).toHaveBeenCalledWith({
         where: {
+          country: 'BR',
           type: 'TEMP_HIGH',
           warehouse: 'W1',
           triggeredAt: {
@@ -95,6 +97,7 @@ describe('PrismaAlertRepository', () => {
 
       await expect(
         repository.existsForWarehouseOnDay(
+          'BR',
           'TEMP_HIGH',
           'W1',
           new Date('2026-06-01T00:00:00.000Z'),
@@ -104,11 +107,12 @@ describe('PrismaAlertRepository', () => {
   });
 
   describe('existsForLotOnDay', () => {
-    it('should count alerts within the UTC day window for the lot', async () => {
+    it('should count alerts within the UTC day window for the country and lot', async () => {
       const dayUtc = new Date('2026-06-01T00:00:00.000Z');
       alert.count.mockResolvedValue(2);
 
       const exists = await repository.existsForLotOnDay(
+        'BR',
         'LOT_EXPIRED',
         'BR-1',
         dayUtc,
@@ -117,6 +121,7 @@ describe('PrismaAlertRepository', () => {
       expect(exists).toBe(true);
       expect(alert.count).toHaveBeenCalledWith({
         where: {
+          country: 'BR',
           type: 'LOT_EXPIRED',
           lotId: 'BR-1',
           triggeredAt: {

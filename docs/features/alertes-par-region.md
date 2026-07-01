@@ -41,6 +41,14 @@ Même schéma que le fix lots [#140](https://github.com/Enzobu/MSPR-TPRE-814/iss
 (`fix(central): scope per-country lot fetch`). En déploiement réel (1 instance par
 pays), le filtre est sans effet — l'instance ne détient qu'un pays.
 
+> **Versant génération** ([#147](https://github.com/Enzobu/MSPR-TPRE-814/issues/147))
+> — la **même classe de bug** touchait la déduplication d'alertes du backend-pays
+> (`existsForWarehouseOnDay` / `existsForLotOnDay`), keyée sans `country`. En démo
+> mono-instance, deux entrepôts (ou lots) homonymes de pays différents partageaient
+> la clé de dédup : une alerte légitime d'un pays pouvait être supprimée par
+> l'activité d'un autre le même jour UTC. Corrigé en ajoutant `country` à la clé de
+> dédup. Détail du mécanisme dans [`alerts.md`](alerts.md) (§ Règles métier).
+
 ## Parcours utilisateur
 
 - En tant qu'utilisateur du siège, je vois pour chaque alerte sa région source.
@@ -97,7 +105,9 @@ dans `unavailable` (jamais 500, ADR-0007).
 
 | Niveau | Fichier | Couvre |
 |---|---|---|
-| Unit (pays) | `apps/backend-pays/src/alerts/infrastructure/prisma-alert.repository.spec.ts` | `where.country` scopé |
+| Unit (pays) | `apps/backend-pays/src/alerts/infrastructure/prisma-alert.repository.spec.ts` | `where.country` scopé (lecture + dédup #147) |
+| Unit (pays) | `apps/backend-pays/src/alerts/application/raise-measurement-alerts.use-case.spec.ts` | dédup scopée pays : entrepôts homonymes BR/EC → 2 alertes (#147) |
+| Unit (pays) | `apps/backend-pays/src/alerts/application/expire-lots.use-case.spec.ts` | dédup péremption scopée pays : lots homonymes BR/EC → 2 alertes (#147) |
 | Unit (siège) | `apps/backend-central/src/alerts/application/list-alerts.use-case.spec.ts` | chemin scopé par pays + BR-only, EC/CO sans alerte |
 | UI | `apps/frontend-web/tests/features/alerts/components/CountryFilter.test.tsx` | filtre région |
 | UI | `apps/frontend-web/tests/features/alerts/components/AlertsTable.test.tsx` | région source affichée |
