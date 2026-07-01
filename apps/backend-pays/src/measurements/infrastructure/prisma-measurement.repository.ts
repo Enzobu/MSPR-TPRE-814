@@ -71,6 +71,17 @@ export class PrismaMeasurementRepository implements MeasurementRepository {
     return { data: rows.map((row) => this.toDomain(row)), total };
   }
 
+  async findLatest(country?: CountryCode): Promise<Measurement | null> {
+    // `id` en clé secondaire : ordre déterministe si deux relevés partagent le
+    // même recordedAt (rule : pas de findFirst sans orderBy stable). `country`
+    // scope la démo mono-instance (cf. #144), no-op en déploiement réel.
+    const row = await this.prisma.measurement.findFirst({
+      where: country ? { country } : {},
+      orderBy: [{ recordedAt: 'desc' }, { id: 'asc' }],
+    });
+    return row ? this.toDomain(row) : null;
+  }
+
   async aggregate(params: AggregateParams): Promise<MeasurementBucket[]> {
     // bucketSeconds est lié en paramètre (jamais interpolé) : pas d'injection.
     // FLOOR(UNIX_TIMESTAMP/bucket) regroupe les relevés par fenêtre temporelle.

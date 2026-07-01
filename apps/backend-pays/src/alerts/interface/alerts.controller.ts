@@ -46,6 +46,7 @@ export class AlertsController {
       acknowledged: query.acknowledged,
       page: query.page,
       pageSize: query.pageSize,
+      country: query.country,
     });
     return { ...result, data: result.data.map(toAlertResponse) };
   }

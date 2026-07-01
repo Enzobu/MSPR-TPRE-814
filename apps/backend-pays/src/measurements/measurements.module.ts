@@ -5,6 +5,7 @@ import { AlertsModule } from '../alerts/alerts.module';
 import { COUNTRY_CODE } from '../config/country-code.token';
 import type { Env } from '../config/env.validation';
 import { AggregateMeasurementsUseCase } from './application/aggregate-measurements.use-case';
+import { GetLatestMeasurementUseCase } from './application/get-latest-measurement.use-case';
 import { GetMeasurementHistoryUseCase } from './application/get-measurement-history.use-case';
 import { IngestMeasurementUseCase } from './application/ingest-measurement.use-case';
 import { MEASUREMENT_REPOSITORY } from './domain/measurement.repository';
@@ -34,6 +35,7 @@ const COUNTRY_CODE_PROVIDER = {
   providers: [
     GetMeasurementHistoryUseCase,
     AggregateMeasurementsUseCase,
+    GetLatestMeasurementUseCase,
     IngestMeasurementUseCase,
     REPOSITORY_PROVIDER,
     COUNTRY_CODE_PROVIDER,

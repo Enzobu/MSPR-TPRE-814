@@ -32,12 +32,14 @@ export class PrismaAlertRepository implements AlertRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async existsForWarehouseOnDay(
+    country: CountryCode,
     type: AlertType,
     warehouse: string,
     dayUtc: Date,
   ): Promise<boolean> {
     const count = await this.prisma.alert.count({
       where: {
+        country,
         type,
         warehouse,
         // Fenêtre [début de jour UTC, début du jour suivant).
@@ -48,12 +50,14 @@ export class PrismaAlertRepository implements AlertRepository {
   }
 
   async existsForLotOnDay(
+    country: CountryCode,
     type: AlertType,
     lotId: string,
     dayUtc: Date,
   ): Promise<boolean> {
     const count = await this.prisma.alert.count({
       where: {
+        country,
         type,
         lotId,
         // Fenêtre [début de jour UTC, début du jour suivant).
@@ -83,6 +87,7 @@ export class PrismaAlertRepository implements AlertRepository {
       ...(params.acknowledged === undefined
         ? {}
         : { acknowledged: params.acknowledged }),
+      ...(params.country === undefined ? {} : { country: params.country }),
     };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.alert.findMany({

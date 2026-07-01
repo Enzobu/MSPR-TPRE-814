@@ -15,6 +15,7 @@ params:query {
   pageSize: 20
   acknowledged: false
   ~type: TEMPERATURE_OUT_OF_RANGE
+  ~country: BR
 }
 
 script:post-response {
@@ -68,6 +69,7 @@ docs {
   | `pageSize` | 20 | Taille de page (1–100) |
   | `acknowledged` | — | Filtre `true`/`false` sur l'acquittement |
   | `type` | — | Filtre `TEMPERATURE_OUT_OF_RANGE` / `HUMIDITY_OUT_OF_RANGE` / `LOT_EXPIRED` |
+  | `country` | — | Filtre `BR`/`EC`/`CO`. Scope le siège à un pays (évite la fuite inter-régions en démo mono-instance). |
 
   ## Réponse 200
   ```json

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { AcknowledgedFilter } from '@/features/alerts/components/AcknowledgedFilter';
 import { AlertCard } from '@/features/alerts/components/AlertCard';
 import { AlertTypeFilter } from '@/features/alerts/components/AlertTypeFilter';
+import { CountryFilter } from '@/features/alerts/components/CountryFilter';
 import { AlertsEmptyState } from '@/features/alerts/components/AlertsEmptyState';
 import { AlertsListSkeleton } from '@/features/alerts/components/AlertsListSkeleton';
 import { AlertsTable } from '@/features/alerts/components/AlertsTable';
@@ -21,14 +22,17 @@ function countLabel(total: number): string {
 }
 
 export default function AlertsPage() {
-  const { filters, setType, setAcknowledged, setPage } = useAlertFilters();
+  const { filters, setCountry, setType, setAcknowledged, setPage } =
+    useAlertFilters();
   const { data, isPending, isError } = useAlerts(filters);
 
   const totalPages = data ? Math.ceil(data.total / DEFAULT_PAGE_SIZE) : 1;
   const hasNextPage = filters.page < totalPages;
   const hasPreviousPage = filters.page > 1;
   const isFiltered =
-    filters.type !== undefined || filters.acknowledged !== undefined;
+    filters.country !== undefined ||
+    filters.type !== undefined ||
+    filters.acknowledged !== undefined;
   const alerts = data?.data ?? [];
 
   return (
@@ -41,7 +45,9 @@ export default function AlertsPage() {
       </header>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        {/* Type et statut sont des filtres API portés par l'URL (useAlertFilters). */}
+        {/* Région, type et statut sont des filtres API portés par l'URL
+            (useAlertFilters). `country` scope l'agrégation au pays source. */}
+        <CountryFilter value={filters.country} onChange={setCountry} />
         <AlertTypeFilter value={filters.type} onChange={setType} />
         <AcknowledgedFilter
           value={filters.acknowledged}

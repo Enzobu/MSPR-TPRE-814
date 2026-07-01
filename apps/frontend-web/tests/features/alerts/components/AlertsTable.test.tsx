@@ -56,6 +56,21 @@ describe('AlertsTable', () => {
     expect(screen.getByText('Lot périmé à Bogota-B')).toBeInTheDocument();
   });
 
+  it('should show the source region of each alert', () => {
+    // Arrange / Act
+    renderTable();
+
+    // Assert — chaque alerte est rattachée visuellement à sa région source
+    const brRow = screen
+      .getByText('Température trop élevée à Santos-A')
+      .closest('tr');
+    expect(within(brRow as HTMLElement).getByText('Brésil')).toBeInTheDocument();
+    const coRow = screen.getByText('Lot périmé à Bogota-B').closest('tr');
+    expect(
+      within(coRow as HTMLElement).getByText('Colombie'),
+    ).toBeInTheDocument();
+  });
+
   it('should navigate to the alert detail when a row is clicked', async () => {
     // Arrange
     renderTable();

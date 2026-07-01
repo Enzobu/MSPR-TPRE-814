@@ -258,6 +258,65 @@ describe('Measurements integration (e2e, real DB)', () => {
       .expect('Content-Type', /application\/problem\+json/);
   });
 
+  // Relevés EC hors ordre chronologique, isolés des fixtures BR via le pays.
+  const seedLatestFixtures = async (): Promise<void> => {
+    await prisma.measurement.createMany({
+      data: [
+        {
+          country: 'EC',
+          warehouse: `${PREFIX}latest-ec`,
+          temperatureCelsius: 30,
+          humidityPercent: 58,
+          recordedAt: new Date('2026-06-03T08:00:00.000Z'),
+        },
+        {
+          country: 'EC',
+          warehouse: `${PREFIX}latest-ec`,
+          temperatureCelsius: 31,
+          humidityPercent: 59,
+          // Le plus récent (inséré au milieu, pour prouver le tri, pas l'ordre d'insertion).
+          recordedAt: new Date('2026-06-03T11:00:00.000Z'),
+        },
+        {
+          country: 'EC',
+          warehouse: `${PREFIX}latest-ec`,
+          temperatureCelsius: 29,
+          humidityPercent: 57,
+          recordedAt: new Date('2026-06-03T09:30:00.000Z'),
+        },
+      ],
+    });
+  };
+
+  it('GET /api/v1/measurements/latest?country=EC should return the most recent reading (scoped)', async () => {
+    await seedLatestFixtures();
+
+    const res = await request(server())
+      .get('/api/v1/measurements/latest?country=EC')
+      .expect(200);
+    const body = res.body as {
+      measurement: { country: string; recordedAt: string; temperatureCelsius: number } | null;
+    };
+    expect(body.measurement).not.toBeNull();
+    expect(body.measurement?.country).toBe('EC');
+    expect(body.measurement?.recordedAt).toBe('2026-06-03T11:00:00.000Z');
+    expect(body.measurement?.temperatureCelsius).toBe(31);
+  });
+
+  it('GET /api/v1/measurements/latest?country=CO should return null when the region has no reading', async () => {
+    const res = await request(server())
+      .get('/api/v1/measurements/latest?country=CO')
+      .expect(200);
+    expect((res.body as { measurement: unknown }).measurement).toBeNull();
+  });
+
+  it('GET /api/v1/measurements/latest should reject an invalid country with 400', async () => {
+    await request(server())
+      .get('/api/v1/measurements/latest?country=NOPE')
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
+  });
+
   it('GET /api/v1/measurements should stay under the perf budget on 1000 rows', async () => {
     const base = new Date('2026-01-01T00:00:00.000Z').getTime();
     const data = Array.from({ length: 1000 }, (_, i) => ({

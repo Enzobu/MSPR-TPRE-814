@@ -16,6 +16,7 @@
 #include "secrets.h"
 #include "sensor.h"
 #include "wifi_manager.h"
+#include <ESP8266WiFi.h>
 
 namespace {
 WifiManager wifi;
@@ -45,24 +46,54 @@ void publishMeasurement() {
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
+  delay(1000);
+
+  Serial.println();
+  Serial.println("[boot] ESP started");
+  Serial.print("[serial] baud=");
+  Serial.println(SERIAL_BAUD);
+
   sensor.begin();
+  Serial.println("[sensor] init OK");
+
   isoClock.begin();
+  Serial.println("[clock] init OK");
+
   wifi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.println("[wifi] init OK");
+
   mqtt.begin(MQTT_HOST, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD, COUNTRY,
              WAREHOUSE_ID);
+  Serial.println("[mqtt] init OK");
 }
 
 void loop() {
   wifi.loop();
 
-  // On ne touche pas MQTT tant que le WiFi n'est pas la (ADR-0003).
   if (!wifi.isConnected()) {
+    static uint32_t lastWifiLog = 0;
+    if (millis() - lastWifiLog > 2000) {
+      lastWifiLog = millis();
+      Serial.println("[wifi] not connected");
+    }
     return;
   }
+
+  static bool wifiLogged = false;
+  if (!wifiLogged) {
+    wifiLogged = true;
+    Serial.print("[wifi] connected, ip=");
+    Serial.println(WiFi.localIP());
+  }
+
   mqtt.loop();
 
-  // Ne publier que si WiFi + MQTT connectes.
   if (!mqtt.isConnected()) {
+    static uint32_t lastMqttLog = 0;
+    if (millis() - lastMqttLog > 2000) {
+      lastMqttLog = millis();
+      Serial.println("[mqtt] not connected");
+    }
     return;
   }
 

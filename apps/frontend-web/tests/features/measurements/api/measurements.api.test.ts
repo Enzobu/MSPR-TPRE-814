@@ -1,8 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ConsolidatedResponse, Measurement } from '@futurekawa/contracts';
+import type {
+  ConsolidatedList,
+  ConsolidatedResponse,
+  Measurement,
+} from '@futurekawa/contracts';
 import { httpClient } from '@/lib/http-client';
 import {
   MEASUREMENTS_CHART_PAGE_SIZE,
+  fetchLatestMeasurements,
   fetchMeasurements,
 } from '@/features/measurements/api/measurements.api';
 
@@ -71,5 +76,18 @@ describe('measurements.api', () => {
         pageSize: 50,
       },
     });
+  });
+
+  it('should request the consolidated latest measurements endpoint', async () => {
+    // Arrange
+    const latest: ConsolidatedList<Measurement> = { data: [], unavailable: [] };
+    mockedClient.get.mockResolvedValue({ data: latest });
+
+    // Act
+    const result = await fetchLatestMeasurements();
+
+    // Assert
+    expect(mockedClient.get).toHaveBeenCalledWith('/api/v1/measurements/latest');
+    expect(result).toEqual(latest);
   });
 });

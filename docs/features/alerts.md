@@ -4,7 +4,7 @@ owner: Yanis
 status: in-progress
 cdc-ref: "§III.4"
 adr-refs: [0002, 0004]
-updated: 2026-06-19
+updated: 2026-07-01
 ---
 
 # Alertes T°/humidité
@@ -21,12 +21,12 @@ le pays) et matérialiser une **alerte** persistée, consultable et actionnable
 **Inclus (#32) :**
 - Évaluateur **pur** des seuils T°/humidité.
 - Persistance des alertes `TEMPERATURE_OUT_OF_RANGE` / `HUMIDITY_OUT_OF_RANGE`.
-- **Déduplication** : 1 alerte max par `(type, entrepôt, jour UTC)`.
+- **Déduplication** : 1 alerte max par `(pays, type, entrepôt, jour UTC)` (#147).
 - Branchement sur l'ingestion des mesures (MQTT #28 + fallback REST).
 
 **Inclus (#33) — péremption :**
 - Cron quotidien (02:00 UTC) qui marque les lots > 365 j en `PERIME`.
-- Alerte `LOT_EXPIRED` dédupliquée par `(lotId, jour UTC)`, idempotente.
+- Alerte `LOT_EXPIRED` dédupliquée par `(pays, lotId, jour UTC)` (#147), idempotente.
 
 **Inclus (#35) — API REST pays :**
 - `GET /api/v1/alerts` — liste paginée, tri `triggeredAt` desc, filtres
@@ -63,6 +63,11 @@ le pays) et matérialiser une **alerte** persistée, consultable et actionnable
 - **Déduplication** : garde applicative (vérifier l'absence avant insert),
   fenêtre = journée calendaire **UTC** du moment courant. Pas de contrainte SQL,
   s'appuie sur l'index `@@index([type, triggeredAt])`.
+- **Scope pays de la dédup** (#147) : la clé inclut `country`. En démo
+  mono-instance (1 DB multi-pays), deux entrepôts (ou lots) homonymes de pays
+  différents ne partagent pas la dédup — une alerte légitime d'un pays ne peut
+  pas être supprimée par l'activité d'un autre le même jour. Voir
+  [`alertes-par-region.md`](alertes-par-region.md) (même classe de bug).
 - Entité de référence pour les alertes mesure = `warehouse`.
 - Messages FR clairs incluant la valeur et la plage (ex.
   « Température 35°C hors plage [26;32] »).

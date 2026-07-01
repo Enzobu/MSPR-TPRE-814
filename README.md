@@ -193,7 +193,14 @@ pio run -t upload        # compile + flashe l'ESP8266
 pio device monitor       # logs série
 ```
 
-Détails matériel / câblage / protocole : [`docs/iot/`](./docs/iot/).
+```bash
+make build     # build des images applicatives
+make up        # démarre l'environnement complet en arrière-plan
+make logs      # suit les logs
+make ps        # liste les services
+make down      # arrête les services
+make clean     # arrête et supprime les volumes
+```
 
 ---
 

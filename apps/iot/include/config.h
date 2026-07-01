@@ -8,14 +8,14 @@
 // DHT22 par defaut (precision/plage superieures). Basculer sur DHT11
 // si c'est le modele disponible sur le stock campus (fallback).
 #ifndef DHT_TYPE
-#define DHT_TYPE DHT22
+#define DHT_TYPE DHT11
 #endif
 
 // GPIO de la broche DATA du DHT. GPIO4 = D2 sur la plupart des
 // cartes ESP-12E / NodeMCU. Pull-up 10k entre DATA et VCC (voir
 // docs/iot/hardware.md).
 #ifndef DHT_PIN
-#define DHT_PIN 4
+#define DHT_PIN 2
 #endif
 
 // ── Cadence de publication ──────────────────────────────────────

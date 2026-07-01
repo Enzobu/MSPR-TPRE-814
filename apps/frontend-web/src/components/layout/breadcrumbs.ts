@@ -8,6 +8,7 @@ export interface Crumb {
 
 const SEGMENT_LABELS: Record<string, string> = {
   '': 'Dashboard',
+  monitoring: 'Suivi',
   lots: 'Lots',
   alerts: 'Alertes',
 };

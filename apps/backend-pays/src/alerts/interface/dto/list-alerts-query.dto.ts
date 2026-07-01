@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
-import { ALERT_TYPES } from '@futurekawa/contracts';
-import type { AlertType } from '@futurekawa/contracts';
+import { ALERT_TYPES, COUNTRY_CODES } from '@futurekawa/contracts';
+import type { AlertType, CountryCode } from '@futurekawa/contracts';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -27,6 +27,18 @@ export class ListAlertsQueryDto {
   @IsOptional()
   @IsIn(ALERT_TYPES)
   type?: AlertType;
+
+  @ApiPropertyOptional({
+    description:
+      'Filtre par pays. Omis = toutes les alertes du backend. Utilisé par le ' +
+      'siège pour scoper chaque appel à une instance pays (évite les doublons ' +
+      'et la fuite inter-régions en démo mono-instance).',
+    example: 'BR',
+    enum: COUNTRY_CODES,
+  })
+  @IsOptional()
+  @IsIn(COUNTRY_CODES, { message: 'country must be one of BR, EC, CO' })
+  country?: CountryCode;
 
   @ApiPropertyOptional({
     description: "Filtre sur l'état d'acquittement.",

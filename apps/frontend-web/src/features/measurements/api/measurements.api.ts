@@ -1,4 +1,5 @@
 import type {
+  ConsolidatedList,
   ConsolidatedResponse,
   CountryCode,
   Measurement,
@@ -6,6 +7,7 @@ import type {
 import { httpClient } from '@/lib/http-client';
 
 const MEASUREMENTS_PATH = '/api/v1/measurements';
+const LATEST_MEASUREMENTS_PATH = '/api/v1/measurements/latest';
 
 // Plafond de points récupérés pour une courbe. Au-delà, la lisibilité et la
 // performance du rendu se dégradent : un downsampling client ou l'usage de
@@ -40,6 +42,19 @@ export async function fetchMeasurements(
         pageSize: params.pageSize ?? MEASUREMENTS_CHART_PAGE_SIZE,
       },
     },
+  );
+  return response.data;
+}
+
+// Dernier relevé par région via backend-central (fan-out consolidé). Renvoie 0 à
+// 3 relevés (un par pays ayant des données) + `unavailable`. Alimente la vue
+// monitoring sans exiger d'entrepôt. Forme jamais re-typée : ConsolidatedList
+// vient de contracts.
+export async function fetchLatestMeasurements(): Promise<
+  ConsolidatedList<Measurement>
+> {
+  const response = await httpClient.get<ConsolidatedList<Measurement>>(
+    LATEST_MEASUREMENTS_PATH,
   );
   return response.data;
 }
