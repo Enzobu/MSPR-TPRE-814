@@ -1,5 +1,11 @@
 import { type ComponentType } from 'react';
-import { Bell, Boxes, LayoutDashboard, type LucideProps } from 'lucide-react';
+import {
+  Bell,
+  Boxes,
+  LayoutDashboard,
+  LineChart,
+  type LucideProps,
+} from 'lucide-react';
 
 export interface SidebarNavItem {
   to: string;
@@ -12,6 +18,7 @@ export interface SidebarNavItem {
 
 export const SIDEBAR_NAV_ITEMS: readonly SidebarNavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/monitoring', label: 'Suivi', icon: LineChart },
   { to: '/lots', label: 'Lots', icon: Boxes },
   { to: '/alerts', label: 'Alertes', icon: Bell },
 ];

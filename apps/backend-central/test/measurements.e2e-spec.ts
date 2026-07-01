@@ -50,6 +50,12 @@ class FakeGateway implements CountryBackendGateway {
     if (path.startsWith('/api/v1/measurements/aggregate')) {
       return Promise.resolve([bucket('2026-06-01T08:00:00.000Z')] as T);
     }
+    if (path.startsWith('/api/v1/measurements/latest')) {
+      // Chaque pays renvoie SON dernier relevé (+ champ interne à filtrer).
+      return Promise.resolve({
+        measurement: { ...measurement(`m-${country}`), country, leaked: 'x' },
+      } as T);
+    }
     const history: PaginatedResponse<Measurement> = {
       // Champ interne en trop : le mapper siège doit le filtrer (découplage).
       data: [{ ...measurement('m-1'), leaked: 'secret' } as Measurement],
@@ -134,6 +140,21 @@ describe('Measurements proxy (e2e, mocked country backends)', () => {
     expect(body.data.map((b) => b.bucketStart)).toEqual([
       '2026-06-01T08:00:00.000Z',
     ]);
+  });
+
+  it('GET /api/v1/measurements/latest should consolidate one reading per available region and report the down one', async () => {
+    const res = await request(server())
+      .get('/api/v1/measurements/latest')
+      .expect(200);
+    const body = res.body as {
+      data: { country: string }[];
+      unavailable: string[];
+    };
+    // BR & CO répondent (chacun son pays), EC est down → unavailable, jamais 500.
+    expect(body.data.map((m) => m.country).sort()).toEqual(['BR', 'CO']);
+    expect(body.unavailable).toEqual(['EC']);
+    // Le mapper siège filtre les champs internes du pays (découplage).
+    expect(body.data.every((m) => !('leaked' in m))).toBe(true);
   });
 
   it('GET /api/v1/measurements should reject a missing country with 400 (RFC 7807)', async () => {

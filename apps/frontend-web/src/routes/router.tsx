@@ -10,6 +10,7 @@ import {
   HomePage,
   LotDetailPage,
   LotsPage,
+  MonitoringPage,
   NotFoundPage,
 } from '@/routes/lazy-pages';
 import LoginPage from '@/pages/LoginPage';
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
         element: <RootLayout />,
         children: [
           { index: true, element: lazyPage(<HomePage />) },
+          { path: 'monitoring', element: lazyPage(<MonitoringPage />) },
           { path: 'lots', element: lazyPage(<LotsPage />) },
           { path: 'lots/:id', element: lazyPage(<LotDetailPage />) },
           { path: 'alerts', element: lazyPage(<AlertsPage />) },

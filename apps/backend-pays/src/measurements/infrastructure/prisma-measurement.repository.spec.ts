@@ -33,6 +33,7 @@ describe('PrismaMeasurementRepository', () => {
   let measurement: {
     create: jest.Mock;
     findMany: jest.Mock;
+    findFirst: jest.Mock;
     count: jest.Mock;
   };
   let queryRaw: jest.Mock;
@@ -43,6 +44,7 @@ describe('PrismaMeasurementRepository', () => {
     measurement = {
       create: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       count: jest.fn(),
     };
     queryRaw = jest.fn();
@@ -76,6 +78,45 @@ describe('PrismaMeasurementRepository', () => {
         },
       });
       expect(result.id).toBe('m-1');
+    });
+  });
+
+  describe('findLatest', () => {
+    it('should return the most recent measurement ordered by recordedAt desc', async () => {
+      // Arrange
+      measurement.findFirst.mockResolvedValue(buildRow());
+
+      // Act
+      const result = await repository.findLatest();
+
+      // Assert
+      expect(measurement.findFirst).toHaveBeenCalledWith({
+        where: {},
+        orderBy: [{ recordedAt: 'desc' }, { id: 'asc' }],
+      });
+      expect(result?.id).toBe('m-1');
+    });
+
+    it('should scope the search to the country when provided', async () => {
+      // Arrange
+      measurement.findFirst.mockResolvedValue(buildRow({ country: 'EC' }));
+
+      // Act
+      await repository.findLatest('EC');
+
+      // Assert — évite la fuite inter-régions en démo mono-instance (cf. #144)
+      expect(measurement.findFirst).toHaveBeenCalledWith({
+        where: { country: 'EC' },
+        orderBy: [{ recordedAt: 'desc' }, { id: 'asc' }],
+      });
+    });
+
+    it('should return null when no measurement exists', async () => {
+      // Arrange
+      measurement.findFirst.mockResolvedValue(null);
+
+      // Act / Assert
+      await expect(repository.findLatest()).resolves.toBeNull();
     });
   });
 

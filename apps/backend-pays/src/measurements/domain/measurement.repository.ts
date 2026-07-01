@@ -1,3 +1,4 @@
+import type { CountryCode } from '@futurekawa/contracts';
 import type {
   Measurement,
   MeasurementBucket,
@@ -38,4 +39,9 @@ export interface MeasurementRepository {
   findHistory(params: FindHistoryParams): Promise<Page<Measurement>>;
   // Moyennes T°/humidité par fenêtre temporelle, triées chronologiquement.
   aggregate(params: AggregateParams): Promise<MeasurementBucket[]>;
+  // Relevé le plus récent (null si aucun) : alimente la vue « dernier relevé par
+  // région » du siège (#143). `country` optionnel scope la recherche : no-op en
+  // déploiement réel (1 pays/instance), mais évite en démo mono-instance (1 DB
+  // multi-pays) que chaque région renvoie le même relevé global (cf. #144).
+  findLatest(country?: CountryCode): Promise<Measurement | null>;
 }

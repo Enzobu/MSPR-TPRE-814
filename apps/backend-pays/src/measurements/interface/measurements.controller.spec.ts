@@ -1,6 +1,7 @@
 import type { CountryCode } from '@futurekawa/contracts';
 import type { Measurement, MeasurementBucket } from '../domain/measurement';
 import type { AggregateMeasurementsUseCase } from '../application/aggregate-measurements.use-case';
+import type { GetLatestMeasurementUseCase } from '../application/get-latest-measurement.use-case';
 import type { GetMeasurementHistoryUseCase } from '../application/get-measurement-history.use-case';
 import type { IngestMeasurementUseCase } from '../application/ingest-measurement.use-case';
 import { MeasurementsController } from './measurements.controller';
@@ -26,16 +27,19 @@ describe('MeasurementsController', () => {
   let getHistory: { execute: jest.Mock };
   let aggregate: { execute: jest.Mock };
   let ingest: { execute: jest.Mock };
+  let getLatest: { execute: jest.Mock };
   let controller: MeasurementsController;
 
   beforeEach(() => {
     getHistory = { execute: jest.fn() };
     aggregate = { execute: jest.fn() };
     ingest = { execute: jest.fn() };
+    getLatest = { execute: jest.fn() };
     controller = new MeasurementsController(
       getHistory as unknown as GetMeasurementHistoryUseCase,
       aggregate as unknown as AggregateMeasurementsUseCase,
       ingest as unknown as IngestMeasurementUseCase,
+      getLatest as unknown as GetLatestMeasurementUseCase,
       COUNTRY,
     );
   });
@@ -120,6 +124,32 @@ describe('MeasurementsController', () => {
         page: 1,
         pageSize: 20,
       });
+    });
+  });
+
+  describe('latest', () => {
+    it('should forward the country filter and map the latest measurement', async () => {
+      // Arrange
+      getLatest.execute.mockResolvedValue(buildMeasurement());
+
+      // Act
+      const result = await controller.latest({ country: 'BR' });
+
+      // Assert
+      expect(getLatest.execute).toHaveBeenCalledWith('BR');
+      expect(result.measurement?.id).toBe('m-1');
+      expect(result.measurement?.recordedAt).toBe('2026-06-01T08:00:00.000Z');
+    });
+
+    it('should return a null measurement when none exists', async () => {
+      // Arrange
+      getLatest.execute.mockResolvedValue(null);
+
+      // Act
+      const result = await controller.latest({});
+
+      // Assert
+      expect(result.measurement).toBeNull();
     });
   });
 
