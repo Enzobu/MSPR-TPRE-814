@@ -9,10 +9,13 @@ import {
 import type { CountryCode } from '@futurekawa/contracts';
 import { COUNTRY_CODE } from '../../config/country-code.token';
 import { AggregateMeasurementsUseCase } from '../application/aggregate-measurements.use-case';
+import { GetLatestMeasurementUseCase } from '../application/get-latest-measurement.use-case';
 import { GetMeasurementHistoryUseCase } from '../application/get-measurement-history.use-case';
 import { IngestMeasurementUseCase } from '../application/ingest-measurement.use-case';
 import { AggregateMeasurementsQueryDto } from './dto/aggregate-measurements-query.dto';
 import { IngestMeasurementDto } from './dto/ingest-measurement.dto';
+import { LatestMeasurementQueryDto } from './dto/latest-measurement-query.dto';
+import { LatestMeasurementResponseDto } from './dto/latest-measurement-response.dto';
 import { MeasurementBucketResponseDto } from './dto/measurement-bucket-response.dto';
 import { MeasurementHistoryQueryDto } from './dto/measurement-history-query.dto';
 import { MeasurementResponseDto } from './dto/measurement-response.dto';
@@ -26,6 +29,7 @@ export class MeasurementsController {
     private readonly getHistory: GetMeasurementHistoryUseCase,
     private readonly aggregate: AggregateMeasurementsUseCase,
     private readonly ingest: IngestMeasurementUseCase,
+    private readonly getLatest: GetLatestMeasurementUseCase,
     @Inject(COUNTRY_CODE) private readonly country: CountryCode,
   ) {}
 
@@ -72,6 +76,24 @@ export class MeasurementsController {
       pageSize: query.pageSize,
     });
     return { ...result, data: result.data.map(toMeasurementResponse) };
+  }
+
+  @Get('latest')
+  @ApiOperation({
+    summary: 'Dernier relevé du pays (tous entrepôts confondus)',
+    description:
+      'Renvoie le relevé le plus récent, ou `null` si aucun. Alimente la vue ' +
+      '« dernier relevé par région » du siège (#143). N’exige pas d’entrepôt. ' +
+      'Filtre `country` optionnel : scope la démo mono-instance (cf. #144).',
+  })
+  @ApiOkResponse({ type: LatestMeasurementResponseDto })
+  async latest(
+    @Query() query: LatestMeasurementQueryDto,
+  ): Promise<LatestMeasurementResponseDto> {
+    const measurement = await this.getLatest.execute(query.country);
+    return {
+      measurement: measurement ? toMeasurementResponse(measurement) : null,
+    };
   }
 
   @Get('aggregate')

@@ -3,8 +3,28 @@ title: Lire les courbes de température et d'humidité
 owner: Yanis
 status: implemented
 cdc-ref: "§IV.8"
-updated: 2026-06-19
+updated: 2026-07-01
 ---
+
+# Suivre les relevés par région
+
+La page **Suivi** (menu de gauche) affiche, pour **chaque région** (Brésil,
+Équateur, Colombie), le **dernier relevé** de température et d'humidité avec son
+**horodatage**.
+
+- Une valeur **hors des seuils du pays** est affichée en **rouge** avec un badge
+  **« Hors seuil »**.
+- **« Aucun relevé pour le moment. »** : la région n'a encore aucune donnée.
+- **« Région injoignable »** : le backend de cette région ne répond pas ; un
+  bandeau récapitule les régions concernées. Réessayez plus tard.
+
+**Cliquez sur une région** pour dérouler, en dessous, l'**historique** de ses
+courbes de température et d'humidité (mêmes graphiques que sur la fiche d'un lot,
+décrits ci-dessous). La région sélectionnée est **le pays choisi dans le sélecteur
+de la barre latérale** : changer l'un met à jour l'autre (et l'URL, partageable).
+
+Au-dessus des courbes, le **filtre « Jour »** restreint l'historique à une
+journée précise ; **« Tout l'historique »** revient à la vue complète.
 
 # Suivre les conditions d'un lot
 

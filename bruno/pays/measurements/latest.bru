@@ -1,0 +1,60 @@
+meta {
+  name: Latest measurement
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/measurements/latest
+  body: none
+  auth: none
+}
+
+params:query {
+  ~country: BR
+}
+
+tests {
+  test('should return 200', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return a measurement or null', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('measurement');
+    if (body.measurement !== null) {
+      expect(body.measurement).to.have.property('country');
+      expect(body.measurement).to.have.property('temperatureCelsius').that.is.a('number');
+      expect(body.measurement).to.have.property('humidityPercent').that.is.a('number');
+      expect(body.measurement).to.have.property('recordedAt');
+    }
+  });
+}
+
+docs {
+  # GET /api/v1/measurements/latest — Dernier relevé du pays
+
+  Renvoie le relevé **le plus récent** du pays (tous entrepôts confondus), ou
+  `null` s'il n'y en a aucun. **N'exige pas d'entrepôt**, contrairement à
+  l'historique — pensé pour la vue « dernier relevé par région » du siège (#143).
+
+  ## Query params
+  | Param | Requis | Description |
+  |---|---|---|
+  | `country` | non | `BR\|EC\|CO`. Omis = tous pays. Scope la démo mono-instance (le siège le passe par pays, cf. #144). |
+
+  ## Réponse 200
+  ```json
+  { "measurement": { /* MeasurementResponseDto */ } }
+  ```
+  ou, si aucun relevé :
+  ```json
+  { "measurement": null }
+  ```
+
+  ## Notes
+  - Toujours 200 (même sans relevé) → le siège gère la consolidation et l'état
+    vide sans traiter un 404.
+  - Tri `recordedAt` desc, `id` asc en clé secondaire (déterministe).
+  - Réf : CDC §III.2. Type partagé : `Measurement`.
+}

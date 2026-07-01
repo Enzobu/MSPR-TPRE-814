@@ -9,17 +9,20 @@ type MeasurementsPanelProps = Readonly<{
   country: CountryCode;
   warehouse: string;
   from?: string;
+  to?: string;
 }>;
 
 export function MeasurementsPanel({
   country,
   warehouse,
   from,
+  to,
 }: MeasurementsPanelProps): React.ReactElement {
   const { data, isPending, isError } = useMeasurements({
     country,
     warehouse,
     from,
+    to,
   });
 
   if (isPending) {

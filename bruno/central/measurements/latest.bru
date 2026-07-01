@@ -1,0 +1,52 @@
+meta {
+  name: Latest measurement per region
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/measurements/latest
+  body: none
+  auth: none
+}
+
+tests {
+  test('should return 200 (never 500, even if a country is down)', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return the consolidated list shape', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('data').that.is.an('array');
+    expect(body).to.have.property('unavailable').that.is.an('array');
+  });
+
+  test('should carry at most one measurement per country', function () {
+    const data = res.getBody().data;
+    const countries = data.map((m) => m.country);
+    expect(new Set(countries).size).to.equal(countries.length);
+  });
+}
+
+docs {
+  # GET /api/v1/measurements/latest — Dernier relevé par région (consolidé)
+
+  Agrège le dernier relevé de **chaque pays** via un fan-out résilient
+  (`Promise.allSettled`, ADR-0007). Alimente la vue monitoring du siège (#143).
+
+  - Un pays **sans relevé** est simplement **absent** de `data`.
+  - Un pays **injoignable** figure dans `unavailable` (jamais 500).
+
+  ## Réponse 200
+  ```json
+  {
+    "data": [ /* MeasurementDto[] — 0 à 3, un par pays */ ],
+    "unavailable": ["EC"]
+  }
+  ```
+
+  ## Notes
+  - Non paginée (volume borné : au plus un relevé par pays).
+  - Le siège mappe la donnée pays vers `MeasurementDto` (découplage).
+  - Réfs : ADR-0007, CDC §III.5. Type partagé : `ConsolidatedList<Measurement>`.
+}

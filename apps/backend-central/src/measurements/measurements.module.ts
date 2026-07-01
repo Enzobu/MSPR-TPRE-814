@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CountryBackendsModule } from '../country-backends/country-backends.module';
 import { AggregateCountryMeasurementsUseCase } from './application/aggregate-country-measurements.use-case';
 import { GetCountryMeasurementsUseCase } from './application/get-country-measurements.use-case';
+import { GetLatestMeasurementsUseCase } from './application/get-latest-measurements.use-case';
 import { MeasurementsController } from './interface/measurements.controller';
 
 // Proxy siège résilient des mesures (partie de #36, ADR-0007). Mono-pays (une
@@ -13,6 +14,7 @@ import { MeasurementsController } from './interface/measurements.controller';
   providers: [
     GetCountryMeasurementsUseCase,
     AggregateCountryMeasurementsUseCase,
+    GetLatestMeasurementsUseCase,
   ],
 })
 export class MeasurementsModule {}
