@@ -185,6 +185,23 @@ describe('PrismaAlertRepository', () => {
       );
     });
 
+    it('should scope findMany and count to the country when provided', async () => {
+      // Arrange
+      alert.findMany.mockResolvedValue([
+        buildRow({ id: 'BR-a', country: 'BR' }),
+      ]);
+      alert.count.mockResolvedValue(1);
+
+      // Act
+      await repository.findMany({ skip: 0, take: 20, country: 'BR' });
+
+      // Assert — le scope pays évite la fuite inter-régions en démo mono-instance
+      expect(alert.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { country: 'BR' } }),
+      );
+      expect(alert.count).toHaveBeenCalledWith({ where: { country: 'BR' } });
+    });
+
     it('should map a null lotId and warehouse to undefined', async () => {
       alert.findMany.mockResolvedValue([
         buildRow({ lotId: null, warehouse: null }),

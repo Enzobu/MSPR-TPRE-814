@@ -124,6 +124,58 @@ describe('ListAlertsUseCase', () => {
     expect(options).toEqual({ correlationId: 'corr-123' });
   });
 
+  it('should scope each country fetch with its own country filter', async () => {
+    // Arrange — le scope pays évite la fuite/triplication inter-régions
+    // quand les 3 URLs pointent vers une même instance (démo mono-instance).
+    const gateway = buildGateway({ BR: [], EC: [], CO: [] });
+    const useCase = new ListAlertsUseCase(gateway);
+
+    // Act
+    await useCase.execute({
+      countries: ['BR', 'EC', 'CO'],
+      page: 1,
+      pageSize: 20,
+      correlationId: 'corr',
+    });
+
+    // Assert — chaque appel porte le filtre du pays qu'il cible
+    const paths = gateway.get.mock.calls.map(
+      (call: [CountryCode, string, unknown]) => call[1],
+    );
+    expect(paths).toEqual([
+      expect.stringContaining('country=BR'),
+      expect.stringContaining('country=EC'),
+      expect.stringContaining('country=CO'),
+    ]);
+  });
+
+  it('should surface alerts only for the breaching country and none for the others', async () => {
+    // Arrange — seule la région BR dépasse les seuils ; EC/CO sans alerte.
+    const gateway = buildGateway({
+      BR: [
+        alert('br-temp', 'BR', '2026-06-02T00:00:00.000Z'),
+        alert('br-hum', 'BR', '2026-06-01T00:00:00.000Z'),
+      ],
+      EC: [],
+      CO: [],
+    });
+    const useCase = new ListAlertsUseCase(gateway);
+
+    // Act
+    const result = await useCase.execute({
+      countries: ['BR', 'EC', 'CO'],
+      page: 1,
+      pageSize: 20,
+      correlationId: 'corr',
+    });
+
+    // Assert — seules les alertes BR remontent, sans duplication
+    expect(result.total).toBe(2);
+    expect(result.unavailable).toEqual([]);
+    expect(result.data.map((a) => a.id)).toEqual(['br-temp', 'br-hum']);
+    expect(result.data.every((a) => a.country === 'BR')).toBe(true);
+  });
+
   it('should mark a failing country as unavailable without throwing', async () => {
     // Arrange
     const gateway = buildGateway({

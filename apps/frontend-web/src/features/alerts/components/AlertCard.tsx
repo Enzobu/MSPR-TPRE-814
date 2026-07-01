@@ -3,6 +3,7 @@ import type { Alert } from '@futurekawa/contracts';
 import { AcknowledgeButton } from '@/features/alerts/components/AcknowledgeButton';
 import { SeverityPill } from '@/features/alerts/components/SeverityPill';
 import { formatAgo } from '@/features/alerts/lib/format';
+import { COUNTRY_LABELS } from '@/features/dashboard/lib/country';
 
 type AlertCardProps = Readonly<{
   alert: Alert;
@@ -21,9 +22,14 @@ export function AlertCard({ alert }: AlertCardProps) {
       />
       <div className="flex items-center justify-between gap-2">
         <SeverityPill type={alert.type} />
-        <span className="text-xs text-muted-foreground">
-          {formatAgo(alert.triggeredAt)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {COUNTRY_LABELS[alert.country]}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatAgo(alert.triggeredAt)}
+          </span>
+        </div>
       </div>
       <p className="mt-2.5 text-sm">{alert.message}</p>
       <div className="mt-3 flex items-center justify-between gap-2">
