@@ -26,8 +26,8 @@ function summarize(
   const max = Math.max(...values);
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
   // WHY: `values` est garanti non vide par l'appelant (retour anticipé si aucune
-  // mesure), donc `.at(-1)` ne renvoie jamais undefined ici.
-  const last = values.at(-1) as number;
+  // mesure), donc le dernier index existe toujours.
+  const last = values[values.length - 1];
   return { min, max, avg, last, lastOut: isOut(last) };
 }
 

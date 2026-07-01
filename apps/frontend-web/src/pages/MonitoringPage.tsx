@@ -52,6 +52,33 @@ export default function MonitoringPage() {
   const selectedMeasurement = selected ? byCountry.get(selected) : undefined;
   const range = day ? dayBounds(day) : undefined;
 
+  // Section historique selon l'état (évite un ternaire imbriqué en JSX).
+  let historySection: React.ReactNode = null;
+  if (selected && selectedMeasurement) {
+    historySection = (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">
+            Historique — {COUNTRY_LABELS[selected]}
+          </h2>
+          <DayFilter day={day} max={todayIso()} onChange={setDay} />
+        </div>
+        <MeasurementsPanel
+          country={selected}
+          warehouse={selectedMeasurement.warehouse}
+          from={range?.from}
+          to={range?.to}
+        />
+      </div>
+    );
+  } else if (selected) {
+    historySection = (
+      <p className="rounded-xl border border-border px-4 py-8 text-center text-sm text-muted-foreground">
+        Aucun relevé pour {COUNTRY_LABELS[selected]} — historique indisponible.
+      </p>
+    );
+  }
+
   return (
     <section className="space-y-4">
       <PageHeader />
@@ -86,26 +113,7 @@ export default function MonitoringPage() {
         ))}
       </div>
 
-      {selected && selectedMeasurement ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 className="text-lg font-semibold tracking-tight">
-              Historique — {COUNTRY_LABELS[selected]}
-            </h2>
-            <DayFilter day={day} max={todayIso()} onChange={setDay} />
-          </div>
-          <MeasurementsPanel
-            country={selected}
-            warehouse={selectedMeasurement.warehouse}
-            from={range?.from}
-            to={range?.to}
-          />
-        </div>
-      ) : selected ? (
-        <p className="rounded-xl border border-border px-4 py-8 text-center text-sm text-muted-foreground">
-          Aucun relevé pour {COUNTRY_LABELS[selected]} — historique indisponible.
-        </p>
-      ) : null}
+      {historySection}
     </section>
   );
 }

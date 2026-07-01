@@ -47,6 +47,47 @@ function Metric({ icon: Icon, label, value, out }: MetricProps) {
   );
 }
 
+type ReadingBodyProps = Readonly<{
+  country: CountryCode;
+  measurement: Measurement | null;
+  unavailable: boolean;
+}>;
+
+// Corps de la carte selon l'état (early return plutôt que ternaire imbriqué).
+function ReadingBody({ country, measurement, unavailable }: ReadingBodyProps) {
+  if (unavailable) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <WifiOff className="size-4 shrink-0 text-status-alerte" aria-hidden />
+        Région injoignable
+      </div>
+    );
+  }
+  if (!measurement) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Aucun relevé pour le moment.
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <Metric
+        icon={Thermometer}
+        label="Température"
+        value={`${measurement.temperatureCelsius.toFixed(1)} °C`}
+        out={isTemperatureOutOfTolerance(measurement.temperatureCelsius, country)}
+      />
+      <Metric
+        icon={Droplets}
+        label="Humidité"
+        value={`${measurement.humidityPercent.toFixed(1)} %`}
+        out={isHumidityOutOfTolerance(measurement.humidityPercent, country)}
+      />
+    </div>
+  );
+}
+
 export function RegionReadingCard({
   country,
   measurement,
@@ -75,32 +116,11 @@ export function RegionReadingCard({
         ) : null}
       </div>
 
-      {unavailable ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <WifiOff className="size-4 shrink-0 text-status-alerte" aria-hidden />
-          Région injoignable
-        </div>
-      ) : measurement ? (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <Metric
-            icon={Thermometer}
-            label="Température"
-            value={`${measurement.temperatureCelsius.toFixed(1)} °C`}
-            out={isTemperatureOutOfTolerance(
-              measurement.temperatureCelsius,
-              country,
-            )}
-          />
-          <Metric
-            icon={Droplets}
-            label="Humidité"
-            value={`${measurement.humidityPercent.toFixed(1)} %`}
-            out={isHumidityOutOfTolerance(measurement.humidityPercent, country)}
-          />
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">Aucun relevé pour le moment.</p>
-      )}
+      <ReadingBody
+        country={country}
+        measurement={measurement}
+        unavailable={unavailable}
+      />
     </button>
   );
 }
