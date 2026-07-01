@@ -106,6 +106,50 @@ describe('ExpireLotsUseCase', () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it('should scope the dedup lookup by country (country first argument)', async () => {
+    // Arrange
+    findExpirable.mockResolvedValue([buildLot({ id: 'L-400', country: 'BR' })]);
+
+    // Act
+    await useCase.execute(now);
+
+    // Assert — sans le pays, deux lots homonymes partageraient la dédup (#147).
+    expect(existsForLotOnDay).toHaveBeenCalledWith(
+      'BR',
+      'LOT_EXPIRED',
+      'L-400',
+      expect.any(Date),
+    );
+  });
+
+  it('should raise two distinct alerts for homonym lots of different countries on the same day (#147)', async () => {
+    // Arrange — dédup réaliste keyée par (pays, type, lot) : reproduit la démo
+    // mono-instance où BR et EC partagent la même DB et un id de lot homonyme.
+    findExpirable.mockResolvedValue([
+      buildLot({ id: 'L-1', country: 'BR' }),
+      buildLot({ id: 'L-1', country: 'EC' }),
+    ]);
+    const raised = new Set<string>();
+    existsForLotOnDay.mockImplementation(
+      (country: CountryCode, type: string, lotId: string) =>
+        Promise.resolve(raised.has(`${country}|${type}|${lotId}`)),
+    );
+    save.mockImplementation((alert: NewAlert) => {
+      raised.add(`${alert.country}|${alert.type}|${alert.lotId}`);
+      return Promise.resolve({ id: `a-${raised.size}` } as Alert);
+    });
+
+    // Act
+    await useCase.execute(now);
+
+    // Assert — deux alertes distinctes, une par pays.
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save.mock.calls.map((call) => call[0].country)).toEqual([
+      'BR',
+      'EC',
+    ]);
+  });
+
   it('should continue scanning when one lot fails', async () => {
     // Arrange : le 1er lot échoue à l'update, le 2e doit quand même être traité.
     findExpirable.mockResolvedValue([

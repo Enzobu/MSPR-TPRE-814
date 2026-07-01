@@ -17,8 +17,8 @@ export interface MeasurementForAlerting {
   humidityPercent: number;
 }
 
-// Évalue une mesure (ADR-0004), déduplique par (type, entrepôt, jour UTC) et
-// persiste les alertes manquantes. Déclenché à chaque ingestion (MQTT + REST).
+// Évalue une mesure (ADR-0004), déduplique par (pays, type, entrepôt, jour UTC)
+// et persiste les alertes manquantes. Déclenché à chaque ingestion (MQTT + REST).
 @Injectable()
 export class RaiseMeasurementAlertsUseCase {
   constructor(
@@ -51,6 +51,7 @@ export class RaiseMeasurementAlertsUseCase {
     dayUtc: Date,
   ): Promise<void> {
     const alreadyRaised = await this.alerts.existsForWarehouseOnDay(
+      measurement.country,
       evaluation.type,
       measurement.warehouse,
       dayUtc,

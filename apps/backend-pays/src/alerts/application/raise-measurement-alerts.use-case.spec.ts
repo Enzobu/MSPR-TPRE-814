@@ -83,4 +83,56 @@ describe('RaiseMeasurementAlertsUseCase', () => {
     expect(existsForWarehouseOnDay).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
   });
+
+  it('should scope the dedup lookup by country (country first argument)', async () => {
+    // Arrange
+    existsForWarehouseOnDay.mockResolvedValue(false);
+
+    // Act
+    await useCase.execute(outOfRange);
+
+    // Assert — sans le pays, deux entrepôts homonymes partageraient la dédup (#147).
+    expect(existsForWarehouseOnDay).toHaveBeenCalledWith(
+      'BR',
+      'TEMPERATURE_OUT_OF_RANGE',
+      'W1',
+      expect.any(Date),
+    );
+  });
+
+  it('should raise two distinct alerts for homonym warehouses of different countries on the same day (#147)', async () => {
+    // Arrange — dédup réaliste keyée par (pays, type, entrepôt) : reproduit la
+    // démo mono-instance où BR et EC partagent la même DB et un entrepôt homonyme.
+    const raised = new Set<string>();
+    existsForWarehouseOnDay.mockImplementation(
+      (country: CountryCode, type: string, warehouse: string) =>
+        Promise.resolve(raised.has(`${country}|${type}|${warehouse}`)),
+    );
+    save.mockImplementation((alert: NewAlert) => {
+      raised.add(`${alert.country}|${alert.type}|${alert.warehouse}`);
+      return Promise.resolve({ id: `a-${raised.size}` } as Alert);
+    });
+
+    // Act — même entrepôt "W1", pays différents, même jour. Humidité dans la
+    // plage de chaque pays pour n'isoler que l'alerte température (seuils par pays).
+    await useCase.execute({
+      country: 'BR' as CountryCode,
+      warehouse: 'W1',
+      temperatureCelsius: 40,
+      humidityPercent: 55,
+    });
+    await useCase.execute({
+      country: 'EC' as CountryCode,
+      warehouse: 'W1',
+      temperatureCelsius: 40,
+      humidityPercent: 60,
+    });
+
+    // Assert — deux alertes distinctes, une par pays.
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save.mock.calls.map((call) => call[0].country)).toEqual([
+      'BR',
+      'EC',
+    ]);
+  });
 });
