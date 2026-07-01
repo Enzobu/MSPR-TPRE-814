@@ -1,4 +1,4 @@
-import type { AlertType } from '@futurekawa/contracts';
+import type { AlertType, CountryCode } from '@futurekawa/contracts';
 import type { Alert, NewAlert } from './alert';
 
 // Port (ADR-0001 dependency rule) : l'application parle à cette interface,
@@ -12,6 +12,10 @@ export interface FindManyAlertsParams {
   acknowledged?: boolean;
   skip: number;
   take: number;
+  // Filtre pays optionnel. En déploiement réel, une instance pays ne détient
+  // qu'un pays (filtre sans effet) ; en démo mono-instance (1 DB multi-pays),
+  // il évite que le siège agrège/affiche les alertes d'un pays via ses 3 URLs.
+  country?: CountryCode;
 }
 
 export interface AlertsPage {

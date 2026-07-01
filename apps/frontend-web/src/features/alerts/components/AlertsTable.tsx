@@ -4,12 +4,20 @@ import { AcknowledgeButton } from '@/features/alerts/components/AcknowledgeButto
 import { SeverityPill } from '@/features/alerts/components/SeverityPill';
 import { AlertTypeHoverCard } from '@/features/alerts/components/AlertTypeHoverCard';
 import { formatAgo } from '@/features/alerts/lib/format';
+import { COUNTRY_LABELS } from '@/features/dashboard/lib/country';
 
 type AlertsTableProps = Readonly<{
   alerts: Alert[];
 }>;
 
-const HEADERS = ['Sévérité', 'Lot', 'Type', 'Déclenchée', 'Action'] as const;
+const HEADERS = [
+  'Sévérité',
+  'Région',
+  'Lot',
+  'Type',
+  'Déclenchée',
+  'Action',
+] as const;
 
 function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
   const navigate = useNavigate();
@@ -32,6 +40,9 @@ function AlertRow({ alert }: Readonly<{ alert: Alert }>) {
     >
       <td className="px-[18px] py-3">
         <SeverityPill type={alert.type} />
+      </td>
+      <td className="px-[18px] py-3 text-[13px] whitespace-nowrap">
+        {COUNTRY_LABELS[alert.country]}
       </td>
       <td className="px-[18px] py-3 font-mono text-[13px] font-semibold">
         <Link

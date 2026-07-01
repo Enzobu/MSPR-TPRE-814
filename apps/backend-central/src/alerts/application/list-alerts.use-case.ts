@@ -52,12 +52,13 @@ export class ListAlertsUseCase {
   private async collect(
     params: ListAlertsParams,
   ): Promise<{ alerts: Alert[]; unavailable: CountryCode[] }> {
-    const path = this.buildPath(params);
     const settled = await Promise.allSettled(
       params.countries.map((country) =>
-        this.gateway.get<PaginatedResponse<Alert>>(country, path, {
-          correlationId: params.correlationId,
-        }),
+        this.gateway.get<PaginatedResponse<Alert>>(
+          country,
+          this.buildPath(params, country),
+          { correlationId: params.correlationId },
+        ),
       ),
     );
 
@@ -82,10 +83,15 @@ export class ListAlertsUseCase {
     });
   }
 
-  private buildPath(params: ListAlertsParams): string {
+  // `country` scope l'appel à ce pays : en démo mono-instance (1 backend pays,
+  // 1 DB multi-pays derrière les 3 URLs), évite d'agréger/afficher les alertes
+  // d'un pays 3× et sur les mauvaises régions. En déploiement réel (1 instance
+  // par pays), le filtre est sans effet. Miroir du fix lots (#140).
+  private buildPath(params: ListAlertsParams, country: CountryCode): string {
     const query = new URLSearchParams({
       page: '1',
       pageSize: String(COUNTRY_FETCH_SIZE),
+      country,
     });
     if (params.type) {
       query.set('type', params.type);

@@ -19,6 +19,7 @@ const WAREHOUSE = `${PREFIX}alerts-api`;
 
 interface AlertBody {
   id: string;
+  country: string;
   type: string;
   acknowledged: boolean;
   triggeredAt: string;
@@ -36,10 +37,11 @@ describe('Alerts API integration (e2e, real DB)', () => {
     type?: 'TEMPERATURE_OUT_OF_RANGE' | 'HUMIDITY_OUT_OF_RANGE' | 'LOT_EXPIRED';
     triggeredAt: string;
     acknowledged?: boolean;
+    country?: 'BR' | 'EC' | 'CO';
   }): Promise<{ id: string }> =>
     prisma.alert.create({
       data: {
-        country: 'BR',
+        country: over.country ?? 'BR',
         type: over.type ?? 'TEMPERATURE_OUT_OF_RANGE',
         message: `${PREFIX}message`,
         warehouse: WAREHOUSE,
@@ -139,6 +141,30 @@ describe('Alerts API integration (e2e, real DB)', () => {
     const body = res.body as { data: unknown[]; pageSize: number };
     expect(body.pageSize).toBe(1);
     expect(body.data.length).toBeLessThanOrEqual(1);
+  });
+
+  it('GET /api/v1/alerts?country=EC should return only that country against a shared multi-country DB', async () => {
+    // Arrange — démo mono-instance : une seule DB porte plusieurs pays. Le siège
+    // scope chaque appel par pays ; on prouve ici que `where.country` filtre bien
+    // en base réelle (pas de fuite BR sur un appel EC).
+    await seedAlert({ country: 'BR', triggeredAt: '2026-07-01T00:00:00.000Z' });
+    await seedAlert({ country: 'EC', triggeredAt: '2026-07-02T00:00:00.000Z' });
+
+    const res = await request(server())
+      .get('/api/v1/alerts?pageSize=100&country=EC')
+      .expect(200);
+
+    // Assert — seules les alertes EC (de l'entrepôt IT) remontent, aucune BR
+    const all = itAlerts(res);
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.every((a) => a.country === 'EC')).toBe(true);
+  });
+
+  it('GET /api/v1/alerts should reject an invalid country with 400', async () => {
+    await request(server())
+      .get('/api/v1/alerts?country=NOPE')
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
   });
 
   it('GET /api/v1/alerts should reject an invalid acknowledged with 400', async () => {

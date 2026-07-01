@@ -83,6 +83,7 @@ export class PrismaAlertRepository implements AlertRepository {
       ...(params.acknowledged === undefined
         ? {}
         : { acknowledged: params.acknowledged }),
+      ...(params.country === undefined ? {} : { country: params.country }),
     };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.alert.findMany({
