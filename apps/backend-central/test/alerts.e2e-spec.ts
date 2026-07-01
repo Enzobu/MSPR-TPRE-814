@@ -150,6 +150,13 @@ describe('Alerts aggregation (e2e, mocked country backends)', () => {
     expect(body.data.every((a) => a.country === 'BR')).toBe(true);
   });
 
+  it('GET /api/v1/alerts should reject an invalid country with 400 (RFC 7807)', async () => {
+    await request(server())
+      .get('/api/v1/alerts?country=NOPE')
+      .expect(400)
+      .expect('Content-Type', /application\/problem\+json/);
+  });
+
   it('GET /api/v1/alerts should reject an invalid type with 400 (RFC 7807)', async () => {
     await request(server())
       .get('/api/v1/alerts?type=NOPE')

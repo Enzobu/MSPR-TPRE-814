@@ -149,6 +149,41 @@ describe('ListAlertsUseCase', () => {
     ]);
   });
 
+  it('should not duplicate alerts when the three country URLs share one backend', async () => {
+    // Arrange — démo mono-instance : les 3 URLs pays pointent vers un même
+    // backend (1 DB multi-pays). Ce gateway simule ce backend : NON scopé il
+    // renverrait TOUT (bug d'origine), scopé (`country=` dans le path) il ne
+    // renvoie que le pays demandé. C'est le garde-fou de régression du fix.
+    const everything: Alert[] = [
+      alert('br', 'BR', '2026-06-03T00:00:00.000Z'),
+      alert('ec', 'EC', '2026-06-02T00:00:00.000Z'),
+      alert('co', 'CO', '2026-06-01T00:00:00.000Z'),
+    ];
+    const sharedBackend: GatewayMock = {
+      get: jest.fn((_country: CountryCode, path: string) => {
+        const scoped = new URLSearchParams(path.split('?')[1]).get('country');
+        const data = scoped
+          ? everything.filter((a) => a.country === scoped)
+          : everything;
+        return Promise.resolve(page(data));
+      }),
+      patch: jest.fn(),
+    };
+    const useCase = new ListAlertsUseCase(sharedBackend);
+
+    // Act
+    const result = await useCase.execute({
+      countries: ['BR', 'EC', 'CO'],
+      page: 1,
+      pageSize: 20,
+      correlationId: 'corr',
+    });
+
+    // Assert — une alerte par pays, aucune triplication ni fuite inter-régions
+    expect(result.total).toBe(3);
+    expect(result.data.map((a) => a.id)).toEqual(['br', 'ec', 'co']);
+  });
+
   it('should surface alerts only for the breaching country and none for the others', async () => {
     // Arrange — seule la région BR dépasse les seuils ; EC/CO sans alerte.
     const gateway = buildGateway({

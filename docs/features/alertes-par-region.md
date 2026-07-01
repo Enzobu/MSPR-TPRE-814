@@ -3,7 +3,7 @@ title: Alertes rattachées à leur région source
 owner: Yanis
 status: implemented
 cdc-ref: "§III.4"
-adr-refs: [0004, 0007]
+adr-refs: [0007]
 updated: 2026-07-01
 ---
 

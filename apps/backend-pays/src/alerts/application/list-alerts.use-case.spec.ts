@@ -52,6 +52,20 @@ describe('ListAlertsUseCase', () => {
     });
   });
 
+  it('should forward the country filter to the repository when provided', async () => {
+    // Arrange
+    alerts.findMany.mockResolvedValue({ data: [], total: 0 });
+
+    // Act
+    await useCase.execute({ page: 1, pageSize: 20, country: 'EC' });
+
+    // Assert — le scope pays est relayé au repository (évite la fuite inter-régions)
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock, pas un appel
+    expect(alerts.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ country: 'EC' }),
+    );
+  });
+
   it('should forward undefined filters when none are provided', async () => {
     // Arrange
     alerts.findMany.mockResolvedValue({ data: [], total: 0 });
