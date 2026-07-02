@@ -7,6 +7,7 @@ import { CreateLotUseCase } from './application/create-lot.use-case';
 import { GetLotFacetsUseCase } from './application/get-lot-facets.use-case';
 import { GetLotUseCase } from './application/get-lot.use-case';
 import { ListLotsUseCase } from './application/list-lots.use-case';
+import { SyncWarehouseLotStatusUseCase } from './application/sync-warehouse-lot-status.use-case';
 import { UpdateLotStatusUseCase } from './application/update-lot-status.use-case';
 import { LOT_REPOSITORY } from './domain/lot.repository';
 import { PrismaLotRepository } from './infrastructure/prisma-lot.repository';
@@ -22,6 +23,7 @@ import { LotsController } from './interface/lots.controller';
     GetLotFacetsUseCase,
     GetLotUseCase,
     UpdateLotStatusUseCase,
+    SyncWarehouseLotStatusUseCase,
     { provide: LOT_REPOSITORY, useClass: PrismaLotRepository },
     {
       provide: COUNTRY_CODE,
@@ -31,6 +33,7 @@ import { LotsController } from './interface/lots.controller';
     },
   ],
   // LOT_REPOSITORY est exporté pour AlertsModule (cron péremption #33).
-  exports: [LOT_REPOSITORY],
+  // SyncWarehouseLotStatusUseCase est exporté pour MeasurementsModule (#151).
+  exports: [LOT_REPOSITORY, SyncWarehouseLotStatusUseCase],
 })
 export class LotsModule {}

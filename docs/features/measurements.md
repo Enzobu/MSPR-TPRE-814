@@ -203,4 +203,4 @@ Lien : [`../user/monitoring.md`](../user/monitoring.md).
 - [x] #30 — front courbes T°/humidité (recharts) sur la fiche lot : lignes de référence pays + highlight hors tolérance.
 - [x] Proxy siège des mesures (`GET /api/v1/measurements` + `/aggregate`) —
   mono-pays résilient, voir [`aggregation-siege.md`](./aggregation-siege.md).
-- [ ] Évaluation des seuils `COUNTRY_CONDITIONS` → transition de statut des lots (alerting).
+- [x] #151 — l'ingestion reflète les conditions de l'entrepôt sur le statut de ses lots (`CONFORME` ↔ `EN_ALERTE`, ADR-0013), en best-effort.

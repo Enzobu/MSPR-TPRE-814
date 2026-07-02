@@ -42,8 +42,12 @@ Colombie).
 | Badge | Signification |
 |---|---|
 | **Conforme** | Lot dans les conditions normales. |
-| **En alerte** | Conditions hors plage : à surveiller. |
+| **En alerte** | Conditions de l'entrepôt hors plage : à surveiller. |
 | **Périmé** | Lot stocké depuis plus de 365 jours. |
+
+> Le passage **En alerte** est **automatique** : dès qu'un relevé de l'entrepôt
+> sort de la plage acceptable, ses lots passent *En alerte* ; dès qu'un relevé
+> revient dans la plage, ils repassent *Conforme*. Un lot *Périmé* le reste.
 
 ## Le détail d'un lot
 

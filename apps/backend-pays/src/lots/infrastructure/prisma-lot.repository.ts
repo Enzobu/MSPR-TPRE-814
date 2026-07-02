@@ -8,6 +8,7 @@ import type {
   LotFilters,
   LotRepository,
   Page,
+  SetWarehouseStatusParams,
 } from '../domain/lot.repository';
 
 // Clause `where` Prisma dérivée des filtres optionnels (pays/exploitation/entrepôt).
@@ -144,6 +145,18 @@ export class PrismaLotRepository implements LotRepository {
       }
       throw error;
     }
+  }
+
+  async setWarehouseStatus(params: SetWarehouseStatusParams): Promise<number> {
+    const { count } = await this.prisma.lot.updateMany({
+      where: {
+        country: params.country,
+        warehouse: params.warehouse,
+        status: params.from,
+      },
+      data: { status: params.to },
+    });
+    return count;
   }
 
   private prismaErrorCode(error: unknown): string | undefined {

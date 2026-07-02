@@ -29,6 +29,16 @@ export interface Page<T> {
   total: number;
 }
 
+// Transition de statut en masse pour un entrepôt (#151) : les lots d'un entrepôt
+// suivent les conditions T°/humidité de cet entrepôt. Le filtre `from` protège
+// les lots PERIME (jamais réécrits) et n'agit que sur la transition voulue.
+export interface SetWarehouseStatusParams {
+  country: CountryCode;
+  warehouse: string;
+  from: LotStatus;
+  to: LotStatus;
+}
+
 export interface LotRepository {
   create(lot: NewLot): Promise<Lot>;
   existsById(id: string): Promise<boolean>;
@@ -41,4 +51,7 @@ export interface LotRepository {
   // (ceux déjà périmés n'ont pas besoin d'être retouchés par le cron).
   findExpirable(cutoff: Date): Promise<Lot[]>;
   updateStatus(id: string, status: LotStatus): Promise<Lot | null>;
+  // Transition `from` → `to` de tous les lots d'un entrepôt. Retourne le nombre
+  // de lots modifiés. Idempotent : 0 si aucun lot n'est dans l'état `from`.
+  setWarehouseStatus(params: SetWarehouseStatusParams): Promise<number>;
 }

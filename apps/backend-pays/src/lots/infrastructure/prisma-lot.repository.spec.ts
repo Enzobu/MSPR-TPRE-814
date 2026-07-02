@@ -37,6 +37,7 @@ describe('PrismaLotRepository', () => {
     findUnique: jest.Mock;
     findMany: jest.Mock;
     update: jest.Mock;
+    updateMany: jest.Mock;
   };
   let prisma: PrismaService;
   let repository: PrismaLotRepository;
@@ -48,6 +49,7 @@ describe('PrismaLotRepository', () => {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     };
     prisma = {
       lot,
@@ -251,6 +253,25 @@ describe('PrismaLotRepository', () => {
         },
       });
       expect(result[0].id).toBe('BR-OLD');
+    });
+  });
+
+  describe('setWarehouseStatus', () => {
+    it('should transition lots of a warehouse matching the from status', async () => {
+      lot.updateMany.mockResolvedValue({ count: 3 });
+
+      const affected = await repository.setWarehouseStatus({
+        country: 'BR',
+        warehouse: 'W1',
+        from: 'CONFORME',
+        to: 'EN_ALERTE',
+      });
+
+      expect(lot.updateMany).toHaveBeenCalledWith({
+        where: { country: 'BR', warehouse: 'W1', status: 'CONFORME' },
+        data: { status: 'EN_ALERTE' },
+      });
+      expect(affected).toBe(3);
     });
   });
 
