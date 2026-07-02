@@ -10,6 +10,7 @@ import {
   LotNotFoundError,
 } from '../domain/lot.errors';
 import type { CreateLotUseCase } from '../application/create-lot.use-case';
+import type { GetLotFacetsUseCase } from '../application/get-lot-facets.use-case';
 import type { GetLotUseCase } from '../application/get-lot.use-case';
 import type { ListLotsUseCase } from '../application/list-lots.use-case';
 import type { UpdateLotStatusUseCase } from '../application/update-lot-status.use-case';
@@ -31,6 +32,7 @@ const buildLot = (overrides: Partial<Lot> = {}): Lot => ({
 describe('LotsController', () => {
   let createLot: { execute: jest.Mock };
   let listLots: { execute: jest.Mock };
+  let getLotFacets: { execute: jest.Mock };
   let getLot: { execute: jest.Mock };
   let updateLotStatus: { execute: jest.Mock };
   let controller: LotsController;
@@ -38,11 +40,13 @@ describe('LotsController', () => {
   beforeEach(() => {
     createLot = { execute: jest.fn() };
     listLots = { execute: jest.fn() };
+    getLotFacets = { execute: jest.fn() };
     getLot = { execute: jest.fn() };
     updateLotStatus = { execute: jest.fn() };
     controller = new LotsController(
       createLot as unknown as CreateLotUseCase,
       listLots as unknown as ListLotsUseCase,
+      getLotFacets as unknown as GetLotFacetsUseCase,
       getLot as unknown as GetLotUseCase,
       updateLotStatus as unknown as UpdateLotStatusUseCase,
     );
@@ -133,6 +137,46 @@ describe('LotsController', () => {
       expect(result.data).toHaveLength(2);
       expect(result.data[0].id).toBe('BR-1');
       expect(result.data[0].storedAt).toBe('2026-06-01T08:00:00.000Z');
+    });
+
+    it('should forward the farm and warehouse filters to the use case', async () => {
+      listLots.execute.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: 20,
+      });
+      const query: ListLotsQueryDto = {
+        page: 1,
+        pageSize: 20,
+        sort: 'storedAt:asc',
+        farm: 'Fazenda Aurora',
+        warehouse: 'Entrepôt Sul-1',
+      };
+
+      await controller.list(query);
+
+      expect(listLots.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          farm: 'Fazenda Aurora',
+          warehouse: 'Entrepôt Sul-1',
+        }),
+      );
+    });
+  });
+
+  describe('facets', () => {
+    it('should return the distinct farms and warehouses for the country', async () => {
+      getLotFacets.execute.mockResolvedValue({
+        farms: ['Fazenda Aurora'],
+        warehouses: ['Entrepôt Sul-1'],
+      });
+
+      const result = await controller.facets({ country: 'BR' });
+
+      expect(getLotFacets.execute).toHaveBeenCalledWith({ country: 'BR' });
+      expect(result.farms).toEqual(['Fazenda Aurora']);
+      expect(result.warehouses).toEqual(['Entrepôt Sul-1']);
     });
   });
 

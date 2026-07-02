@@ -1,11 +1,21 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { COUNTRY_CODES, type CountryCode } from '@futurekawa/contracts';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+const MAX_FACET_LENGTH = 120;
 // Seul `storedAt` est triable : c'est la clé FIFO (CDC §III.1).
 const SORT_PATTERN = /^storedAt:(asc|desc)$/;
 
@@ -61,4 +71,24 @@ export class ListLotsQueryDto {
   @IsOptional()
   @IsIn(COUNTRY_CODES, { message: 'country must be one of BR, EC, CO' })
   country?: CountryCode;
+
+  @ApiPropertyOptional({
+    description: 'Filtre par exploitation (égalité stricte). CDC §III.3.',
+    example: 'Fazenda Aurora',
+    maxLength: MAX_FACET_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(MAX_FACET_LENGTH)
+  farm?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtre par entrepôt (égalité stricte). CDC §III.3.',
+    example: 'Entrepôt Santos',
+    maxLength: MAX_FACET_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(MAX_FACET_LENGTH)
+  warehouse?: string;
 }

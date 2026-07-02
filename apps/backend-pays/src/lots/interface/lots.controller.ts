@@ -21,6 +21,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { CreateLotUseCase } from '../application/create-lot.use-case';
+import { GetLotFacetsUseCase } from '../application/get-lot-facets.use-case';
 import { GetLotUseCase } from '../application/get-lot.use-case';
 import { ListLotsUseCase } from '../application/list-lots.use-case';
 import { UpdateLotStatusUseCase } from '../application/update-lot-status.use-case';
@@ -32,6 +33,8 @@ import {
 import type { SortDirection } from '../domain/lot.repository';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { ListLotsQueryDto } from './dto/list-lots-query.dto';
+import { LotFacetsQueryDto } from './dto/lot-facets-query.dto';
+import { LotFacetsResponseDto } from './dto/lot-facets-response.dto';
 import { LotResponseDto } from './dto/lot-response.dto';
 import { PaginatedLotsResponseDto } from './dto/paginated-lots-response.dto';
 import { UpdateLotStatusDto } from './dto/update-lot-status.dto';
@@ -43,6 +46,7 @@ export class LotsController {
   constructor(
     private readonly createLot: CreateLotUseCase,
     private readonly listLots: ListLotsUseCase,
+    private readonly getLotFacets: GetLotFacetsUseCase,
     private readonly getLot: GetLotUseCase,
     private readonly updateLotStatus: UpdateLotStatusUseCase,
   ) {}
@@ -93,8 +97,24 @@ export class LotsController {
       pageSize: query.pageSize,
       direction,
       country: query.country,
+      farm: query.farm,
+      warehouse: query.warehouse,
     });
     return { ...result, data: result.data.map(toLotResponse) };
+  }
+
+  // WHY: doit précéder `:id`, sinon Nest route "facets" vers getById(id="facets").
+  @Get('facets')
+  @ApiOperation({
+    summary: 'Facettes de filtrage (exploitations, entrepôts)',
+    description:
+      'Valeurs distinctes disponibles pour filtrer les lots (CDC §III.3). Scopable par pays.',
+  })
+  @ApiOkResponse({ type: LotFacetsResponseDto })
+  async facets(
+    @Query() query: LotFacetsQueryDto,
+  ): Promise<LotFacetsResponseDto> {
+    return this.getLotFacets.execute({ country: query.country });
   }
 
   @Get(':id')
