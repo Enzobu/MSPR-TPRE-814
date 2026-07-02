@@ -3,7 +3,7 @@ title: Consulter les lots de café vert
 owner: Yanis
 status: implemented
 cdc-ref: "§IV.8"
-updated: 2026-06-19
+updated: 2026-07-02
 ---
 
 # Consulter les lots
@@ -23,8 +23,16 @@ Colombie).
 ### Filtrer et trier
 
 - **Filtre par pays** : boutons *Tous / BR / EC / CO* pour ne voir qu'un pays.
+- **Filtre par exploitation** : menu déroulant *Exploitation* pour n'afficher que
+  les lots d'une exploitation. Tapez pour rechercher dans la liste ; *Toutes les
+  exploitations* réinitialise.
+- **Filtre par entrepôt** : menu déroulant *Entrepôt*, même fonctionnement.
 - **Sens du tri** : le bouton *Plus anciens / Plus récents* inverse l'ordre.
 - **Pagination** : boutons *Précédent / Suivant* en bas de la liste.
+
+> Les listes d'exploitations et d'entrepôts proposées s'adaptent au pays
+> sélectionné. Ces filtres portent sur **l'ensemble** des lots (pas seulement la
+> page affichée).
 
 > Les filtres sont mémorisés dans l'adresse de la page : vous pouvez
 > **recharger** ou **partager** un lien qui rouvre la même vue.

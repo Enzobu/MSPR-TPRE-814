@@ -4,7 +4,7 @@ owner: Yanis
 status: in-progress
 cdc-ref: "§III.1"
 adr-refs: [0002, 0008]
-updated: 2026-06-19
+updated: 2026-07-02
 ---
 
 # Lots de café vert
@@ -50,6 +50,11 @@ hors-norme (en alerte, périmés > 365 j). Couvre le CDC §III.1.
 - **Pays** (`Country`) : `BR | EC | CO`, aligné sur `CountryCode` de
   `@futurekawa/contracts`. Les seuils T°/humidité associés vivent dans
   `COUNTRY_CONDITIONS` (contracts), pas ici.
+- **Filtrage (CDC §III.3, #152)** : la liste se filtre côté **serveur** par
+  `country`, `farm` (exploitation) et `warehouse` (entrepôt), en **égalité
+  stricte**. Les valeurs proposées viennent d'un endpoint de **facettes**
+  (valeurs distinctes réelles), pas d'une saisie libre. Le filtrage n'est jamais
+  fait uniquement sur la page courante côté client.
 
 ## Modèle de données
 
@@ -82,12 +87,14 @@ Index : `lots_storedAt_idx` (FIFO), `lots_id_country_key` (unicité).
 
 | Type | Contrat | Fichier |
 |---|---|---|
-| Types | `Lot`, `LotStatus`, `CreateLotDto`, `UpdateLotStatusDto`, `PaginatedResponse` | `packages/contracts/src/lot.ts`, `pagination.ts` |
+| Types | `Lot`, `LotStatus`, `LotFacets`, `CreateLotDto`, `UpdateLotStatusDto`, `PaginatedResponse` | `packages/contracts/src/lot.ts`, `pagination.ts` |
 | Prisma | modèle `Lot` | `apps/backend-pays/prisma/schema.prisma` |
 | REST | `POST /api/v1/lots` | `apps/backend-pays/src/lots/interface/lots.controller.ts` |
-| REST | `GET /api/v1/lots?page&pageSize&sort` | idem |
+| REST | `GET /api/v1/lots?page&pageSize&sort&country&farm&warehouse` | idem |
+| REST | `GET /api/v1/lots/facets?country` | idem (valeurs distinctes exploitations/entrepôts) |
 | REST | `GET /api/v1/lots/:id` | idem |
 | REST | `PATCH /api/v1/lots/:id/status` | idem |
+| REST (siège) | `GET /api/v1/stocks?…&farm&warehouse` + `GET /api/v1/stocks/facets` | `apps/backend-central/src/stocks/interface/stocks.controller.ts` (relais + facettes consolidées) |
 
 Status codes : `201` création, `200` lecture/patch, `400` validation, `404`
 inconnu, `409` id déjà pris, `422` pays ≠ backend. Erreurs RFC 7807.
@@ -111,7 +118,7 @@ injecté dans le use-case de création pour rejeter un lot d'un autre pays.
 - **Application** : `apps/backend-pays/src/lots/application/` (4 use-cases : create / list / get / update-status)
 - **Infrastructure** : `apps/backend-pays/src/lots/infrastructure/prisma-lot.repository.ts`
 - **Interface** : `apps/backend-pays/src/lots/interface/` (controller + DTOs + `lot.mapper.ts`)
-- **Front** : `apps/frontend-web/src/features/lots/` (api `fetchStocks`, hooks `useLots`/`useLot`/`useLotFilters`, composants `LotsTable`/`LotCard`/`LotStatusBadge`/`CountryFilter`/`UnavailableBanner`) + pages `LotsPage` (`/lots`) et `LotDetailPage` (`/lots/:id`). Consomme l'agrégation siège `GET /api/v1/stocks` ([aggregation-siege.md](aggregation-siege.md)). Filtres/tri/pagination portés par l'URL (`useSearchParams`).
+- **Front** : `apps/frontend-web/src/features/lots/` (api `fetchStocks`/`fetchLotFacets`, hooks `useLots`/`useLot`/`useLotFilters`/`useLotFacets`, composants `LotsTable`/`LotCard`/`LotStatusBadge`/`CountryFilter`/`FacetCombobox`/`UnavailableBanner`) + pages `LotsPage` (`/lots`) et `LotDetailPage` (`/lots/:id`). Consomme l'agrégation siège `GET /api/v1/stocks` ([aggregation-siege.md](aggregation-siege.md)). Filtres (pays/exploitation/entrepôt)/tri/pagination portés par l'URL (`useSearchParams`) → filtrage serveur ; les sélecteurs exploitation/entrepôt sont peuplés par `GET /api/v1/stocks/facets`.
 
 ### Migrer / seeder en local
 
@@ -151,6 +158,7 @@ Lien : [`../user/lots.md`](../user/lots.md).
       + DTO in/out + mapper + Swagger + Bruno.
 - [x] #25 — front `features/lots` (liste FIFO, filtre pays, pagination, détail, badge statut).
 - [x] #26 — tests d'intégration (API + DB réelle via `docker-compose.test.yml`).
+- [x] #152 — filtrage serveur par exploitation/entrepôt + endpoints de facettes (pays + siège) + sélecteurs front.
 - [ ] Transitions de statut automatiques (alerting hors-plage, cron péremption).
 - [ ] Exposition éventuelle de `harvestDate` / `qualityGrade` à l'API.
 - [ ] Documentation utilisateur métier `docs/user/lots.md`.

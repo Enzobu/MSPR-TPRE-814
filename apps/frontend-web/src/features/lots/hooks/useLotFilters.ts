@@ -11,12 +11,19 @@ export type LotSort = (typeof SORT_VALUES)[number];
 
 export interface LotFilters {
   country?: CountryCode;
+  farm?: string;
+  warehouse?: string;
   page: number;
   sort: LotSort;
 }
 
 function parseCountry(raw: string | null): CountryCode | undefined {
   return COUNTRY_CODES.find((code) => code === raw);
+}
+
+function parseFacet(raw: string | null): string | undefined {
+  const value = raw?.trim();
+  return value ? value : undefined;
 }
 
 function parseSort(raw: string | null): LotSort {
@@ -31,38 +38,58 @@ function parsePage(raw: string | null): number {
 export interface UseLotFiltersResult {
   filters: LotFilters;
   setCountry: (country?: CountryCode) => void;
+  setFarm: (farm?: string) => void;
+  setWarehouse: (warehouse?: string) => void;
   setSort: (sort: LotSort) => void;
   setPage: (page: number) => void;
 }
 
 // Filtres/tri/pagination portés par l'URL (rules front : bookmarkable, rechargeable).
-// Source de vérité = query string. Changer pays ou tri remet la page à 1.
+// Source de vérité = query string. Changer un filtre ou le tri remet la page à 1.
 export function useLotFilters(): UseLotFiltersResult {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo<LotFilters>(
     () => ({
       country: parseCountry(searchParams.get('country')),
+      farm: parseFacet(searchParams.get('farm')),
+      warehouse: parseFacet(searchParams.get('warehouse')),
       page: parsePage(searchParams.get('page')),
       sort: parseSort(searchParams.get('sort')),
     }),
     [searchParams],
   );
 
-  const setCountry = useCallback(
-    (country?: CountryCode) => {
+  // Fabrique un setter de filtre string porté par l'URL (reset page à 1).
+  const makeFacetSetter = useCallback(
+    (key: 'country' | 'farm' | 'warehouse') => (value?: string) => {
       setSearchParams((previous) => {
         const next = new URLSearchParams(previous);
-        if (country) {
-          next.set('country', country);
+        if (value) {
+          next.set(key, value);
         } else {
-          next.delete('country');
+          next.delete(key);
         }
         next.set('page', String(DEFAULT_PAGE));
         return next;
       });
     },
     [setSearchParams],
+  );
+
+  const setCountry = useCallback(
+    (country?: CountryCode) => makeFacetSetter('country')(country),
+    [makeFacetSetter],
+  );
+
+  const setFarm = useCallback(
+    (farm?: string) => makeFacetSetter('farm')(farm),
+    [makeFacetSetter],
+  );
+
+  const setWarehouse = useCallback(
+    (warehouse?: string) => makeFacetSetter('warehouse')(warehouse),
+    [makeFacetSetter],
   );
 
   const setSort = useCallback(
@@ -88,5 +115,5 @@ export function useLotFilters(): UseLotFiltersResult {
     [setSearchParams],
   );
 
-  return { filters, setCountry, setSort, setPage };
+  return { filters, setCountry, setFarm, setWarehouse, setSort, setPage };
 }
