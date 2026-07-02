@@ -61,7 +61,7 @@ docs {
   | `warehouse` | string | oui | Entrepôt à l'origine du relevé (non vide) |
   | `temperatureCelsius` | number | oui | Température °C, ∈ [-50, 80] |
   | `humidityPercent` | number | oui | Humidité relative %, ∈ [0, 100] |
-  | `recordedAt` | string | oui | Instant du relevé, ISO 8601 |
+  | `recordedAt` | string | non | Instant du relevé, ISO 8601. Omis → horodaté à la réception par le backend (#150) |
 
   ## Réponse 201
   ```json
@@ -78,7 +78,7 @@ docs {
   ## Erreurs (RFC 7807)
   | Code | Cas |
   |---|---|
-  | 400 | payload invalide : `warehouse` vide, T°/humidité hors bornes, `recordedAt` non ISO 8601 |
+  | 400 | payload invalide : `warehouse` vide, T°/humidité hors bornes, `recordedAt` **présent mais** non ISO 8601 |
 
   ## Références
   - ADR-0003 (convention topics + bornes de validation). CDC §III.2.

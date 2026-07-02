@@ -4,7 +4,7 @@ owner: Yanis
 status: in-progress
 cdc-ref: "§III.2"
 adr-refs: [0002, 0003]
-updated: 2026-06-19
+updated: 2026-07-02
 ---
 
 # Mesures IoT (T°/humidité)
@@ -61,8 +61,11 @@ dérives avant qu'un lot ne bascule en alerte.
 - **Ingestion** : voie nominale MQTT (#28), voie de secours `POST /measurements`.
   Les deux partagent les **mêmes bornes** : `temperatureCelsius` ∈
   [`TEMPERATURE_CELSIUS_MIN`, `TEMPERATURE_CELSIUS_MAX`], `humidityPercent` ∈
-  [`HUMIDITY_PERCENT_MIN`, `HUMIDITY_PERCENT_MAX`] (`@futurekawa/contracts`),
-  `recordedAt` ISO 8601.
+  [`HUMIDITY_PERCENT_MIN`, `HUMIDITY_PERCENT_MAX`] (`@futurekawa/contracts`).
+- **`recordedAt` optionnel** (#150) : le module IoT l'omet tant que NTP n'a pas
+  convergé (démarrage à froid). Absent/vide → **le backend horodate à la
+  réception** (temps serveur) ; présent → validé ISO 8601, sinon la mesure est
+  rejetée. Vaut pour l'ingestion MQTT **et** REST.
 
 ## Modèle de données
 
@@ -123,8 +126,9 @@ lit que son propre pays (wildcard `+` uniquement sur l'entrepôt).
   par l'instance (env `COUNTRY_CODE`), jamais lu du message.
 - **Validation** (parsing pur, `measurement-message.parser.ts`) : format de topic
   (5 segments, pays == `COUNTRY_CODE`, suffixe `measurement`), JSON valide, shape
-  attendue, `recordedAt` parsable, bornes T°/humidité — **mêmes constantes que le
-  DTO REST**. Tout cas invalide → `logger.warn` + **drop** (jamais de crash).
+  attendue, `recordedAt` optionnel (omis → horodaté réception ; présent → ISO 8601
+  sinon drop), bornes T°/humidité — **mêmes constantes que le DTO REST**. Tout cas
+  invalide → `logger.warn` + **drop** (jamais de crash).
 - **Compteurs** `persisted` / `dropped` loggués à chaque message pour la
   supervision.
 - **Résilience** : `reconnectPeriod = 2000 ms`. Si le broker est down au boot, le
