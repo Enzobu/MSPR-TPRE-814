@@ -15,6 +15,8 @@ export interface AggregateStocksParams {
   pageSize: number;
   direction: 'asc' | 'desc';
   correlationId: string;
+  farm?: string;
+  warehouse?: string;
 }
 
 // Le siège récupère TOUS les lots de chaque pays (en paginant le backend pays),
@@ -65,9 +67,7 @@ export class AggregateStocksUseCase {
     params: AggregateStocksParams,
   ): Promise<{ lots: Lot[]; unavailable: CountryCode[] }> {
     const settled = await Promise.allSettled(
-      params.countries.map((country) =>
-        this.fetchAllLots(country, params.direction, params.correlationId),
-      ),
+      params.countries.map((country) => this.fetchAllLots(country, params)),
     );
 
     const lots: Lot[] = [];
@@ -86,21 +86,24 @@ export class AggregateStocksUseCase {
   // erreur (même en page 2+) propage → le pays bascule en `unavailable`.
   private async fetchAllLots(
     country: CountryCode,
-    direction: 'asc' | 'desc',
-    correlationId: string,
+    params: AggregateStocksParams,
   ): Promise<Lot[]> {
     const all: Lot[] = [];
+    // Filtres exploitation/entrepôt relayés au pays (CDC §III.3) ; le pays fait
+    // le filtrage SQL, le siège ne fait que consolider.
+    const filters = [
+      params.farm ? `&farm=${encodeURIComponent(params.farm)}` : '',
+      params.warehouse ? `&warehouse=${encodeURIComponent(params.warehouse)}` : '',
+    ].join('');
     for (let page = 1; page <= MAX_PAGES_PER_COUNTRY; page += 1) {
       // `country` scope l'appel à ce pays : en démo mono-instance (1 backend
       // pays, 1 DB multi-pays derrière les 3 URLs), évite d'agréger le même lot
       // 3×. En déploiement réel (1 instance/pays), le filtre est sans effet.
-      const path = `/api/v1/lots?page=${page}&pageSize=${PAGE_SIZE}&sort=storedAt:${direction}&country=${country}`;
+      const path = `/api/v1/lots?page=${page}&pageSize=${PAGE_SIZE}&sort=storedAt:${params.direction}&country=${country}${filters}`;
       const res = await this.gateway.get<PaginatedResponse<Lot>>(
         country,
         path,
-        {
-          correlationId,
-        },
+        { correlationId: params.correlationId },
       );
       all.push(...res.data);
       if (res.data.length < PAGE_SIZE || all.length >= res.total) {
@@ -128,6 +131,10 @@ export class AggregateStocksUseCase {
       params.page,
       params.pageSize,
       params.direction,
+      // Les filtres font partie de la clé : sinon une réponse filtrée serait
+      // servie pour une requête non filtrée (et inversement).
+      params.farm ?? '',
+      params.warehouse ?? '',
     ].join('|');
   }
 }
