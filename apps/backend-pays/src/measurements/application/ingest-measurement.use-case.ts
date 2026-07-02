@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { COUNTRY_CONDITIONS } from '@futurekawa/contracts';
+import { evaluateMeasurement } from '../../alerts/domain/alert-rule';
 import { RaiseMeasurementAlertsUseCase } from '../../alerts/application/raise-measurement-alerts.use-case';
+import { SyncWarehouseLotStatusUseCase } from '../../lots/application/sync-warehouse-lot-status.use-case';
 import type { Measurement, NewMeasurement } from '../domain/measurement';
 import { MEASUREMENT_REPOSITORY } from '../domain/measurement.repository';
 import type { MeasurementRepository } from '../domain/measurement.repository';
@@ -17,6 +20,7 @@ export class IngestMeasurementUseCase {
     @Inject(MEASUREMENT_REPOSITORY)
     private readonly measurements: MeasurementRepository,
     private readonly raiseAlerts: RaiseMeasurementAlertsUseCase,
+    private readonly syncLotStatus: SyncWarehouseLotStatusUseCase,
     @InjectPinoLogger(IngestMeasurementUseCase.name)
     private readonly logger: PinoLogger,
   ) {}
@@ -24,6 +28,7 @@ export class IngestMeasurementUseCase {
   async execute(input: NewMeasurement): Promise<Measurement> {
     const measurement = await this.measurements.save(input);
     await this.evaluateAlerts(measurement);
+    await this.reflectOnLotStatus(measurement);
     return measurement;
   }
 
@@ -39,6 +44,29 @@ export class IngestMeasurementUseCase {
       this.logger.warn(
         { err: error, warehouse: measurement.warehouse },
         "Évaluation d'alertes échouée (ingestion conservée)",
+      );
+    }
+  }
+
+  // Reflète l'état de l'entrepôt sur ses lots (#151, ADR-0013), best-effort :
+  // hors plage → CONFORME devient EN_ALERTE ; retour dans la plage → EN_ALERTE
+  // revient CONFORME. Un échec ne fait jamais échouer l'ingestion.
+  private async reflectOnLotStatus(measurement: Measurement): Promise<void> {
+    try {
+      const outOfRange =
+        evaluateMeasurement(
+          measurement,
+          COUNTRY_CONDITIONS[measurement.country],
+        ).length > 0;
+      await this.syncLotStatus.execute({
+        country: measurement.country,
+        warehouse: measurement.warehouse,
+        outOfRange,
+      });
+    } catch (error: unknown) {
+      this.logger.warn(
+        { err: error, warehouse: measurement.warehouse },
+        'Sync du statut des lots échouée (ingestion conservée)',
       );
     }
   }

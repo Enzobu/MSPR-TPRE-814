@@ -18,6 +18,14 @@ if (typeof Element.prototype.scrollIntoView !== 'function') {
   Element.prototype.scrollIntoView = () => {};
 }
 
+// Radix (Popover, etc.) interroge la Pointer Capture API que jsdom n'implémente
+// pas : stubs pour permettre l'ouverture des overlays dans les tests.
+if (typeof Element.prototype.hasPointerCapture !== 'function') {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+}
+
 // jsdom n'expose pas un Storage utilisable selon la config : stub mémoire.
 if (
   globalThis.localStorage === undefined ||

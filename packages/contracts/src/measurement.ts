@@ -13,7 +13,9 @@ export interface IngestMeasurementDto {
   warehouse: string;
   temperatureCelsius: number;
   humidityPercent: number;
-  recordedAt: string;
+  // Optionnel : le module IoT l'omet tant que NTP n'a pas convergé. Absent →
+  // le backend horodate à la réception (ADR-0003). Widening non-breaking.
+  recordedAt?: string;
 }
 
 // Fenêtre temporelle agrégée (moyennes T°/humidité) d'un entrepôt, renvoyée par

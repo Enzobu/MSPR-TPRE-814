@@ -3,8 +3,8 @@ title: Lots de café vert (stock, FIFO, traçabilité)
 owner: Yanis
 status: in-progress
 cdc-ref: "§III.1"
-adr-refs: [0002, 0008]
-updated: 2026-06-19
+adr-refs: [0002, 0008, 0013]
+updated: 2026-07-02
 ---
 
 # Lots de café vert
@@ -44,12 +44,23 @@ hors-norme (en alerte, périmés > 365 j). Couvre le CDC §III.1.
   dédié `@@index([storedAt])`.
 - **Identité** : un identifiant de lot est unique au sein d'un pays
   (`@@unique([id, country])`).
-- **Statut** (`LotStatus`) : `CONFORME` (défaut) → `EN_ALERTE` (conditions
-  hors-plage) → `PERIME` (stockage > 365 j). Les transitions automatiques sont
-  hors scope #23.
+- **Statut** (`LotStatus`) : `CONFORME` (défaut) ↔ `EN_ALERTE` (conditions
+  hors-plage de l'entrepôt) et `PERIME` (stockage > 365 j).
+  - **`EN_ALERTE` (#151, ADR-0013)** : à chaque relevé, les lots d'un entrepôt
+    suivent ses conditions — une mesure hors plage bascule ses lots `CONFORME` en
+    `EN_ALERTE` ; une mesure de retour dans la plage les ramène `CONFORME`
+    (retour dès le premier relevé conforme). Les lots `PERIME` ne sont jamais
+    touchés (la péremption prime). Transition en masse par entrepôt, best-effort
+    vis-à-vis de l'ingestion.
+  - **`PERIME`** : posé par le cron quotidien de péremption (ADR-0004), définitif.
 - **Pays** (`Country`) : `BR | EC | CO`, aligné sur `CountryCode` de
   `@futurekawa/contracts`. Les seuils T°/humidité associés vivent dans
   `COUNTRY_CONDITIONS` (contracts), pas ici.
+- **Filtrage (CDC §III.3, #152)** : la liste se filtre côté **serveur** par
+  `country`, `farm` (exploitation) et `warehouse` (entrepôt), en **égalité
+  stricte**. Les valeurs proposées viennent d'un endpoint de **facettes**
+  (valeurs distinctes réelles), pas d'une saisie libre. Le filtrage n'est jamais
+  fait uniquement sur la page courante côté client.
 
 ## Modèle de données
 
@@ -82,12 +93,14 @@ Index : `lots_storedAt_idx` (FIFO), `lots_id_country_key` (unicité).
 
 | Type | Contrat | Fichier |
 |---|---|---|
-| Types | `Lot`, `LotStatus`, `CreateLotDto`, `UpdateLotStatusDto`, `PaginatedResponse` | `packages/contracts/src/lot.ts`, `pagination.ts` |
+| Types | `Lot`, `LotStatus`, `LotFacets`, `CreateLotDto`, `UpdateLotStatusDto`, `PaginatedResponse` | `packages/contracts/src/lot.ts`, `pagination.ts` |
 | Prisma | modèle `Lot` | `apps/backend-pays/prisma/schema.prisma` |
 | REST | `POST /api/v1/lots` | `apps/backend-pays/src/lots/interface/lots.controller.ts` |
-| REST | `GET /api/v1/lots?page&pageSize&sort` | idem |
+| REST | `GET /api/v1/lots?page&pageSize&sort&country&farm&warehouse` | idem |
+| REST | `GET /api/v1/lots/facets?country` | idem (valeurs distinctes exploitations/entrepôts) |
 | REST | `GET /api/v1/lots/:id` | idem |
 | REST | `PATCH /api/v1/lots/:id/status` | idem |
+| REST (siège) | `GET /api/v1/stocks?…&farm&warehouse` + `GET /api/v1/stocks/facets` | `apps/backend-central/src/stocks/interface/stocks.controller.ts` (relais + facettes consolidées) |
 
 Status codes : `201` création, `200` lecture/patch, `400` validation, `404`
 inconnu, `409` id déjà pris, `422` pays ≠ backend. Erreurs RFC 7807.
@@ -108,10 +121,10 @@ injecté dans le use-case de création pour rejeter un lot d'un autre pays.
 - **Migration** : `apps/backend-pays/prisma/migrations/*_add_lot/`
 - **Seed** : [`../../apps/backend-pays/prisma/seed.ts`](../../apps/backend-pays/prisma/seed.ts)
 - **Domain** : `apps/backend-pays/src/lots/domain/` (`lot.ts`, `lot.repository.ts`, `lot.errors.ts`)
-- **Application** : `apps/backend-pays/src/lots/application/` (4 use-cases : create / list / get / update-status)
+- **Application** : `apps/backend-pays/src/lots/application/` (create / list / get / update-status / **get-lot-facets** #152 / **sync-warehouse-lot-status** #151)
 - **Infrastructure** : `apps/backend-pays/src/lots/infrastructure/prisma-lot.repository.ts`
 - **Interface** : `apps/backend-pays/src/lots/interface/` (controller + DTOs + `lot.mapper.ts`)
-- **Front** : `apps/frontend-web/src/features/lots/` (api `fetchStocks`, hooks `useLots`/`useLot`/`useLotFilters`, composants `LotsTable`/`LotCard`/`LotStatusBadge`/`CountryFilter`/`UnavailableBanner`) + pages `LotsPage` (`/lots`) et `LotDetailPage` (`/lots/:id`). Consomme l'agrégation siège `GET /api/v1/stocks` ([aggregation-siege.md](aggregation-siege.md)). Filtres/tri/pagination portés par l'URL (`useSearchParams`).
+- **Front** : `apps/frontend-web/src/features/lots/` (api `fetchStocks`/`fetchLotFacets`, hooks `useLots`/`useLot`/`useLotFilters`/`useLotFacets`, composants `LotsTable`/`LotCard`/`LotStatusBadge`/`CountryFilter`/`FacetCombobox`/`UnavailableBanner`) + pages `LotsPage` (`/lots`) et `LotDetailPage` (`/lots/:id`). Consomme l'agrégation siège `GET /api/v1/stocks` ([aggregation-siege.md](aggregation-siege.md)). Filtres (pays/exploitation/entrepôt)/tri/pagination portés par l'URL (`useSearchParams`) → filtrage serveur ; les sélecteurs exploitation/entrepôt sont peuplés par `GET /api/v1/stocks/facets`.
 
 ### Migrer / seeder en local
 
@@ -131,7 +144,8 @@ pnpm --filter backend-pays db:seed
 
 | Niveau | Fichier | Couvre |
 |---|---|---|
-| Unit | `apps/backend-pays/src/lots/application/*.spec.ts` | règles métier des 4 use-cases (mismatch pays, doublon, not-found, pagination/FIFO) |
+| Unit | `apps/backend-pays/src/lots/application/*.spec.ts` | règles métier des use-cases (mismatch pays, doublon, not-found, pagination/FIFO, facettes, **transition `CONFORME`↔`EN_ALERTE`** #151) |
+| Unit | `apps/backend-pays/src/lots/infrastructure/prisma-lot.repository.spec.ts` | filtre farm/warehouse, facettes distinctes, **`setWarehouseStatus` (updateMany scopé au statut `from`)** #151 |
 | Intégration (e2e + DB réelle) | `apps/backend-pays/test/lots.e2e-spec.ts` | les 4 endpoints contre MariaDB : status codes, RFC 7807, **tri FIFO** (3 lots dans le désordre → asc, et `sort=storedAt:desc` inverse), rejet d'un tri non supporté (400), pagination, validation, persistance (relecture) |
 | UI (Vitest + RTL) | `apps/frontend-web/tests/features/lots/**`, `tests/pages/LotsPage.test.tsx` | badge de statut, lignes/liens du tableau, page liste (filtre pays, bannière `unavailable`) |
 | E2E (Playwright, réseau mocké) | `apps/frontend-web/tests/e2e/fifo.spec.ts` (#38) | parcours bout-en-bout : session active → liste lots **triée FIFO (storedAt asc)** → clic lot → détail + mesures visibles. Lancé par le job CI `e2e` (rapport HTML archivé). |
@@ -151,6 +165,8 @@ Lien : [`../user/lots.md`](../user/lots.md).
       + DTO in/out + mapper + Swagger + Bruno.
 - [x] #25 — front `features/lots` (liste FIFO, filtre pays, pagination, détail, badge statut).
 - [x] #26 — tests d'intégration (API + DB réelle via `docker-compose.test.yml`).
-- [ ] Transitions de statut automatiques (alerting hors-plage, cron péremption).
+- [x] #152 — filtrage serveur par exploitation/entrepôt + endpoints de facettes (pays + siège) + sélecteurs front.
+- [x] #151 — transition automatique `CONFORME` ↔ `EN_ALERTE` selon les conditions de l'entrepôt (ADR-0013), à l'ingestion des mesures.
+- [x] Transition `PERIME` par le cron de péremption (ADR-0004).
 - [ ] Exposition éventuelle de `harvestDate` / `qualityGrade` à l'API.
 - [ ] Documentation utilisateur métier `docs/user/lots.md`.

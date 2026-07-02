@@ -51,6 +51,18 @@ services:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./infra/mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
       - ${VOLUME_BASE_PATH}/mosquitto-pays-data:/mosquitto/data
+    # Vérifie broker + auth + ACL : -E abandonne dès la souscription acquittée,
+    # sans attendre de message. Le user backend a un droit `read` sur ce topic.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mosquitto_sub -h localhost -p 1883 -u \"$$MOSQUITTO_BACKEND_USERNAME\" -P \"$$MOSQUITTO_BACKEND_PASSWORD\" -t \"futurekawa/$$COUNTRY_CODE/warehouse/+/measurement\" -E || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   phpmyadmin:
     image: phpmyadmin:5.2-apache
@@ -96,11 +108,24 @@ services:
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     expose:
       - 3000
+    # /ready vérifie DB + MQTT (503 sinon). start_period couvre migrations + boot.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
     depends_on:
       mariadb-pays:
         condition: service_healthy
       mosquitto-pays:
-        condition: service_started
+        condition: service_healthy
 
   backend-central:
     build:
@@ -128,6 +153,20 @@ services:
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     ports:
       - "${BACKEND_CENTRAL_PORT}:3000"
+    # /ready ne dépend que de la DB centrale (pas des pays) : le central reste
+    # sain même si un pays est isolé — l'agrégation est résiliente (ADR-0007).
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
     depends_on:
       mariadb-central:
         condition: service_healthy
@@ -147,9 +186,17 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_WEB_PORT}:8080"
+    # Nginx sert la SPA : 200 sur / une fois les assets en place.
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     depends_on:
       backend-central:
-        condition: service_started
+        condition: service_healthy
 
   # Site de documentation utilisateur (VitePress, ADR-0009/0010). Statique et
   # autonome : aucune dépendance runtime. Buildé avec la stack (donc en CI via

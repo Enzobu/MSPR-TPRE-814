@@ -33,6 +33,9 @@ Source de vérité des seuils : `COUNTRY_CONDITIONS[country]` de `@futurekawa/co
 | 1.5 | Seuils **différents par pays** (BR/EC/CO) | U | même mesure, 3 pays | verdict conforme aux seuils de chaque pays | `alert-rule.spec.ts` |
 | 1.6 | **Déduplication** : 1 alerte / type+entité+jour | U | 2 mesures hors plage le même jour | 1 seule alerte | `raise-measurement-alerts.use-case.spec.ts` |
 | 1.7 | Alerte hors plage → **email** envoyé | I | mesure hors plage, MailDev up | email capté par MailDev | `alerts/infrastructure/email/*.spec.ts`, e2e `alerting-mqtt-email.e2e-spec.ts` |
+| 1.8 | Mesure hors plage → lots `CONFORME` de l'entrepôt → `EN_ALERTE` (#151) | U | mesure hors plage | `setWarehouseStatus(CONFORME→EN_ALERTE)` appelé | `lots/application/sync-warehouse-lot-status.use-case.spec.ts`, `measurements/application/ingest-measurement.use-case.spec.ts` |
+| 1.9 | Mesure de retour dans la plage → lots `EN_ALERTE` → `CONFORME` (#151) | U | mesure in-range | `setWarehouseStatus(EN_ALERTE→CONFORME)` appelé | idem |
+| 1.10 | Les lots `PERIME` ne changent jamais de statut (péremption prime) | U | transitions hors/dans plage | `PERIME` jamais dans `from`/`to` | `sync-warehouse-lot-status.use-case.spec.ts` |
 
 ## 2. Péremption des lots (365 j)
 
