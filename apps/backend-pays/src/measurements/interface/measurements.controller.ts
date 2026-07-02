@@ -53,7 +53,8 @@ export class MeasurementsController {
       warehouse: dto.warehouse,
       temperatureCelsius: dto.temperatureCelsius,
       humidityPercent: dto.humidityPercent,
-      recordedAt: new Date(dto.recordedAt),
+      // Absent → horodatage à la réception (évite new Date(undefined) = Invalid Date).
+      recordedAt: dto.recordedAt ? new Date(dto.recordedAt) : new Date(),
     });
     return toMeasurementResponse(measurement);
   }

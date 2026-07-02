@@ -1,13 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import type { CountryCode, LotStatus } from '@futurekawa/contracts';
+import type { CountryCode, LotFacets, LotStatus } from '@futurekawa/contracts';
 import { PrismaService } from '../../infrastructure/persistence/prisma.service';
 import type { Lot, NewLot } from '../domain/lot';
 import { LotAlreadyExistsError } from '../domain/lot.errors';
 import type {
   FindManyParams,
+  LotFilters,
   LotRepository,
   Page,
+  SetWarehouseStatusParams,
 } from '../domain/lot.repository';
+
+// Clause `where` Prisma dérivée des filtres optionnels (pays/exploitation/entrepôt).
+// Une valeur absente n'ajoute aucune contrainte. `country` reste typé CountryCode
+// (miroir de l'enum Prisma `Country`), pas `string`.
+function whereFromFilters(filters: LotFilters): {
+  country?: CountryCode;
+  farm?: string;
+  warehouse?: string;
+} {
+  const where: { country?: CountryCode; farm?: string; warehouse?: string } =
+    {};
+  if (filters.country) {
+    where.country = filters.country;
+  }
+  if (filters.farm) {
+    where.farm = filters.farm;
+  }
+  if (filters.warehouse) {
+    where.warehouse = filters.warehouse;
+  }
+  return where;
+}
 
 // Codes d'erreur Prisma connus.
 const PRISMA_UNIQUE_VIOLATION = 'P2002'; // insert violant une contrainte unique
@@ -61,7 +85,7 @@ export class PrismaLotRepository implements LotRepository {
   }
 
   async findManyByStoredAt(params: FindManyParams): Promise<Page<Lot>> {
-    const where = params.country ? { country: params.country } : {};
+    const where = whereFromFilters(params);
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.lot.findMany({
         where,
@@ -74,6 +98,28 @@ export class PrismaLotRepository implements LotRepository {
       this.prisma.lot.count({ where }),
     ]);
     return { data: rows.map((row) => this.toDomain(row)), total };
+  }
+
+  async findFacets(filters: LotFilters): Promise<LotFacets> {
+    const where = whereFromFilters(filters);
+    const [farms, warehouses] = await this.prisma.$transaction([
+      this.prisma.lot.findMany({
+        where,
+        distinct: ['farm'],
+        select: { farm: true },
+        orderBy: { farm: 'asc' },
+      }),
+      this.prisma.lot.findMany({
+        where,
+        distinct: ['warehouse'],
+        select: { warehouse: true },
+        orderBy: { warehouse: 'asc' },
+      }),
+    ]);
+    return {
+      farms: farms.map((row) => row.farm),
+      warehouses: warehouses.map((row) => row.warehouse),
+    };
   }
 
   async findExpirable(cutoff: Date): Promise<Lot[]> {
@@ -100,6 +146,18 @@ export class PrismaLotRepository implements LotRepository {
       }
       throw error;
     }
+  }
+
+  async setWarehouseStatus(params: SetWarehouseStatusParams): Promise<number> {
+    const { count } = await this.prisma.lot.updateMany({
+      where: {
+        country: params.country,
+        warehouse: params.warehouse,
+        status: params.from,
+      },
+      data: { status: params.to },
+    });
+    return count;
   }
 
   private prismaErrorCode(error: unknown): string | undefined {

@@ -70,6 +70,38 @@ describe('useLotFilters', () => {
     expect(result.current.filters.country).toBeUndefined();
   });
 
+  it('should parse farm and warehouse from the query string', () => {
+    const { result } = renderHook(() => useLotFilters(), {
+      wrapper: makeWrapper([
+        '/lots?farm=Fazenda%20Aurora&warehouse=Entrep%C3%B4t%20Sul-1',
+      ]),
+    });
+
+    expect(result.current.filters.farm).toBe('Fazenda Aurora');
+    expect(result.current.filters.warehouse).toBe('Entrepôt Sul-1');
+  });
+
+  it('should set the farm and reset the page', () => {
+    const { result } = renderHook(() => useLotFilters(), {
+      wrapper: makeWrapper(['/lots?page=5']),
+    });
+
+    act(() => result.current.setFarm('Fazenda Aurora'));
+
+    expect(result.current.filters.farm).toBe('Fazenda Aurora');
+    expect(result.current.filters.page).toBe(DEFAULT_PAGE);
+  });
+
+  it('should clear the warehouse when called without an argument', () => {
+    const { result } = renderHook(() => useLotFilters(), {
+      wrapper: makeWrapper(['/lots?warehouse=Entrep%C3%B4t%20Sul-1']),
+    });
+
+    act(() => result.current.setWarehouse(undefined));
+
+    expect(result.current.filters.warehouse).toBeUndefined();
+  });
+
   it('should set the sort and reset the page', () => {
     // Arrange
     const { result } = renderHook(() => useLotFilters(), {

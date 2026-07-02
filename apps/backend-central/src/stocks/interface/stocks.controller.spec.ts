@@ -1,12 +1,19 @@
 import type { Request } from 'express';
 import type { ConsolidatedResponse, Lot } from '@futurekawa/contracts';
+import type { AggregateFacetsUseCase } from '../application/aggregate-facets.use-case';
 import type { AggregateStocksUseCase } from '../application/aggregate-stocks.use-case';
 import { StocksController } from './stocks.controller';
+import type { StocksFacetsQueryDto } from './dto/stocks-facets-query.dto';
 import type { StocksQueryDto } from './dto/stocks-query.dto';
 
 type RequestWithId = Request & { id: string };
 
 const req = { id: 'corr-1' } as RequestWithId;
+
+// Stub de facettes injecté aux tests de `list` (non utilisé par ces cas).
+const facetsStub = {
+  execute: jest.fn(),
+} as unknown as AggregateFacetsUseCase;
 
 function buildLot(): Lot {
   return {
@@ -32,7 +39,7 @@ describe('StocksController', () => {
       };
       const execute = jest.fn().mockResolvedValue(result);
       const aggregateStocks = { execute } as unknown as AggregateStocksUseCase;
-      const controller = new StocksController(aggregateStocks);
+      const controller = new StocksController(aggregateStocks, facetsStub);
       const query = {
         page: 1,
         pageSize: 20,
@@ -79,7 +86,7 @@ describe('StocksController', () => {
       };
       const execute = jest.fn().mockResolvedValue(result);
       const aggregateStocks = { execute } as unknown as AggregateStocksUseCase;
-      const controller = new StocksController(aggregateStocks);
+      const controller = new StocksController(aggregateStocks, facetsStub);
       const query = {
         country: 'CO',
         page: 1,
@@ -112,7 +119,7 @@ describe('StocksController', () => {
       const aggregateStocks = {
         execute: jest.fn().mockResolvedValue(result),
       } as unknown as AggregateStocksUseCase;
-      const controller = new StocksController(aggregateStocks);
+      const controller = new StocksController(aggregateStocks, facetsStub);
       const query = {
         page: 1,
         pageSize: 20,
@@ -125,6 +132,59 @@ describe('StocksController', () => {
       // Assert
       expect(response.unavailable).toEqual(['EC']);
       expect(response.data).toEqual([]);
+    });
+
+    it('should forward the farm and warehouse filters to the use case', async () => {
+      const execute = jest.fn().mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: 20,
+        unavailable: [],
+      });
+      const aggregateStocks = { execute } as unknown as AggregateStocksUseCase;
+      const controller = new StocksController(aggregateStocks, facetsStub);
+      const query = {
+        page: 1,
+        pageSize: 20,
+        sort: 'storedAt:asc',
+        farm: 'Fazenda Aurora',
+        warehouse: 'Entrepôt Santos',
+      } as StocksQueryDto;
+
+      await controller.list(query, req);
+
+      expect(execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          farm: 'Fazenda Aurora',
+          warehouse: 'Entrepôt Santos',
+        }),
+      );
+    });
+  });
+
+  describe('facets', () => {
+    it('should consolidate facets across all countries by default', async () => {
+      const execute = jest.fn().mockResolvedValue({
+        farms: ['Fazenda Aurora'],
+        warehouses: ['Entrepôt Santos'],
+        unavailable: [],
+      });
+      const aggregateFacets = { execute } as unknown as AggregateFacetsUseCase;
+      const controller = new StocksController(
+        { execute: jest.fn() } as unknown as AggregateStocksUseCase,
+        aggregateFacets,
+      );
+      const query = {} as StocksFacetsQueryDto;
+
+      const response = await controller.facets(query, req);
+
+      expect(execute).toHaveBeenCalledWith({
+        countries: ['BR', 'EC', 'CO'],
+        correlationId: 'corr-1',
+      });
+      expect(response.farms).toEqual(['Fazenda Aurora']);
+      expect(response.unavailable).toEqual([]);
     });
   });
 });
