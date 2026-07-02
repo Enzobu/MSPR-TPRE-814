@@ -10,7 +10,9 @@ describe('AggregateFacetsUseCase', () => {
   let useCase: AggregateFacetsUseCase;
 
   beforeEach(() => {
-    gateway = { get: jest.fn() } as unknown as jest.Mocked<CountryBackendGateway>;
+    gateway = {
+      get: jest.fn(),
+    } as unknown as jest.Mocked<CountryBackendGateway>;
     useCase = new AggregateFacetsUseCase(gateway);
   });
 

@@ -26,7 +26,11 @@ describe('SyncWarehouseLotStatusUseCase', () => {
   });
 
   it('should move EN_ALERTE lots back to CONFORME when in range', async () => {
-    await useCase.execute({ country: 'EC', warehouse: 'W2', outOfRange: false });
+    await useCase.execute({
+      country: 'EC',
+      warehouse: 'W2',
+      outOfRange: false,
+    });
 
     expect(setWarehouseStatus).toHaveBeenCalledWith({
       country: 'EC',
@@ -38,11 +42,21 @@ describe('SyncWarehouseLotStatusUseCase', () => {
 
   it('should never target PERIME lots (only CONFORME/EN_ALERTE transitions)', async () => {
     await useCase.execute({ country: 'CO', warehouse: 'W3', outOfRange: true });
-    await useCase.execute({ country: 'CO', warehouse: 'W3', outOfRange: false });
+    await useCase.execute({
+      country: 'CO',
+      warehouse: 'W3',
+      outOfRange: false,
+    });
 
-    const froms = setWarehouseStatus.mock.calls.map((c) => c[0].from);
-    const tos = setWarehouseStatus.mock.calls.map((c) => c[0].to);
-    expect(froms).not.toContain('PERIME');
-    expect(tos).not.toContain('PERIME');
+    // Les seules transitions émises sont CONFORME↔EN_ALERTE : PERIME n'est
+    // jamais ni source ni cible.
+    expect(setWarehouseStatus).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ from: 'CONFORME', to: 'EN_ALERTE' }),
+    );
+    expect(setWarehouseStatus).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ from: 'EN_ALERTE', to: 'CONFORME' }),
+    );
   });
 });

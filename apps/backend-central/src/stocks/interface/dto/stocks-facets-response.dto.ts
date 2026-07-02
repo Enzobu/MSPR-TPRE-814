@@ -21,7 +21,8 @@ export class StocksFacetsResponseDto implements ConsolidatedFacets {
   warehouses!: string[];
 
   @ApiProperty({
-    description: 'Pays injoignables (facettes partielles). Vide si tout est OK.',
+    description:
+      'Pays injoignables (facettes partielles). Vide si tout est OK.',
     enum: COUNTRY_CODES,
     isArray: true,
     example: [],

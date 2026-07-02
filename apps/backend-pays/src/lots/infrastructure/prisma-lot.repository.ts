@@ -19,7 +19,8 @@ function whereFromFilters(filters: LotFilters): {
   farm?: string;
   warehouse?: string;
 } {
-  const where: { country?: CountryCode; farm?: string; warehouse?: string } = {};
+  const where: { country?: CountryCode; farm?: string; warehouse?: string } =
+    {};
   if (filters.country) {
     where.country = filters.country;
   }

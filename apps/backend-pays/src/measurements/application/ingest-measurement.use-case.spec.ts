@@ -13,7 +13,9 @@ describe('IngestMeasurementUseCase', () => {
   let save: jest.Mock;
   let measurements: jest.Mocked<MeasurementRepository>;
   let raiseAlerts: jest.Mocked<Pick<RaiseMeasurementAlertsUseCase, 'execute'>>;
-  let syncLotStatus: jest.Mocked<Pick<SyncWarehouseLotStatusUseCase, 'execute'>>;
+  let syncLotStatus: jest.Mocked<
+    Pick<SyncWarehouseLotStatusUseCase, 'execute'>
+  >;
   let useCase: IngestMeasurementUseCase;
 
   // BR (idéal 29°C/55%, tol ±3/±2) → plages [26;32] et [53;57]. 21°C et 50%

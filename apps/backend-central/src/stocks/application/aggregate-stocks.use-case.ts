@@ -93,7 +93,9 @@ export class AggregateStocksUseCase {
     // le filtrage SQL, le siège ne fait que consolider.
     const filters = [
       params.farm ? `&farm=${encodeURIComponent(params.farm)}` : '',
-      params.warehouse ? `&warehouse=${encodeURIComponent(params.warehouse)}` : '',
+      params.warehouse
+        ? `&warehouse=${encodeURIComponent(params.warehouse)}`
+        : '',
     ].join('');
     for (let page = 1; page <= MAX_PAGES_PER_COUNTRY; page += 1) {
       // `country` scope l'appel à ce pays : en démo mono-instance (1 backend

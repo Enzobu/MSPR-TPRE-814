@@ -212,7 +212,10 @@ describe('PrismaLotRepository', () => {
   describe('findFacets', () => {
     it('should return distinct sorted farms and warehouses scoped by country', async () => {
       lot.findMany
-        .mockResolvedValueOnce([{ farm: 'Fazenda Aurora' }, { farm: 'Sitio Sol' }])
+        .mockResolvedValueOnce([
+          { farm: 'Fazenda Aurora' },
+          { farm: 'Sitio Sol' },
+        ])
         .mockResolvedValueOnce([{ warehouse: 'Entrepôt Sul-1' }]);
 
       const facets = await repository.findFacets({ country: 'BR' });

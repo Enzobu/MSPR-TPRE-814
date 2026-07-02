@@ -6,7 +6,8 @@ import { COUNTRY_CODES, type CountryCode } from '@futurekawa/contracts';
 // mono-instance, comme la liste des lots).
 export class LotFacetsQueryDto {
   @ApiPropertyOptional({
-    description: 'Filtre par pays. Omis = facettes de tous les lots du backend.',
+    description:
+      'Filtre par pays. Omis = facettes de tous les lots du backend.',
     example: 'BR',
     enum: COUNTRY_CODES,
   })
