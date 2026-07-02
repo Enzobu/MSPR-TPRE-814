@@ -11,13 +11,14 @@ import type {
 } from '../domain/lot.repository';
 
 // Clause `where` Prisma dérivée des filtres optionnels (pays/exploitation/entrepôt).
-// Une valeur absente n'ajoute aucune contrainte.
+// Une valeur absente n'ajoute aucune contrainte. `country` reste typé CountryCode
+// (miroir de l'enum Prisma `Country`), pas `string`.
 function whereFromFilters(filters: LotFilters): {
-  country?: string;
+  country?: CountryCode;
   farm?: string;
   warehouse?: string;
 } {
-  const where: { country?: string; farm?: string; warehouse?: string } = {};
+  const where: { country?: CountryCode; farm?: string; warehouse?: string } = {};
   if (filters.country) {
     where.country = filters.country;
   }
