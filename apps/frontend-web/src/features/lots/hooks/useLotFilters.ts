@@ -22,8 +22,7 @@ function parseCountry(raw: string | null): CountryCode | undefined {
 }
 
 function parseFacet(raw: string | null): string | undefined {
-  const value = raw?.trim();
-  return value ? value : undefined;
+  return raw?.trim() || undefined;
 }
 
 function parseSort(raw: string | null): LotSort {

@@ -68,7 +68,7 @@ export function FacetCombobox({
           <CommandList>
             <CommandEmpty>Aucun résultat.</CommandEmpty>
             <CommandGroup>
-              <CommandItem value={allLabel} onSelect={() => select(undefined)}>
+              <CommandItem value={allLabel} onSelect={() => select()}>
                 <Check
                   className={cn('mr-2 size-4', value ? 'opacity-0' : 'opacity-100')}
                   aria-hidden
