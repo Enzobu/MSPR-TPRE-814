@@ -2,7 +2,7 @@
 // Header-only => tournent en natif sans hardware.
 #include <unity.h>
 
-#include "../../src/topic.h"
+#include "../../src/telemetry/topic.h"
 
 void setUp(void) {}
 void tearDown(void) {}

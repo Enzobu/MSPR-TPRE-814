@@ -4,7 +4,7 @@
 #include <PubSubClient.h>
 
 #include "config.h"
-#include "topic.h"
+#include "../telemetry/topic.h"
 
 namespace {
 WiFiClient wifiClient;

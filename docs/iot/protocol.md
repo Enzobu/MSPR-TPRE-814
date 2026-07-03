@@ -4,7 +4,7 @@ owner: Yanis
 status: implemented
 cdc-ref: "§IV.4.2"
 adr-refs: [0001, 0003]
-updated: 2026-06-20
+updated: 2026-07-03
 ---
 
 # Protocole MQTT IoT
@@ -40,8 +40,8 @@ avec un **wildcard `+`** scopé à son pays et ne voit donc jamais les autres pa
 ## Topics
 
 La convention de nommage est figée et **identique** des deux côtés. Le firmware
-la duplique en C++ (`apps/iot/src/topic.h`) car il ne peut pas importer le
-package TypeScript ; le backend la dérive de `@futurekawa/contracts`
+la duplique en C++ (`apps/iot/src/telemetry/topic.h`) car il ne peut pas importer
+le package TypeScript ; le backend la dérive de `@futurekawa/contracts`
 (`measurementTopic`, `measurementSubscriptionTopic`). Un test de chaque côté
 garantit le format.
 
@@ -164,6 +164,6 @@ La stratégie de reconnexion **côté capteur** est décrite dans
 - Convention figée : [ADR-0003](../adr/0003-mqtt-convention.md)
 - Architecture distribuée (un broker par pays) : [ADR-0001](../adr/0001-distributed-architecture.md)
 - Firmware (producteur) : [`firmware.md`](firmware.md) · Câblage : [`hardware.md`](hardware.md)
-- Code producteur : `apps/iot/src/mqtt_client.cpp`, `apps/iot/src/topic.h`
+- Code producteur : `apps/iot/src/connectivity/mqtt_client.cpp`, `apps/iot/src/telemetry/topic.h`
 - Code consommateur : `apps/backend-pays/src/measurements/infrastructure/mqtt-measurement.subscriber.ts`
 - Helpers de topic partagés : `packages/contracts/src/mqtt.ts`
