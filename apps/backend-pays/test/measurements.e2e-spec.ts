@@ -295,7 +295,11 @@ describe('Measurements integration (e2e, real DB)', () => {
       .get('/api/v1/measurements/latest?country=EC')
       .expect(200);
     const body = res.body as {
-      measurement: { country: string; recordedAt: string; temperatureCelsius: number } | null;
+      measurement: {
+        country: string;
+        recordedAt: string;
+        temperatureCelsius: number;
+      } | null;
     };
     expect(body.measurement).not.toBeNull();
     expect(body.measurement?.country).toBe('EC');

@@ -2,7 +2,7 @@
 title: Environnement Docker
 owner: équipe
 status: implemented
-updated: 2026-06-17
+updated: 2026-07-02
 ---
 
 # Environnement Docker
@@ -25,6 +25,20 @@ Les URLs locales, ports exposés, URLs internes et credentials MariaDB sont déf
 | `mariadb-pays` | Base pays |
 | `mosquitto-pays` | Broker MQTT pays |
 | `phpmyadmin` | Interface dev-only d'accès aux bases MariaDB |
+
+## Healthchecks et ordre de démarrage
+
+Chaque service porte un `healthcheck` et les dépendances utilisent `condition: service_healthy` pour éviter les courses au démarrage (règle `08-observability.md`) :
+
+| Service | Sonde | Dépend de (healthy) |
+|---|---|---|
+| `mariadb-central` / `mariadb-pays` | `mariadb-admin ping` | — |
+| `mosquitto-pays` | `mosquitto_sub -E` (auth backend + ACL pays) | — |
+| `backend-pays` | `GET /ready` (DB + MQTT) | `mariadb-pays`, `mosquitto-pays` |
+| `backend-central` | `GET /ready` (DB centrale uniquement) | `mariadb-central` |
+| `frontend-web` | `wget /` (Nginx) | `backend-central` |
+
+`backend-central` dépend de `backend-pays` en `service_started` (pas `healthy`) : son `/ready` ne vérifie **pas** les pays, car l'agrégation est résiliente à un pays isolé (ADR-0007). Les endpoints `/health` (liveness) et `/ready` (readiness) sont exposés par les deux backends hors préfixe `/api`.
 
 ## Commandes
 

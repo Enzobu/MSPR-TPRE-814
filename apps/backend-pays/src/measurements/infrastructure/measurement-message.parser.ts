@@ -56,6 +56,21 @@ function isInRange(value: number, min: number, max: number): boolean {
   return Number.isFinite(value) && value >= min && value <= max;
 }
 
+// `recordedAt` est optionnel dans le payload : l'ESP8266 l'omet tant que NTP
+// n'a pas convergé (démarrage à froid). Absent/vide → horodatage à la réception
+// (temps serveur). Présent → validé strictement ; une date invalide ou un type
+// non-string rejette la mesure (`null`).
+function resolveRecordedAt(recordedAt: unknown): Date | null {
+  if (recordedAt === undefined || recordedAt === null || recordedAt === '') {
+    return new Date();
+  }
+  if (typeof recordedAt !== 'string') {
+    return null;
+  }
+  const date = new Date(recordedAt);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function parseMeasurementMessage(
   topic: string,
   payload: Buffer,
@@ -81,14 +96,13 @@ export function parseMeasurementMessage(
 
   if (
     typeof temperatureCelsius !== 'number' ||
-    typeof humidityPercent !== 'number' ||
-    typeof recordedAt !== 'string'
+    typeof humidityPercent !== 'number'
   ) {
     return { ok: false, reason: 'invalid-payload-shape' };
   }
 
-  const recordedAtDate = new Date(recordedAt);
-  if (Number.isNaN(recordedAtDate.getTime())) {
+  const recordedAtDate = resolveRecordedAt(recordedAt);
+  if (recordedAtDate === null) {
     return { ok: false, reason: 'invalid-payload-shape' };
   }
 

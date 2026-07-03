@@ -1,4 +1,4 @@
-import type { CountryCode, LotStatus } from '@futurekawa/contracts';
+import type { CountryCode, LotFacets, LotStatus } from '@futurekawa/contracts';
 import type { Lot, NewLot } from './lot';
 
 // Port (ADR-0001 dependency rule) : l'application parle à cette interface,
@@ -7,14 +7,21 @@ export const LOT_REPOSITORY = Symbol('LOT_REPOSITORY');
 
 export type SortDirection = 'asc' | 'desc';
 
-export interface FindManyParams {
-  skip: number;
-  take: number;
-  direction: SortDirection;
+// Filtres optionnels par exploitation / entrepôt (CDC §III.3). Égalité stricte :
+// les valeurs proviennent des facettes réelles, pas d'une saisie libre.
+export interface LotFilters {
   // Filtre pays optionnel. En déploiement réel, une instance pays ne détient
   // qu'un pays (filtre sans effet) ; en démo mono-instance (1 DB multi-pays),
   // il évite que le siège agrège le même lot via ses 3 URLs pays.
   country?: CountryCode;
+  farm?: string;
+  warehouse?: string;
+}
+
+export interface FindManyParams extends LotFilters {
+  skip: number;
+  take: number;
+  direction: SortDirection;
 }
 
 export interface Page<T> {
@@ -22,13 +29,29 @@ export interface Page<T> {
   total: number;
 }
 
+// Transition de statut en masse pour un entrepôt (#151) : les lots d'un entrepôt
+// suivent les conditions T°/humidité de cet entrepôt. Le filtre `from` protège
+// les lots PERIME (jamais réécrits) et n'agit que sur la transition voulue.
+export interface SetWarehouseStatusParams {
+  country: CountryCode;
+  warehouse: string;
+  from: LotStatus;
+  to: LotStatus;
+}
+
 export interface LotRepository {
   create(lot: NewLot): Promise<Lot>;
   existsById(id: string): Promise<boolean>;
   findById(id: string): Promise<Lot | null>;
   findManyByStoredAt(params: FindManyParams): Promise<Page<Lot>>;
+  // Valeurs distinctes (exploitations, entrepôts) pour alimenter les sélecteurs
+  // du frontend (CDC §III.3). Scopé par pays comme la liste (dédup démo mono-instance).
+  findFacets(filters: LotFilters): Promise<LotFacets>;
   // Péremption (ADR-0004) : lots dont `storedAt < cutoff` ET non encore `PERIME`
   // (ceux déjà périmés n'ont pas besoin d'être retouchés par le cron).
   findExpirable(cutoff: Date): Promise<Lot[]>;
   updateStatus(id: string, status: LotStatus): Promise<Lot | null>;
+  // Transition `from` → `to` de tous les lots d'un entrepôt. Retourne le nombre
+  // de lots modifiés. Idempotent : 0 si aucun lot n'est dans l'état `from`.
+  setWarehouseStatus(params: SetWarehouseStatusParams): Promise<number>;
 }

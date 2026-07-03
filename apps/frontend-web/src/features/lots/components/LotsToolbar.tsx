@@ -2,6 +2,7 @@ import { ArrowDownNarrowWide, ArrowUpNarrowWide } from 'lucide-react';
 import type { CountryCode } from '@futurekawa/contracts';
 import { Button } from '@/components/ui/button';
 import { CountryFilter } from '@/features/lots/components/CountryFilter';
+import { FacetCombobox } from '@/features/lots/components/FacetCombobox';
 import { LotsSearch } from '@/features/lots/components/LotsSearch';
 import {
   LotStatusFilter,
@@ -13,6 +14,12 @@ type LotsToolbarProps = Readonly<{
   onSearchChange: (value: string) => void;
   country?: CountryCode;
   onCountryChange: (country?: CountryCode) => void;
+  farm?: string;
+  onFarmChange: (farm?: string) => void;
+  farmOptions: string[];
+  warehouse?: string;
+  onWarehouseChange: (warehouse?: string) => void;
+  warehouseOptions: string[];
   status: LotStatusFilterValue;
   onStatusChange: (status: LotStatusFilterValue) => void;
   isAscending: boolean;
@@ -24,6 +31,12 @@ export function LotsToolbar({
   onSearchChange,
   country,
   onCountryChange,
+  farm,
+  onFarmChange,
+  farmOptions,
+  warehouse,
+  onWarehouseChange,
+  warehouseOptions,
   status,
   onStatusChange,
   isAscending,
@@ -33,6 +46,20 @@ export function LotsToolbar({
     <div className="flex flex-wrap items-center gap-2.5">
       <LotsSearch value={search} onChange={onSearchChange} />
       <CountryFilter value={country} onChange={onCountryChange} />
+      <FacetCombobox
+        label="Exploitation"
+        allLabel="Toutes les exploitations"
+        value={farm}
+        options={farmOptions}
+        onChange={onFarmChange}
+      />
+      <FacetCombobox
+        label="Entrepôt"
+        allLabel="Tous les entrepôts"
+        value={warehouse}
+        options={warehouseOptions}
+        onChange={onWarehouseChange}
+      />
       <div className="hidden flex-1 lg:block" />
       <LotStatusFilter value={status} onChange={onStatusChange} />
       <Button

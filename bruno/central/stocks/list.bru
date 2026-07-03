@@ -15,6 +15,8 @@ params:query {
   pageSize: 20
   sort: storedAt:asc
   ~country: BR
+  ~farm: Fazenda Aurora
+  ~warehouse: Entrepôt Santos
 }
 
 tests {
@@ -52,6 +54,8 @@ docs {
   | Param | Défaut | Description |
   |---|---|---|
   | `country` | (tous) | `BR\|EC\|CO` — filtre ; absent → consolidation des 3 pays |
+  | `farm` | (toutes) | Optionnel : filtre par exploitation (relayé aux pays). CDC §III.3 |
+  | `warehouse` | (tous) | Optionnel : filtre par entrepôt (relayé aux pays). CDC §III.3 |
   | `page` | 1 | page 1-based |
   | `pageSize` | 20 | taille de page (1–100) |
   | `sort` | `storedAt:asc` | `storedAt:asc` (FIFO) ou `storedAt:desc` |

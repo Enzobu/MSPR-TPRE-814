@@ -1,0 +1,47 @@
+meta {
+  name: Lot facets (exploitations, entrepôts)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/lots/facets
+  body: none
+  auth: none
+}
+
+params:query {
+  ~country: BR
+}
+
+tests {
+  test('should return 200', function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return distinct farms and warehouses arrays', function() {
+    const body = res.getBody();
+    expect(body).to.have.property('farms').that.is.an('array');
+    expect(body).to.have.property('warehouses').that.is.an('array');
+  });
+}
+
+docs {
+  # GET /api/v1/lots/facets
+
+  Valeurs distinctes (exploitations, entrepôts) pour alimenter les sélecteurs de
+  filtrage du frontend (CDC §III.3). Les facettes sont triées.
+
+  ## Query params
+  | Param | Défaut | Description |
+  |---|---|---|
+  | `country` | _(absent)_ | Optionnel : `BR` \| `EC` \| `CO`. Scope les facettes (dédup démo mono-instance). |
+
+  ## Réponse 200
+  ```json
+  { "farms": ["Fazenda Aurora", "Sitio Sol"], "warehouses": ["Entrepôt Sul-1"] }
+  ```
+
+  ## Références
+  - CDC §III.3 (sélection exploitation/entrepôt). Types : `LotFacets` (`packages/contracts/src/lot.ts`).
+}

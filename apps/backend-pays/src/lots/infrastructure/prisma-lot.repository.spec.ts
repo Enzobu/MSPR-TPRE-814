@@ -37,6 +37,7 @@ describe('PrismaLotRepository', () => {
     findUnique: jest.Mock;
     findMany: jest.Mock;
     update: jest.Mock;
+    updateMany: jest.Mock;
   };
   let prisma: PrismaService;
   let repository: PrismaLotRepository;
@@ -48,6 +49,7 @@ describe('PrismaLotRepository', () => {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     };
     prisma = {
       lot,
@@ -180,6 +182,61 @@ describe('PrismaLotRepository', () => {
       });
       expect(lot.count).toHaveBeenCalledWith({ where: { country: 'EC' } });
     });
+
+    it('should filter by farm and warehouse when provided', async () => {
+      lot.findMany.mockResolvedValue([buildRow()]);
+      lot.count.mockResolvedValue(1);
+
+      await repository.findManyByStoredAt({
+        skip: 0,
+        take: 20,
+        direction: 'asc',
+        country: 'BR',
+        farm: 'Fazenda Aurora',
+        warehouse: 'Entrepôt Sul-1',
+      });
+
+      expect(lot.findMany).toHaveBeenCalledWith({
+        where: {
+          country: 'BR',
+          farm: 'Fazenda Aurora',
+          warehouse: 'Entrepôt Sul-1',
+        },
+        skip: 0,
+        take: 20,
+        orderBy: [{ storedAt: 'asc' }, { id: 'asc' }],
+      });
+    });
+  });
+
+  describe('findFacets', () => {
+    it('should return distinct sorted farms and warehouses scoped by country', async () => {
+      lot.findMany
+        .mockResolvedValueOnce([
+          { farm: 'Fazenda Aurora' },
+          { farm: 'Sitio Sol' },
+        ])
+        .mockResolvedValueOnce([{ warehouse: 'Entrepôt Sul-1' }]);
+
+      const facets = await repository.findFacets({ country: 'BR' });
+
+      expect(lot.findMany).toHaveBeenNthCalledWith(1, {
+        where: { country: 'BR' },
+        distinct: ['farm'],
+        select: { farm: true },
+        orderBy: { farm: 'asc' },
+      });
+      expect(lot.findMany).toHaveBeenNthCalledWith(2, {
+        where: { country: 'BR' },
+        distinct: ['warehouse'],
+        select: { warehouse: true },
+        orderBy: { warehouse: 'asc' },
+      });
+      expect(facets).toEqual({
+        farms: ['Fazenda Aurora', 'Sitio Sol'],
+        warehouses: ['Entrepôt Sul-1'],
+      });
+    });
   });
 
   describe('findExpirable', () => {
@@ -199,6 +256,25 @@ describe('PrismaLotRepository', () => {
         },
       });
       expect(result[0].id).toBe('BR-OLD');
+    });
+  });
+
+  describe('setWarehouseStatus', () => {
+    it('should transition lots of a warehouse matching the from status', async () => {
+      lot.updateMany.mockResolvedValue({ count: 3 });
+
+      const affected = await repository.setWarehouseStatus({
+        country: 'BR',
+        warehouse: 'W1',
+        from: 'CONFORME',
+        to: 'EN_ALERTE',
+      });
+
+      expect(lot.updateMany).toHaveBeenCalledWith({
+        where: { country: 'BR', warehouse: 'W1', status: 'CONFORME' },
+        data: { status: 'EN_ALERTE' },
+      });
+      expect(affected).toBe(3);
     });
   });
 

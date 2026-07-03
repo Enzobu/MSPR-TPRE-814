@@ -11,6 +11,7 @@ import { LotsTable } from '@/features/lots/components/LotsTable';
 import { LotsToolbar } from '@/features/lots/components/LotsToolbar';
 import { STATUS_ALL } from '@/features/lots/components/LotStatusFilter';
 import { UnavailableBanner } from '@/features/lots/components/UnavailableBanner';
+import { useLotFacets } from '@/features/lots/hooks/useLotFacets';
 import { useLots } from '@/features/lots/hooks/useLots';
 import {
   DEFAULT_PAGE_SIZE,
@@ -21,8 +22,11 @@ import {
 // pagination. Recherche texte et filtre statut sont des filtres CLIENT LOCAUX
 // sur la page courante (aucun paramètre API correspondant) — état `useState`.
 export default function LotsPage() {
-  const { filters, setCountry, setSort, setPage } = useLotFilters();
+  const { filters, setCountry, setFarm, setWarehouse, setSort, setPage } =
+    useLotFilters();
   const { data, isPending, isError } = useLots(filters);
+  // Facettes scopées au pays sélectionné pour peupler les sélecteurs serveur.
+  const { data: facets } = useLotFacets(filters.country);
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<typeof STATUS_ALL | Lot['status']>(
@@ -47,7 +51,11 @@ export default function LotsPage() {
     });
   }, [data, search, status]);
 
-  const hasFiltersApplied = search.trim().length > 0 || status !== STATUS_ALL;
+  const hasFiltersApplied =
+    search.trim().length > 0 ||
+    status !== STATUS_ALL ||
+    Boolean(filters.farm) ||
+    Boolean(filters.warehouse);
   const totalCount = data?.total ?? 0;
   const rangeStart = totalCount === 0 ? 0 : (filters.page - 1) * DEFAULT_PAGE_SIZE + 1;
   const rangeEnd = Math.min(filters.page * DEFAULT_PAGE_SIZE, totalCount);
@@ -80,6 +88,12 @@ export default function LotsPage() {
         onSearchChange={setSearch}
         country={filters.country}
         onCountryChange={setCountry}
+        farm={filters.farm}
+        onFarmChange={setFarm}
+        farmOptions={facets?.farms ?? []}
+        warehouse={filters.warehouse}
+        onWarehouseChange={setWarehouse}
+        warehouseOptions={facets?.warehouses ?? []}
         status={status}
         onStatusChange={setStatus}
         isAscending={isAscending}
@@ -108,7 +122,7 @@ export default function LotsPage() {
               title="Aucun lot ne correspond"
               description={
                 hasFiltersApplied
-                  ? 'Ajustez la recherche ou les filtres pays / statut.'
+                  ? 'Ajustez la recherche ou les filtres pays / exploitation / entrepôt / statut.'
                   : 'Aucun lot en stock pour ce périmètre.'
               }
               onReset={
@@ -116,6 +130,8 @@ export default function LotsPage() {
                   ? () => {
                       setSearch('');
                       setStatus(STATUS_ALL);
+                      setFarm(undefined);
+                      setWarehouse(undefined);
                     }
                   : undefined
               }

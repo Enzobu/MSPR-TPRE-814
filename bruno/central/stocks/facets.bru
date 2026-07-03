@@ -1,0 +1,54 @@
+meta {
+  name: Consolidated lot facets
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/stocks/facets
+  body: none
+  auth: none
+}
+
+params:query {
+  ~country: BR
+}
+
+tests {
+  test('should return 200 (never 500, even if a country is down)', function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test('should return consolidated facets with unavailable list', function () {
+    const body = res.getBody();
+    expect(body).to.have.property('farms').that.is.an('array');
+    expect(body).to.have.property('warehouses').that.is.an('array');
+    expect(body).to.have.property('unavailable').that.is.an('array');
+  });
+}
+
+docs {
+  # GET /api/v1/stocks/facets — Facettes consolidées
+
+  Union **dédupliquée et triée** des facettes (exploitations, entrepôts) des
+  backends pays, pour alimenter les sélecteurs de filtrage du frontend
+  (CDC §III.3). Même résilience que `/stocks` : un pays injoignable est listé
+  dans `unavailable`, **jamais 500** (ADR-0007).
+
+  ## Query params
+  | Param | Défaut | Description |
+  |---|---|---|
+  | `country` | (tous) | `BR\|EC\|CO` — scope ; absent → consolidation des 3 pays |
+
+  ## Réponse 200
+  ```json
+  {
+    "farms": ["Fazenda Aurora", "Hacienda El Roble"],
+    "warehouses": ["Entrepôt Santos"],
+    "unavailable": []
+  }
+  ```
+
+  ## Références
+  - CDC §III.3, ADR-0007. Type pays : `LotFacets` (`packages/contracts/src/lot.ts`).
+}

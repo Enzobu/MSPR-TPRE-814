@@ -37,6 +37,7 @@ Chaque ADR fige un choix, son contexte et ses conséquences.
 | [0009](0009-vitepress-user-docs.md) | VitePress pour la doc utilisateur | `accepted` | #44, #58 |
 | [0010](0010-docs-site-deployment.md) | Déploiement du site de doc (service Docker) | `accepted` | #58 |
 | [0011](0011-error-monitoring-sentry.md) | Suivi des erreurs (Sentry SaaS, région EU) | `accepted` | #127 |
+| [0013](0013-lot-status-from-conditions.md) | Statut de lot piloté par les conditions entrepôt | `accepted` | #151 |
 
 > La colonne **Cadre (tickets)** liste les tickets que chaque décision cadre
 > (features / infra impactées), pas le ticket de rédaction de l'ADR.

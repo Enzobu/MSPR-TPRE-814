@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsISO8601, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsISO8601,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import {
   HUMIDITY_PERCENT_MAX,
   HUMIDITY_PERCENT_MIN,
@@ -41,11 +48,13 @@ export class IngestMeasurementDto implements IngestMeasurementContract {
   @Max(HUMIDITY_PERCENT_MAX)
   humidityPercent!: number;
 
-  @ApiProperty({
-    description: 'Instant du relevé (ISO 8601).',
+  @ApiPropertyOptional({
+    description:
+      'Instant du relevé (ISO 8601). Optionnel : omis → horodaté à la réception.',
     example: '2026-06-01T08:00:00.000Z',
     format: 'date-time',
   })
+  @IsOptional()
   @IsISO8601()
-  recordedAt!: string;
+  recordedAt?: string;
 }

@@ -15,6 +15,8 @@ params:query {
   pageSize: 20
   sort: storedAt:asc
   ~country: BR
+  ~farm: Fazenda Aurora
+  ~warehouse: Entrepôt Sul-1
 }
 
 tests {
@@ -52,6 +54,8 @@ docs {
   | `pageSize` | 20 | Taille de page (1–100) |
   | `sort` | `storedAt:asc` | `storedAt:asc` (FIFO) ou `storedAt:desc` |
   | `country` | _(absent)_ | Optionnel : `BR` \| `EC` \| `CO`. Omis = tous les lots du backend. Le siège le passe pour scoper chaque appel à un pays (évite les doublons en démo mono-instance). |
+  | `farm` | _(absent)_ | Optionnel : filtre par exploitation (égalité stricte). CDC §III.3. |
+  | `warehouse` | _(absent)_ | Optionnel : filtre par entrepôt (égalité stricte). CDC §III.3. |
 
   ## Réponse 200
   ```json

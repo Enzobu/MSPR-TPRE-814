@@ -9,6 +9,8 @@ export interface ListLotsParams {
   pageSize: number;
   direction: SortDirection;
   country?: CountryCode;
+  farm?: string;
+  warehouse?: string;
 }
 
 @Injectable()
@@ -16,12 +18,14 @@ export class ListLotsUseCase {
   constructor(@Inject(LOT_REPOSITORY) private readonly lots: LotRepository) {}
 
   async execute(params: ListLotsParams): Promise<PaginatedResponse<Lot>> {
-    const { page, pageSize, direction, country } = params;
+    const { page, pageSize, direction, country, farm, warehouse } = params;
     const { data, total } = await this.lots.findManyByStoredAt({
       skip: (page - 1) * pageSize,
       take: pageSize,
       direction,
       country,
+      farm,
+      warehouse,
     });
     return { data, total, page, pageSize };
   }

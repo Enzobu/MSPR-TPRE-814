@@ -16,6 +16,8 @@ export function useLots(
     queryFn: () =>
       fetchStocks({
         country: filters.country,
+        farm: filters.farm,
+        warehouse: filters.warehouse,
         page: filters.page,
         pageSize: DEFAULT_PAGE_SIZE,
         sort: filters.sort,

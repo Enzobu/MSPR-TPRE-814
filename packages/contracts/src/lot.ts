@@ -27,6 +27,14 @@ export interface CreateLotDto {
   storedAt: string;
 }
 
+// Valeurs distinctes disponibles pour filtrer les lots (CDC §III.3 : sélection
+// par exploitation/entrepôt). Alimente les sélecteurs du frontend ; côté siège,
+// c'est l'union dédupliquée des facettes de chaque pays.
+export interface LotFacets {
+  farms: string[];
+  warehouses: string[];
+}
+
 export interface UpdateLotStatusDto {
   status: LotStatus;
 }
