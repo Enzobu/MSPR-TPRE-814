@@ -2,7 +2,7 @@
 title: Câblage et choix matériel IoT (ESP8266 + DHT)
 owner: Yanis
 status: implemented
-updated: 2026-06-20
+updated: 2026-07-03
 cdc-ref: "§III.2"
 ---
 
@@ -18,7 +18,7 @@ dans [`firmware.md`](firmware.md) et le protocole MQTT dans
 | Composant | Référence | Rôle |
 |---|---|---|
 | Microcontrôleur | ESP8266 (module ESP-12E / carte NodeMCU) | WiFi + exécution firmware |
-| Capteur | DHT22 (AM2302) — fallback DHT11 | mesure température + humidité |
+| Capteur | DHT11 par défaut firmware — DHT22 (AM2302) compatible | mesure température + humidité |
 | Résistance | 10 kΩ | pull-up sur la ligne DATA |
 | Alimentation | 3.3 V régulée (via USB de la carte) | — |
 
@@ -26,12 +26,12 @@ dans [`firmware.md`](firmware.md) et le protocole MQTT dans
 
 La broche DATA du DHT est en collecteur ouvert : elle **exige une résistance de
 pull-up 10 kΩ** entre DATA et VCC pour des lectures fiables. Le firmware utilise
-`GPIO4` (= `D2` sur NodeMCU) par défaut (`DHT_PIN` dans `apps/iot/include/config.h`).
+`GPIO2` (= `D4` sur NodeMCU) par défaut (`DHT_PIN` dans `apps/iot/include/config.h`).
 
 | Broche DHT | Relié à | Note |
 |---|---|---|
 | VCC (1) | 3V3 de l'ESP8266 | **3.3 V** — ne pas alimenter en 5 V (logique ESP en 3.3 V) |
-| DATA (2) | GPIO4 / D2 | + pull-up 10 kΩ vers VCC |
+| DATA (2) | GPIO2 / D4 | + pull-up 10 kΩ vers VCC |
 | NC (3) | — | non connectée (DHT22) |
 | GND (4) | GND de l'ESP8266 | masse commune |
 
@@ -40,7 +40,7 @@ flowchart LR
     subgraph ESP[ESP8266 / ESP-12E]
         V3[3V3]
         G[GND]
-        D2[GPIO4 / D2]
+        D4[GPIO2 / D4]
     end
     subgraph DHT[DHT22 / DHT11]
         VCC[VCC]
@@ -49,7 +49,7 @@ flowchart LR
     end
     V3 --- VCC
     G --- GND
-    D2 --- DATA
+    D4 --- DATA
     VCC -. "pull-up 10kΩ" .- DATA
 ```
 
@@ -62,7 +62,7 @@ ASCII équivalent :
   |        |       |           |        |
   |        |     [10kΩ]        |        |
   |        |       |           |        |
-  |  GPIO4 |-------+---------->| DATA   |
+  |  GPIO2 |-------+---------->| DATA   |
   |        |                   |        |
   |   GND  |------------------>| GND    |
   +--------+                   +--------+
@@ -79,10 +79,11 @@ ASCII équivalent :
 | Fréquence d'échantillonnage | 0.5 Hz (1 lecture / 2 s) | 1 Hz |
 | Coût | plus élevé | faible |
 
-Le **DHT22** est retenu par défaut : sa plage et sa précision couvrent mieux le
-suivi de café vert (alertes fines). Le **DHT11** reste un fallback si c'est le
-seul modèle disponible sur le stock campus — basculer via le `#define DHT_TYPE`
-dans `apps/iot/include/config.h` (`DHT22` → `DHT11`).
+Le **DHT11** est la configuration firmware par défaut pour matcher le stock
+campus actuel. Le **DHT22** reste le capteur préféré pour une installation cible :
+sa plage et sa précision couvrent mieux le suivi de café vert (alertes fines).
+Basculer via le `#define DHT_TYPE` dans `apps/iot/include/config.h`
+(`DHT11` → `DHT22`) lorsque le prototype utilise un AM2302.
 
 > La cadence d'émission firmware (30 s, `PUBLISH_INTERVAL_MS`) est très en deçà
 > de la fréquence max du capteur : aucune contrainte côté échantillonnage.

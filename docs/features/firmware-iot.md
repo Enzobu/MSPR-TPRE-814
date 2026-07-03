@@ -4,7 +4,7 @@ owner: Yanis
 status: implemented
 cdc-ref: "§III.2"
 adr-refs: [0001, 0003]
-updated: 2026-06-20
+updated: 2026-07-03
 ---
 
 # Firmware IoT (ESP8266 + DHT → MQTT)
@@ -101,6 +101,7 @@ mitigée par LWT + cadence).
 - **Infra embarquée** : `src/wifi_manager.*`, `src/mqtt_client.*`, `src/sensor.*`, `src/clock_iso.*`
 - **Orchestration** : `src/main.cpp`
 - **Config / secrets** : `include/config.h`, `include/secrets.h.example`
+  (`DHT11` + `GPIO2 / D4` par défaut, voir [`../iot/hardware.md`](../iot/hardware.md))
 
 ## Tests
 
