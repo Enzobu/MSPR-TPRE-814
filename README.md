@@ -253,22 +253,40 @@ factices dans Mosquitto pour tester le backend pays et l'alerting.
 
 ## Documentation
 
-Toute la doc vit dans [`docs/`](./docs/) (structure imposée par [`.claude/rules/05-documentation.md`](./.claude/rules/05-documentation.md)) :
+Toute la doc vit dans [`docs/`](./docs/) (structure imposée par [`.claude/rules/05-documentation.md`](./.claude/rules/05-documentation.md)).
 
-- [`docs/architecture/`](./docs/architecture/) — archi globale, DB, MQTT, API (§IV.4.1 CDC)
-- [`docs/features/`](./docs/features/) — une feature = un fichier, source de vérité cross-app
-- [`docs/iot/`](./docs/iot/) — hardware, protocole, firmware (§IV.4.2 CDC)
-- [`docs/testing/`](./docs/testing/) — stratégie, plan de tests (§IV.4.3 CDC)
-- [`docs/adr/`](./docs/adr/) — Architecture Decision Records (immuables)
-- [`docs/ci-cd/`](./docs/ci-cd/) — pipeline GitHub Actions, Docker (§IV.5 CDC)
-- [`docs/operations/`](./docs/operations/) — runbook, déploiement, troubleshooting
-- [`docs/user/`](./docs/user/) — documentation utilisateur métier en français (§IV.8 CDC)
-- [`docs/phase-2/`](./docs/phase-2/) — automatisation & questionnaire (§IV.9-10 CDC)
+Séparation des audiences :
+
+- **Documentation utilisateur** : [`docs/user/`](./docs/user/) et site VitePress, pour les parcours métier.
+- **Documentation technique** : les sections ci-dessous, consultables depuis le dépôt via cet index.
+
+### Documentation technique
+
+| Section | Pages principales |
+|---|---|
+| Architecture (§IV.4.1) | [`index`](./docs/architecture/README.md) · [`vue d'ensemble`](./docs/architecture/overview.md) · [`architecture distribuée`](./docs/architecture/distributed.md) · [`base de données`](./docs/architecture/database.md) · [`MQTT`](./docs/architecture/mqtt.md) · [`API`](./docs/architecture/api.md) |
+| Features cross-app | [`agrégation siège`](./docs/features/aggregation-siege.md) · [`dashboard siège`](./docs/features/dashboard-siege.md) · [`lots`](./docs/features/lots.md) · [`mesures`](./docs/features/measurements.md) · [`alertes`](./docs/features/alerts.md) · [`alertes par région`](./docs/features/alertes-par-region.md) · [`firmware IoT`](./docs/features/firmware-iot.md) · [`déploiement CI/CD`](./docs/features/deploiement-ci-cd.md) |
+| IoT (§IV.4.2) | [`index`](./docs/iot/README.md) · [`hardware`](./docs/iot/hardware.md) · [`protocole MQTT`](./docs/iot/protocol.md) · [`firmware`](./docs/iot/firmware.md) |
+| Tests (§IV.4.3, §6.6) | [`index`](./docs/testing/README.md) · [`stratégie`](./docs/testing/strategy.md) · [`plan de tests`](./docs/testing/test-plan.md) · [`tests manuels`](./docs/testing/manual-tests.md) · [`anomalies`](./docs/testing/anomalies.md) |
+| CI/CD (§IV.5) | [`index`](./docs/ci-cd/README.md) · [`GitHub Actions`](./docs/ci-cd/github-actions.md) · [`Docker`](./docs/ci-cd/docker.md) |
+| Opérations | [`index`](./docs/operations/README.md) · [`runbook`](./docs/operations/runbook.md) · [`déploiement`](./docs/operations/deployment.md) · [`troubleshooting`](./docs/operations/troubleshooting.md) · [`assistants IA`](./docs/operations/ai-assistants.md) |
+| ADR | [`index`](./docs/adr/README.md) · [`architecture distribuée`](./docs/adr/0001-distributed-architecture.md) · [`convention MQTT`](./docs/adr/0003-mqtt-convention.md) · [`VitePress doc utilisateur`](./docs/adr/0009-vitepress-user-docs.md) · [`déploiement docs`](./docs/adr/0010-docs-site-deployment.md) |
+| Phase 2 (§IV.9-10) | [`index`](./docs/phase-2/README.md) · [`schéma d'automatisation`](./docs/phase-2/automation-schema.md) · [`questionnaire d'interview`](./docs/phase-2/interview-questionnaire.md) |
 
 ### Site de documentation utilisateur (VitePress)
 
-La doc utilisateur (`docs/user/`) est aussi servie comme **site web navigable
-avec recherche** ([ADR-0009](./docs/adr/0009-vitepress-user-docs.md)). En local :
+La doc utilisateur métier (`docs/user/`) est aussi servie comme **site web
+navigable avec recherche** ([ADR-0009](./docs/adr/0009-vitepress-user-docs.md)).
+VitePress reste volontairement limité à cette audience utilisateur ; la
+documentation technique reste référencée depuis le README et les index `docs/`.
+
+Pages utilisateur :
+[`accueil`](./docs/user/index.md) · [`prise en main`](./docs/user/getting-started.md) ·
+[`connexion`](./docs/user/connexion.md) · [`lots`](./docs/user/lots.md) ·
+[`monitoring`](./docs/user/monitoring.md) · [`alertes`](./docs/user/alerts.md) ·
+[`FAQ`](./docs/user/faq.md)
+
+En local :
 
 ```bash
 pnpm docs:dev       # site en local (hot-reload)

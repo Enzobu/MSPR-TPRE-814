@@ -4,7 +4,7 @@ owner: Yanis
 status: implemented
 cdc-ref: "§IV.4.2"
 adr-refs: [0001, 0003]
-updated: 2026-06-20
+updated: 2026-07-03
 ---
 
 # Architecture du firmware IoT
@@ -31,12 +31,12 @@ Règles de dev embarqué : [`apps/iot/CLAUDE.md`](../../apps/iot/CLAUDE.md).
 | Module | Fichier | Responsabilité |
 |---|---|---|
 | Orchestration | `src/main.cpp` | `setup()` / `loop()`, enchaînement des états. Zéro logique métier. |
-| WiFi | `src/wifi_manager.{h,cpp}` | Connexion + reconnexion **backoff exponentiel** non bloquante. |
-| MQTT | `src/mqtt_client.{h,cpp}` | Wrapper PubSubClient : LWT, statut online/offline, publish mesure, reconnexion. |
-| Capteur | `src/sensor.{h,cpp}` | Lecture DHT (T°/humidité), propage `NaN` si échec. |
-| Horloge | `src/clock_iso.{h,cpp}` | Horodatage ISO-8601 UTC via NTP (best-effort). |
-| Sérialisation | `src/measurement_json.{h,cpp}` | Validation des bornes + JSON. **Logique pure.** |
-| Topics | `src/topic.h` | Construction topic mesure/statut + clientId (ADR-0003). **Logique pure.** |
+| WiFi | `src/connectivity/wifi_manager.{h,cpp}` | Connexion + reconnexion **backoff exponentiel** non bloquante. |
+| MQTT | `src/connectivity/mqtt_client.{h,cpp}` | Wrapper PubSubClient : LWT, statut online/offline, publish mesure, reconnexion. |
+| Capteur | `src/sensor/sensor.{h,cpp}` | Lecture DHT (T°/humidité), propage `NaN` si échec. |
+| Horloge | `src/clock/clock_iso.{h,cpp}` | Horodatage ISO-8601 UTC via NTP (best-effort). |
+| Sérialisation | `src/telemetry/measurement_json.{h,cpp}` | Validation des bornes + JSON. **Logique pure.** |
+| Topics | `src/telemetry/topic.h` | Construction topic mesure/statut + clientId (ADR-0003). **Logique pure.** |
 | Config | `include/config.h` | Pins, type DHT, cadence, bornes, backoff, NTP. Aucun secret. |
 | Secrets | `include/secrets.h` (gitignoré) | WiFi + MQTT + `COUNTRY` + `WAREHOUSE_ID`. |
 
@@ -49,6 +49,20 @@ flowchart TD
     M --> J[measurement_json]
     Q --> T[topic.h]
     J -. bornes .-> CFG[config.h]
+    subgraph CONN[connectivity/]
+      W
+      Q
+    end
+    subgraph SENSOR[sensor/]
+      SE
+    end
+    subgraph CLOCK[clock/]
+      C
+    end
+    subgraph TEL[telemetry/]
+      J
+      T
+    end
     classDef pure fill:#e7f5e7,stroke:#2e7d32;
     class J,T pure;
 ```

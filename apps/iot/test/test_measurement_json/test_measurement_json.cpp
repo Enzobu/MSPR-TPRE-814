@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "../../src/measurement_json.h"
+#include "../../src/telemetry/measurement_json.h"
 
 void setUp(void) {}
 void tearDown(void) {}

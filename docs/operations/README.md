@@ -1,9 +1,9 @@
 ---
 title: Operations — index
 owner: Yanis
-status: in-progress
+status: implemented
 cdc-ref: "§IV.4.1"
-updated: 2026-06-20
+updated: 2026-07-03
 ---
 
 # Operations
@@ -14,7 +14,7 @@ et résolution d'incidents.
 | Document | Contenu |
 |---|---|
 | [`runbook.md`](runbook.md) | Opérations courantes : démarrage, logs, santé, redémarrage, sauvegarde |
-| [`deployment.md`](deployment.md) | Déploiement local → prod (GitHub Actions → Dokploy) + rollback |
+| [`deployment.md`](deployment.md) | Déploiement local → prod (GitHub Actions → Dokploy), preuve d'exécution + rollback |
 | [`troubleshooting.md`](troubleshooting.md) | Problèmes connus et solutions |
 
 Liens utiles : [architecture](../architecture/README.md) · [CI/CD](../ci-cd/README.md) ·

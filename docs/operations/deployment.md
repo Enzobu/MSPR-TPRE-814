@@ -1,10 +1,10 @@
 ---
 title: Déploiement
 owner: Yanis
-status: in-progress
+status: implemented
 cdc-ref: "§IV.5"
 adr-refs: [0001]
-updated: 2026-06-20
+updated: 2026-07-03
 ---
 
 # Déploiement
@@ -85,31 +85,81 @@ viennent de l'environnement Dokploy, **jamais** du dépôt. Durcissement prod
 
 ## 3. Preuve d'exécution (jury)
 
-> 📸 **À compléter (#51)** : insérer ici une capture d'un run GitHub Actions vert
-> (workflow `Build`) et un extrait de log du job `deploy` (code HTTP 2xx renvoyé
-> par l'API Dokploy). Cette étape nécessite un accès au dépôt GitHub / Dokploy et
-> est réalisée par l'équipe.
+Run de référence : **Build #28649726905**, déclenché par push sur `main`
+le **2026-07-03 08:53:55 UTC**, commit
+`2d46e453e900fd9bace59bf826478b9d9c782090`.
+
+Lien GitHub Actions :
+`https://github.com/Enzobu/MSPR-TPRE-814/actions/runs/28649726905`
+
+Synthèse du run :
+
+| Job | Statut | Preuve |
+|---|---|---|
+| Build Docker images | success | images Docker construites via `docker compose --env-file .env.compose.ci build` |
+| Run tests | success | `pnpm -r lint`, `pnpm -r test`, coverage uploadé |
+| Front e2e (Playwright) | success | tests Playwright + rapport uploadé |
+| SonarQube analysis | success | scan + Quality Gate |
+| Deploy | success | appel Dokploy accepté |
+
+Capture : [`../ci-cd/capture_ecran_preuve_ci_cd.png`](../ci-cd/capture_ecran_preuve_ci_cd.png)
+
+Extrait du job `Deploy` :
+
+```text
+HTTP code: 200
+{"success":true,"message":"Deployment queued","composeId":"***"}
+```
+
+Les secrets (`DOKPLOY_API_KEY`, `DOKPLOY_COMPOSE_ID`) sont masqués par GitHub
+dans les logs (`***`).
 
 ## 4. Rollback
 
 En cas de déploiement défaillant :
 
-1. **Re-déployer la version précédente** : remettre `main` sur le dernier commit
-   stable puis relancer le déploiement.
+1. **Identifier le commit fautif et le dernier commit stable** depuis l'onglet
+   Actions ou l'historique Git. Ne pas reverter automatiquement le dernier merge
+   si plusieurs correctifs ont été groupés dans la release.
+2. **Créer une PR de rollback** depuis une branche dédiée :
 
    ```bash
-   git revert <commit-fautif>   # ou reset sur le tag stable, via PR
-   # le merge sur main relance le job deploy
+   git switch main
+   git pull --ff-only
+   git switch -c revert/<scope>-<incident>
+   git revert <commit-ou-merge-fautif>   # ajouter -m 1 si le commit fautif est un merge
+   git push -u origin revert/<scope>-<incident>
+   gh pr create --base main --fill
    ```
 
-2. **Rollback côté Dokploy** : redéployer le `composeId` sur l'image/tag stable
-   précédent depuis l'interface Dokploy (ou rappeler `compose.deploy` après avoir
-   pointé sur la version antérieure).
-3. **Vérifier** : `/ready` des backends + UI + flux MQTT (voir
+3. **Merger la PR sur `main`** après review rapide. Le merge relance le workflow
+   `Build`, puis le job `Deploy` rappelle Dokploy si la CI est verte.
+4. **Rollback côté Dokploy si GitHub est indisponible** : redéployer le
+   `composeId` sur l'image/tag stable précédent depuis l'interface Dokploy, ou
+   rappeler `compose.deploy` après avoir pointé la stack sur la version stable.
+5. **Vérifier** : `/ready` des backends + UI + flux MQTT (voir
    [`runbook.md`](runbook.md)).
 
-> 🔁 **Rollback à tester (#51)** : valider la procédure sur l'environnement réel
-> et joindre la preuve.
+### Test de rollback
+
+Test non destructif réalisé le **2026-07-03** dans un worktree temporaire :
+
+```bash
+git worktree add /tmp/futurekawa-rollback-test origin/main
+cd /tmp/futurekawa-rollback-test
+git revert --no-commit -m 1 e08b8533584d268f204d7ef3719481377f0af980
+git status --short
+git worktree remove --force /tmp/futurekawa-rollback-test
+```
+
+Résultat : le revert Git du merge testé passe sans conflit. Le `git status`
+montre les fichiers qui seraient restaurés avant création de la PR de rollback ;
+cela confirme aussi qu'il faut choisir le commit fautif avec précision pour ne
+pas retirer des changements valides inclus dans la même release.
+
+Le redéploiement Dokploy réel n'a pas été déclenché pendant ce test pour éviter
+un rollback de production inutile. Sa preuve opérationnelle est le job `Deploy`
+du run #28649726905, qui accepte le redéploiement avec HTTP 200.
 
 ## 5. Checklist « avant mise en prod » (CDC §V.2, OWASP API Top 10)
 

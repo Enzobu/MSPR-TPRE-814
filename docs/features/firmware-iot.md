@@ -63,9 +63,9 @@ de stockage.
 
 | Type | Contrat | Fichier |
 |---|---|---|
-| MQTT (mesure) | `futurekawa/{country}/warehouse/{id}/measurement` (QoS, retain=false) | `apps/iot/src/topic.h`, `apps/iot/src/mqtt_client.cpp` |
-| MQTT (statut) | `futurekawa/{country}/warehouse/{id}/status` (LWT `offline`/`online`, retain) | `apps/iot/src/mqtt_client.cpp` |
-| Payload | `{ temperatureCelsius, humidityPercent, recordedAt? }` | `apps/iot/src/measurement_json.cpp` |
+| MQTT (mesure) | `futurekawa/{country}/warehouse/{id}/measurement` (QoS, retain=false) | `apps/iot/src/telemetry/topic.h`, `apps/iot/src/connectivity/mqtt_client.cpp` |
+| MQTT (statut) | `futurekawa/{country}/warehouse/{id}/status` (LWT `offline`/`online`, retain) | `apps/iot/src/connectivity/mqtt_client.cpp` |
+| Payload | `{ temperatureCelsius, humidityPercent, recordedAt? }` | `apps/iot/src/telemetry/measurement_json.cpp` |
 
 Convention figée : [ADR-0003](../adr/0003-mqtt-convention.md). Le pattern de
 topic est **dupliqué** côté C++ (`topic.h`) car le firmware ne consomme pas
@@ -97,8 +97,10 @@ mitigée par LWT + cadence).
 ## Implémentation
 
 `apps/iot/` (PlatformIO, **hors workspace pnpm** — pas de `package.json`) :
-- **Logique pure (testable natif)** : `src/measurement_json.{h,cpp}`, `src/topic.h`
-- **Infra embarquée** : `src/wifi_manager.*`, `src/mqtt_client.*`, `src/sensor.*`, `src/clock_iso.*`
+- **Logique pure (testable natif)** : `src/telemetry/measurement_json.{h,cpp}`, `src/telemetry/topic.h`
+- **Connectivité** : `src/connectivity/wifi_manager.*`, `src/connectivity/mqtt_client.*`
+- **Capteur** : `src/sensor/sensor.*`
+- **Horloge** : `src/clock/clock_iso.*`
 - **Orchestration** : `src/main.cpp`
 - **Config / secrets** : `include/config.h`, `include/secrets.h.example`
   (`DHT11` + `GPIO2 / D4` par défaut, voir [`../iot/hardware.md`](../iot/hardware.md))

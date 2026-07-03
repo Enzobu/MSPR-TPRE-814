@@ -9,13 +9,13 @@
 // ──────────────────────────────────────────────
 #include <Arduino.h>
 
-#include "clock_iso.h"
+#include "clock/clock_iso.h"
 #include "config.h"
-#include "measurement_json.h"
-#include "mqtt_client.h"
+#include "connectivity/mqtt_client.h"
+#include "connectivity/wifi_manager.h"
+#include "sensor/sensor.h"
 #include "secrets.h"
-#include "sensor.h"
-#include "wifi_manager.h"
+#include "telemetry/measurement_json.h"
 #include <ESP8266WiFi.h>
 
 namespace {
