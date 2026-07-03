@@ -3,7 +3,7 @@ title: Pipeline GitHub Actions
 owner: Yanis
 status: implemented
 cdc-ref: "§IV.5"
-updated: 2026-06-20
+updated: 2026-07-03
 ---
 
 # Pipeline CI/CD — GitHub Actions
@@ -117,7 +117,37 @@ docker compose --env-file .env.compose build   # équivaut au job docker-build
 
 ## Preuve d'exécution
 
-![Image preuve d'exécution](./capture_ecran_preuve_ci_cd.png "Image preuve d'exécution")
+Run de référence : **Build #28649726905**, déclenché par push sur `main`
+le **2026-07-03 08:53:55 UTC**, commit
+`2d46e453e900fd9bace59bf826478b9d9c782090`
+(`Merge pull request #162 from Enzobu/dev`).
+
+Lien GitHub Actions :
+`https://github.com/Enzobu/MSPR-TPRE-814/actions/runs/28649726905`
+
+![Run GitHub Actions vert avec jobs Build Docker images, Run tests, Front e2e, SonarQube et Deploy](./capture_ecran_preuve_ci_cd.png "Preuve d'exécution CI/CD")
+
+| Job | Statut | Début UTC | Fin UTC | Preuve |
+|---|---|---:|---:|---|
+| Build Docker images | success | 08:53:57 | 08:56:19 | `docker compose --env-file .env.compose.ci build` exécuté |
+| Run tests | success | 08:56:23 | 08:59:16 | `pnpm -r lint`, `pnpm -r test`, artefact `js-ts-coverage` |
+| Front e2e (Playwright) | success | 08:56:22 | 08:57:28 | artefact `playwright-report` |
+| SonarQube analysis | success | 08:59:19 | 09:00:19 | scan + Quality Gate |
+| Deploy | success | 09:00:21 | 09:00:23 | API Dokploy HTTP 200 |
+
+Artefacts vérifiés sur le run :
+- `js-ts-coverage` : fichiers `lcov.info` pour `apps/*` et `packages/*`.
+- `playwright-report` : rapport HTML Playwright.
+
+Extrait du job `Deploy` (secrets masqués par GitHub) :
+
+```text
+HTTP code: 200
+{"success":true,"message":"Deployment queued","composeId":"***"}
+```
+
+La procédure de déploiement et rollback associée est documentée dans
+[`../operations/deployment.md`](../operations/deployment.md).
 
 ## Références
 
