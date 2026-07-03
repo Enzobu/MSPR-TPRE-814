@@ -115,12 +115,9 @@ pnpm -r lint && pnpm -r test
 docker compose --env-file .env.compose build   # équivaut au job docker-build
 ```
 
-## Preuve d'exécution (jury)
+## Preuve d'exécution
 
-> 📸 **À compléter (#43/#51)** : insérer une capture d'un run GitHub Actions vert
-> (workflow `Build`, les 4–5 jobs au vert) et des extraits de logs significatifs
-> (build des images, `pnpm -r test`, quality gate, code HTTP du job `deploy`).
-> L'accès aux runs nécessite le dépôt GitHub — étape réalisée par l'équipe.
+![Image preuve d'exécution](./capture_ecran_preuve_ci_cd.png "Image preuve d'exécution")
 
 ## Références
 

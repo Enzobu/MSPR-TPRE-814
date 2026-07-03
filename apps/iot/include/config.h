@@ -5,13 +5,13 @@
 #pragma once
 
 // ── Capteur DHT ─────────────────────────────────────────────────
-// DHT22 par defaut (precision/plage superieures). Basculer sur DHT11
-// si c'est le modele disponible sur le stock campus (fallback).
+// DHT11 par defaut pour matcher le stock campus. Basculer sur DHT22
+// si le prototype utilise le capteur AM2302 (meilleure precision/plage).
 #ifndef DHT_TYPE
 #define DHT_TYPE DHT11
 #endif
 
-// GPIO de la broche DATA du DHT. GPIO4 = D2 sur la plupart des
+// GPIO de la broche DATA du DHT. GPIO2 = D4 sur la plupart des
 // cartes ESP-12E / NodeMCU. Pull-up 10k entre DATA et VCC (voir
 // docs/iot/hardware.md).
 #ifndef DHT_PIN
